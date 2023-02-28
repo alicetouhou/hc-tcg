@@ -44,7 +44,7 @@ function* attackSaga(game, turnAction, actionState) {
 		? currentPlayer.board.singleUseCard
 		: null
 
-	if (!attackerActiveRow) return 'INVALID'
+	if (!attackerActiveRow || !attackerActiveRow.hermitCard) return 'INVALID'
 
 	const attackerHermitCard = attackerActiveRow.hermitCard
 	const attackerHermitInfo = CARDS[attackerHermitCard.cardId]
