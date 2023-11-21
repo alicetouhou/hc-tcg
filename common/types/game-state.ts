@@ -5,7 +5,7 @@ import {EnergyT, Slot, SlotPos} from './cards'
 import {MessageInfoT} from './chat'
 import {GameHook, WaterfallHook} from './hooks'
 import {PickProcessT, PickedSlots} from './pick-process'
-import {ModalRequest, PickRequest, PickResult} from './server-requests'
+import {ModalRequest, PickRequest} from './server-requests'
 
 export type PlayerId = string
 
@@ -143,6 +143,8 @@ export type PlayerState = {
 		beforeActiveRowChange: GameHook<(oldRow: number | null, newRow: number) => boolean>
 		/** Hook called when the active row is changed. */
 		onActiveRowChange: GameHook<(oldRow: number | null, newRow: number) => void>
+		/** Hook called when a card attemps to move or rows are swapped. Returns whether the card in this position can be moved, or if the slot is empty, if it can be moved to. */
+		onCardPositionChange: GameHook<(slot: SlotPos) => boolean>
 	}
 }
 
@@ -164,7 +166,7 @@ export type PickCardActionResult =
 export type ActionResult = GenericActionResult | PlayCardActionResult | PickCardActionResult
 
 export type ModalData = {
-	modalId: string,
+	modalId: string
 	payload?: any
 }
 

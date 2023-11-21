@@ -57,6 +57,9 @@ class Smajor1995RareHermitCard extends HermitCard {
 
 					return 'SUCCESS'
 				},
+				onTimeout() {
+					return
+				},
 			})
 		})
 	}
