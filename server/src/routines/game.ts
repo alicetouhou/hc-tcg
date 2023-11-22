@@ -1,7 +1,6 @@
 import {all, take, fork, cancel, race, delay, call, actionChannel} from 'typed-redux-saga'
 import {CARDS, HERMIT_CARDS, ITEM_CARDS, SINGLE_USE_CARDS} from 'common/cards'
 import {getEmptyRow, getLocalGameState} from '../utils/state-gen'
-import {getPickedSlots} from '../utils/picked-cards'
 import attackSaga, {executeAllAttacks, runAllAttacks} from './turn-actions/attack'
 import playCardSaga from './turn-actions/play-card'
 import changeActiveHermitSaga from './turn-actions/change-active-hermit'
@@ -20,7 +19,7 @@ import {discardCard, discardSingleUse} from 'common/utils/movement'
 import {getCardPos} from 'common/models/card-pos-model'
 import {printHooksState} from '../utils'
 import {buffers} from 'redux-saga'
-import {PickCardActionData} from 'common/types/action-data'
+import {AttackActionData, PickCardActionData, attackToAttackAction} from 'common/types/action-data'
 import {AttackModel} from 'common/models/attack-model'
 
 ////////////////////////////////////////
@@ -264,13 +263,6 @@ function* turnActionSaga(game: GameModel, turnAction: any) {
 		return
 	}
 
-	const pickedSlots = getPickedSlots(game, turnAction)
-	// Validation failed
-	if (!pickedSlots) {
-		game.setLastActionResult(actionType, 'FAILURE_INVALID_DATA')
-		return
-	}
-
 	let modalResult = null
 	if (turnAction.payload && turnAction.payload.modalResult) {
 		modalResult = turnAction.payload.modalResult
@@ -296,7 +288,7 @@ function* turnActionSaga(game: GameModel, turnAction: any) {
 			result = yield* call(changeActiveHermitSaga, game, turnAction)
 			break
 		case 'APPLY_EFFECT':
-			result = yield* call(applyEffectSaga, game, pickedSlots)
+			result = yield* call(applyEffectSaga, game)
 			break
 		case 'REMOVE_EFFECT':
 			result = yield* call(removeEffectSaga, game)
@@ -436,23 +428,58 @@ function* turnActionsSaga(game: GameModel) {
 
 			// Handle timeout
 			if (raceResult.timeout) {
+				// @TODO this works, but could be cleaned
+				const currentAttack = game.state.turn.currentAttack
+				let reset = false
+
 				// First check to see if the opponent had a pick or modal request active
 				const currentPickRequest = game.state.pickRequests[0]
-				if (currentPickRequest?.playerId === opponentPlayerId) {
-					// If yes, timeout that pick request and remove it
-					game.removePickRequest()
-					// Reset timer to max time
-					game.state.timer.turnStartTime = Date.now()
-					game.state.timer.turnRemaining = CONFIG.limits.maxTurnTime
-					continue
+				if (currentPickRequest) {
+					if (currentPickRequest.playerId === currentPlayerId) {
+						if (!!currentAttack) {
+							reset = true
+						}
+					} else {
+						reset = true
+					}
 				}
-				const currentModalRequest = game.state.modalRequests[0]
-				if (currentModalRequest?.playerId === opponentPlayerId) {
-					// If yes, timeout that pick request and remove it
-					game.removeModalRequest()
+
+				// First check to see if the opponent had a pick or modal request active
+				const currentModalRequest = game.state.pickRequests[0]
+				if (currentModalRequest) {
+					if (currentModalRequest.playerId === currentPlayerId) {
+						if (!!currentAttack) {
+							reset = true
+						}
+					} else {
+						reset = true
+					}
+				}
+
+				if (reset) {
+					// Timeout current request and remove it
+					if (currentPickRequest) {
+						game.removePickRequest()
+					} else {
+						game.removeModalRequest()
+					}
+
 					// Reset timer to max time
 					game.state.timer.turnStartTime = Date.now()
 					game.state.timer.turnRemaining = CONFIG.limits.maxTurnTime
+
+					// Execute attack now if there's a current attack
+					if (!game.hasActiveRequests() && !!currentAttack) {
+						// There are no active requests left, and we're in the middle of an attack. Execute it now.
+						const turnAction: AttackActionData = {
+							type: attackToAttackAction[currentAttack],
+							payload: {
+								playerId: game.currentPlayerId,
+							},
+						}
+						yield* call(attackSaga, game, turnAction, false)
+					}
+
 					continue
 				}
 
@@ -484,7 +511,7 @@ function* turnActionsSaga(game: GameModel) {
 }
 
 function* turnSaga(game: GameModel) {
-	const {currentPlayerId, currentPlayer, opponentPlayer} = game
+	const {currentPlayerId, currentPlayer} = game
 
 	// Reset turn state
 	game.state.turn.availableActions = []

@@ -73,6 +73,9 @@ class KeralisRareHermitCard extends HermitCard {
 
 					return 'SUCCESS'
 				},
+				onTimeout() {
+					// We didn't pick anyone to heal, so heal no one
+				},
 			})
 		})
 
@@ -94,9 +97,6 @@ class KeralisRareHermitCard extends HermitCard {
 					pickedRow.health + 100,
 					hermitInfo.health // Max health
 				)
-			} else {
-				// Armor Stand
-				pickedRow.health += 100
 			}
 
 			delete player.custom[playerKey]
