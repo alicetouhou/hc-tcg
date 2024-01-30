@@ -1,5 +1,10 @@
 import {useDispatch, useSelector} from 'react-redux'
-import {joinQueue, createPrivateGame, joinPrivateGame} from 'logic/matchmaking/matchmaking-actions'
+import {
+	joinQueue,
+	createPrivateGame,
+	joinPrivateGame,
+	joinPvEGame,
+} from 'logic/matchmaking/matchmaking-actions'
 import {logout} from 'logic/session/session-actions'
 import {getSession} from 'logic/session/session-selectors'
 import css from './main-menu.module.scss'
@@ -20,6 +25,7 @@ function MainMenu({setMenuSection}: Props) {
 	const handleLogOut = () => dispatch(logout())
 	const handleDeck = () => setMenuSection('deck')
 	const handleSettings = () => setMenuSection('settings')
+	const handlePvEGame = () => dispatch(joinPvEGame())
 
 	const welcomeMessage = playerDeck.name === 'Starter Deck' ? 'Welcome' : 'Welcome Back'
 
@@ -45,6 +51,9 @@ function MainMenu({setMenuSection}: Props) {
 					</Button>
 					<Button variant="stone" id={css.privateJoin} onClick={handleJoinPrivateGame}>
 						Join Private Game
+					</Button>
+					<Button variant="stone" id={css.pveGame} onClick={handlePvEGame}>
+						PvE Game
 					</Button>
 					<Button variant="stone" id={css.deck} onClick={handleDeck}>
 						Customize Deck

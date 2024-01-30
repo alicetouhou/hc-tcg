@@ -124,6 +124,44 @@ function* joinPrivateGameSaga() {
 	}
 }
 
+function* joinPveGameSaga() {
+	function* matchmaking() {
+		try {
+			// Send message to server to create the game
+			yield* call(sendMsg, 'JOIN_PVE_GAME')
+
+			// Wait for game start or timeout
+			const queueResponse = yield* race({
+				gameStart: call(receiveMsg, 'GAME_START'),
+				timeout: call(receiveMsg, 'PVE_GAME_TIMEOUT'),
+			})
+
+			if (queueResponse.gameStart) {
+				yield* call(gameSaga)
+			}
+		} catch (err) {
+			console.error('Game crashed: ', err)
+		} finally {
+			if (yield* cancelled()) {
+				yield* put(clearMatchmaking())
+				yield* put(gameEnd())
+			}
+		}
+	}
+
+	const result = yield* race({
+		cancel: take('LEAVE_MATCHMAKING'), // We pressed the leave button
+		matchmaking: call(matchmaking),
+	})
+
+	yield* put(clearMatchmaking())
+
+	if (result.cancel) {
+		// Tell the server the private game is cancelled
+		yield* call(sendMsg, 'CANCEL_PRIVATE_GAME')
+	}
+}
+
 function* joinQueueSaga() {
 	function* matchmaking() {
 		try {
@@ -183,6 +221,7 @@ function* matchmakingSaga() {
 	yield* takeEvery('JOIN_QUEUE', joinQueueSaga)
 	yield* takeEvery('CREATE_PRIVATE_GAME', createPrivateGameSaga)
 	yield* takeEvery('JOIN_PRIVATE_GAME', joinPrivateGameSaga)
+	yield* takeEvery('JOIN_PVE_GAME', joinPveGameSaga)
 	yield* fork(reconnectSaga)
 }
 

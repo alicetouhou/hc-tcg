@@ -31,6 +31,11 @@ const matchmakingReducer = (state = defaultState, action: AnyAction): Matchmakin
 				status: 'private_code_needed',
 				invalidCode: false,
 			}
+		case 'JOIN_PVE_GAME':
+			return {
+				...state,
+				status: 'pve_waiting',
+			}
 		case 'WAITING_FOR_PLAYER':
 			return {
 				...state,

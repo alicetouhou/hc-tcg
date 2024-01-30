@@ -14,6 +14,10 @@ export const joinPrivateGame = () => ({
 	type: 'JOIN_PRIVATE_GAME' as const,
 })
 
+export const joinPvEGame = () => ({
+	type: 'JOIN_PVE_GAME' as const,
+})
+
 export const codeReceived = (code: string) => ({
 	type: 'CODE_RECEIVED' as const,
 	payload: code,

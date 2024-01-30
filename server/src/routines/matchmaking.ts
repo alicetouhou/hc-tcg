@@ -5,6 +5,7 @@ import {GameModel} from 'common/models/game-model'
 import {getGamePlayerOutcome, getWinner, getGameOutcome} from '../utils/win-conditions'
 import {getLocalGameState} from '../utils/state-gen'
 import {PlayerModel} from 'common/models/player-model'
+import {VirtualPlayerModel} from 'common/models/virtual-player-model'
 import root from '../serverRoot'
 
 export type ClientMessage = {
@@ -20,7 +21,7 @@ function* gameManager(game: GameModel) {
 		const playerIds = game.getPlayerIds()
 		const players = game.getPlayers()
 
-		const gameType = game.code ? 'Private' : 'Public'
+		const gameType = players.every((p) => p.socket) ? (game.code ? 'Private' : 'Public') : 'PvE'
 		console.log(
 			`${gameType} game started.`,
 			`Players: ${players[0].playerName} + ${players[1].playerName}.`,
@@ -49,6 +50,7 @@ function* gameManager(game: GameModel) {
 		})
 
 		for (const player of players) {
+			if (!player.socket) return
 			const gameState = getLocalGameState(game, player)
 			if (gameState) {
 				gameState.timer.turnRemaining = 0
@@ -312,6 +314,29 @@ function onPlayerLeft(player: PlayerModel) {
 	}
 }
 
+function* joinPveGame(msg: ClientMessage) {
+	const {playerId} = msg
+	const player = root.players[playerId]
+	if (!player) {
+		console.log('[Join PvE game] Player not found: ', playerId)
+		return
+	}
+
+	if (inGame(playerId) || inQueue(playerId)) {
+		console.log('[Join PvE game] Player is already in game or queue:', player.playerName)
+		broadcast([player], 'JOIN_PVE_GAME_FAILURE')
+		return
+	}
+
+	console.log(`Joining PvE game: ${player.playerName}.`)
+
+	broadcast([player], 'JOIN_PVE_GAME_SUCCESS')
+	const virtualPlayer = new VirtualPlayerModel('virtualPlayer', 'virtualPlayer')
+	const newGame = new GameModel(player, virtualPlayer)
+	root.addGame(newGame)
+	yield* fork(gameManager, newGame)
+}
+
 function* matchmakingSaga() {
 	root.hooks.playerLeft.add('matchmaking', onPlayerLeft)
 
@@ -325,6 +350,8 @@ function* matchmakingSaga() {
 		takeEvery('CREATE_PRIVATE_GAME', createPrivateGame),
 		takeEvery('JOIN_PRIVATE_GAME', joinPrivateGame),
 		takeEvery('CANCEL_PRIVATE_GAME', cancelPrivateGame),
+
+		takeEvery('JOIN_PVE_GAME', joinPveGame),
 	])
 }
 

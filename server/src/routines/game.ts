@@ -21,6 +21,7 @@ import {printHooksState} from '../utils'
 import {buffers} from 'redux-saga'
 import {AttackActionData, PickCardActionData, attackToAttackAction} from 'common/types/action-data'
 import {AttackModel} from 'common/models/attack-model'
+import {virtualTurnActionsSaga} from './virtual/virtual-player'
 
 ////////////////////////////////////////
 // @TODO sort this whole thing out properly
@@ -179,7 +180,7 @@ function playerAction(actionType: string, playerId: string) {
 
 // return false in case one player is dead
 // @TODO completely redo how we calculate if a hermit is dead etc
-function* checkHermitHealth(game: GameModel) {
+export function* checkHermitHealth(game: GameModel) {
 	const playerStates: Array<PlayerState> = Object.values(game.state.players)
 	const deadPlayerIds: Array<string> = []
 	for (let playerState of playerStates) {
@@ -230,8 +231,9 @@ function* checkHermitHealth(game: GameModel) {
 	return deadPlayerIds
 }
 
-function* sendGameState(game: GameModel) {
+export function* sendGameState(game: GameModel) {
 	game.getPlayers().forEach((player) => {
+		if (!player.socket) return
 		const localGameState = getLocalGameState(game, player)
 
 		player.socket.emit('GAME_STATE', {
@@ -521,8 +523,13 @@ function* turnSaga(game: GameModel) {
 		}
 	}
 
-	const result = yield* call(turnActionsSaga, game)
-	if (result === 'GAME_END') return 'GAME_END'
+	if (currentPlayer.playerType === 'real') {
+		const result = yield* call(turnActionsSaga, game)
+		if (result === 'GAME_END') return 'GAME_END'
+	} else {
+		const result = yield* call(virtualTurnActionsSaga, game)
+		if (result === 'GAME_END') return 'GAME_END'
+	}
 
 	// Create card draw array
 	const drawCards: Array<CardT | null> = []

@@ -95,6 +95,10 @@ nav {
 	grid-area: logout;
 }
 
+#pveGame {
+	grid-area: pve-game;
+}
+
 /* Settings Page */
 
 .settingsPage {
@@ -244,7 +248,7 @@ nav {
 		gap: 2vh;
 		grid-template-columns: 1fr 1fr;
 		grid-template-areas:
-			'public public'
+			'public pve-game'
 			'private-create private-join'
 			'deck deck'
 			'logout settings';

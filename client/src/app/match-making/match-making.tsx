@@ -42,6 +42,13 @@ function MatchMaking() {
 						</Button>
 					</>
 				)
+			case 'pve_waiting':
+				return (
+					<>
+						<Spinner />
+						<p>Loading</p>
+					</>
+				)
 			case 'loading':
 				return (
 					<>

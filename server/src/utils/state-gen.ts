@@ -22,6 +22,7 @@ import EffectCard from 'common/cards/base/effect-card'
 import {CardPosModel} from 'common/models/card-pos-model'
 import {getCardCost, getCardRank} from 'common/utils/ranks'
 import {HermitAttackType} from 'common/types/attack'
+import {VirtualPlayerModel} from 'common/models/virtual-player-model'
 
 ////////////////////////////////////////
 // @TODO sort this whole thing out properly
@@ -151,7 +152,7 @@ export function getEmptyRow(): RowState {
 	return rowState
 }
 
-export function getPlayerState(player: PlayerModel): PlayerState {
+export function getPlayerState(player: PlayerModel | VirtualPlayerModel): PlayerState {
 	const allCards = Object.values(CARDS).map(
 		(card: Card): CardT => ({
 			cardId: card.id,
@@ -203,6 +204,7 @@ export function getPlayerState(player: PlayerModel): PlayerState {
 	return {
 		id: player.playerId,
 		playerName: player.playerName,
+		playerType: player.socket ? 'real' : 'virtual',
 		minecraftName: player.minecraftName,
 		playerDeck: pack,
 		censoredPlayerName: player.censoredPlayerName,
@@ -265,7 +267,10 @@ export function getLocalPlayerState(playerState: PlayerState): LocalPlayerState 
 	return localPlayerState
 }
 
-export function getLocalGameState(game: GameModel, player: PlayerModel): LocalGameState | null {
+export function getLocalGameState(
+	game: GameModel,
+	player: PlayerModel | VirtualPlayerModel
+): LocalGameState | null {
 	const opponentPlayerId = game.getPlayerIds().find((id) => id !== player.playerId)
 	if (!opponentPlayerId) {
 		return null
