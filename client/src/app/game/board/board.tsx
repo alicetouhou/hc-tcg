@@ -6,6 +6,7 @@ import BoardRow from './board-row'
 import PlayerInfo from '../player-info'
 import Timer from '../timer'
 import Actions from '../actions/actions'
+import {CARDS} from 'common/cards'
 import {getSettings} from 'logic/local-settings/local-settings-selectors'
 import MobileActions from '../actions/mobile-actions'
 import {PickInfo, SlotInfo} from 'common/types/server-requests'
@@ -55,7 +56,7 @@ function Board({onClick, localGameState}: Props) {
 							active={index === player.board.activeRow}
 							onClick={handleRowClick.bind(null, player.id, index)}
 							type={direction}
-							ailments={localGameState.ailments}
+							statusEffects={localGameState.statusEffects}
 						/>
 					)
 				})}
