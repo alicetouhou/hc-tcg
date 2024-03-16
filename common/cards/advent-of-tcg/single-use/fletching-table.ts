@@ -7,7 +7,7 @@ class FletchingTableSingleUseCard extends SingleUseCard {
 		super({
 			id: 'fletching_table',
 			numericId: 223,
-			name: 'Fletching table',
+			name: 'Fletching Table',
 			rarity: 'common',
 			description: 'Completely useless! Worth -1 tokens.',
 		})

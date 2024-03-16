@@ -24,7 +24,7 @@ class Smajor1995RareHermitCard extends HermitCard {
 			},
 			secondary: {
 				name: 'To Dye For',
-				cost: ['any', 'any', 'any'],
+				cost: ['any', 'any'],
 				damage: 70,
 				power:
 					'After your attack, select one of your Hermits. Items attached to this Hermit become any type.',

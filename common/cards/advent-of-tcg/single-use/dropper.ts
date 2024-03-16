@@ -21,13 +21,11 @@ class DropperSingleUseCard extends SingleUseCard {
 		const {player, opponentPlayer} = pos
 
 		player.hooks.onApply.add(instance, () => {
-			for (let i = 0; i < 2; i++) {
-				const cardInfo = {
-					cardId: 'fletching_table',
-					cardInstance: Math.random().toString(),
-				}
-				opponentPlayer.pile.unshift(cardInfo)
+			const cardInfo = {
+				cardId: 'fletching_table',
+				cardInstance: Math.random().toString(),
 			}
+			opponentPlayer.pile.unshift(cardInfo)
 		})
 	}
 

@@ -10,7 +10,7 @@ class BrewingStandEffectCard extends EffectCard {
 		super({
 			id: 'brewing_stand',
 			numericId: 201,
-			name: 'Brewing stand',
+			name: 'Brewing Stand',
 			rarity: 'rare',
 			description:
 				'Attach to any active or AFK Hermit. At the start of every turn where this Hermit is active, flip a coin. If heads, discard an item card attached to this Hermit and heal by 60hp.',

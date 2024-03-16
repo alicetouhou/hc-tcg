@@ -21,7 +21,7 @@ class Biffa2001RareHermitCard extends HermitCard {
 			secondary: {
 				name: "Biffa's Museum",
 				cost: ['miner', 'any'],
-				damage: 70,
+				damage: 60,
 				power: 'For each card you played or used this turn, this attack does 20 more damage.',
 			},
 		})
