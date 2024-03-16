@@ -3,7 +3,7 @@ import {GameModel} from '../../../models/game-model'
 import HermitCard from '../../base/hermit-card'
 import {flipCoin} from '../../../utils/coinFlips'
 import {AttackModel} from '../../../models/attack-model'
-import {executeAttacks} from '../../../utils/attacks'
+import {executeExtraAttacks} from '../../../utils/attacks'
 import {getActiveRow} from '../../../utils/board'
 import {RowPos} from '../../../types/cards'
 
@@ -26,7 +26,7 @@ class BigBSt4tzRareHermitCard extends HermitCard {
 				name: 'Soulmate',
 				cost: ['speedrunner', 'speedrunner'],
 				damage: 80,
-				power: "When BigB is knocked out, deal 140 damage to the opponent's active Hermit.",
+				power: "When BigB is knocked out, deal 70 damage to the opponent's active Hermit.",
 			},
 		})
 	}
@@ -72,10 +72,10 @@ class BigBSt4tzRareHermitCard extends HermitCard {
 					target: targetRow,
 					type: 'status-effect',
 				})
-				statusEffectAttack.addDamage(this.id, 140)
+				statusEffectAttack.addDamage(this.id, 70)
 
 				opponentPlayer.hooks.afterAttack.remove(instance)
-				executeAttacks(game, [statusEffectAttack], true)
+				executeExtraAttacks(game, [statusEffectAttack], 'BigB', true)
 			}
 		})
 

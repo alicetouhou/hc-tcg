@@ -220,7 +220,7 @@
 	" - ADVENT OF TCG EFFECTS - ": "",
 
 	"brewing_stand": 1,
-	"furnace": 1,
+	"furnace": 0,
 	"cat": 1,
 	"berry_bush": 2,
 	"slimeball": 0,

@@ -9,7 +9,7 @@ class DropperSingleUseCard extends SingleUseCard {
 			numericId: 222,
 			name: 'Dropper',
 			rarity: 'rare',
-			description: "Shuffle 2 fletching tables into your opponent's deck",
+			description: "Place 1 fletching table at the top of your opponent's deck.",
 		})
 	}
 
@@ -26,11 +26,7 @@ class DropperSingleUseCard extends SingleUseCard {
 					cardId: 'fletching_table',
 					cardInstance: Math.random().toString(),
 				}
-				opponentPlayer.pile.splice(
-					Math.round(Math.random() * opponentPlayer.pile.length),
-					0,
-					cardInfo
-				)
+				opponentPlayer.pile.unshift(cardInfo)
 			}
 		})
 	}
