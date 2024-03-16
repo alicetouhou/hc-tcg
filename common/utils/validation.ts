@@ -2,7 +2,10 @@ import {CONFIG, DEBUG_CONFIG, EXPANSIONS} from '../config'
 import {CARDS} from '../cards'
 import {getDeckCost} from './ranks'
 
-export function validateDeck(deckCards: Array<string>) {
+export function validateDeck(
+	deckCards: Array<string>,
+	customDisabled: Array<string> | null = null
+) {
 	if (DEBUG_CONFIG.disableDeckValidation) return
 
 	const limits = CONFIG.limits
@@ -11,8 +14,9 @@ export function validateDeck(deckCards: Array<string>) {
 	// order validation by simplest problem first, so that a player can easily identify why their deck isn't valid
 
 	// Contains disabled cards
+	const disabled = customDisabled ? customDisabled : EXPANSIONS.disabled
 	const hasDisabledCards = deckCards.some((cardId) =>
-		EXPANSIONS.disabled.includes(CARDS[cardId].getExpansion())
+		disabled.includes(CARDS[cardId].getExpansion())
 	)
 	if (hasDisabledCards) return 'Deck must not include removed cards.'
 

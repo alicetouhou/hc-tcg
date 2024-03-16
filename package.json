@@ -10,6 +10,7 @@
 	"dependencies": {
 		"@floating-ui/react": "^0.19.1",
 		"@radix-ui/react-alert-dialog": "^1.0.3",
+		"@radix-ui/react-checkbox": "^1.0.4",
 		"@radix-ui/react-dialog": "^1.0.4",
 		"@radix-ui/react-dropdown-menu": "^2.0.4",
 		"@radix-ui/react-popover": "1.0.5",
@@ -68,12 +69,10 @@
 		"husky": "husky install",
 		"clean": "rm -rf client/dist && rm -rf server/dist",
 		"build": "npm run client:build && npm run server:build",
-
 		"server": "node server/dist/index.js",
 		"server:build": "npm run server:tsc && node esbuild.js",
 		"server:dev": "tsx watch --tsconfig server/tsconfig.json server/src",
 		"server:tsc": "tsc --p server/tsconfig.json",
-		
 		"client:build": "npm run client:tsc && vite build client/",
 		"client:tsc": "tsc --p client/",
 		"client:dev": "vite client/",

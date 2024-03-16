@@ -236,6 +236,15 @@ nav {
 	gap: 1vh;
 }
 
+.customGameMenu {
+	position: relative;
+	display: grid;
+	grid-template-columns: 40% 40%;
+	height: 80%;
+	width: 100%;
+	color: var(--text-light);
+}
+
 /* DESKTOP */
 @media (min-width: 80vh) {
 	nav {

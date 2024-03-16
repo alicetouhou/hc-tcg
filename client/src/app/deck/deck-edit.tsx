@@ -58,7 +58,7 @@ const rarityDropdownOptions = RANK_NAMES.map((option) => ({
 	icon: `/images/ranks/${option}.png`,
 }))
 
-interface ExpansionMap {
+export interface ExpansionMap {
 	[key: string]: string
 }
 const expansionDropdownOptions = EXPANSION_NAMES.map((option) => ({

@@ -16,6 +16,7 @@ import GameSettings from './main-menu/game-settings'
 import Credits from './main-menu/credits'
 import LostConnection from 'components/lost-connection'
 import Background from 'components/background'
+import CustomGame from './main-menu/custom-game'
 
 function App() {
 	const section = useRouter()
@@ -43,6 +44,8 @@ function App() {
 					return <Deck setMenuSection={setMenuSection} />
 				case 'settings':
 					return <Settings setMenuSection={setMenuSection} />
+				case 'custom-game':
+					return <CustomGame setMenuSection={setMenuSection} />
 				case 'game-settings':
 					return <GameSettings setMenuSection={setMenuSection} />
 				case 'credits':
