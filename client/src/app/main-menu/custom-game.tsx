@@ -30,7 +30,7 @@ function CustomGame({setMenuSection}: Props) {
 	const playerDeck = useSelector(getPlayerDeck)
 	const [loadedDeck, setLoadedDeck] = useState<PlayerDeckT>({...playerDeck})
 	const [customDisabled, setCustomDisabled] = useState<Array<string>>(EXPANSIONS.disabled)
-	const [customSettings, setCustomSettings] = useState(false)
+	const [useLrf, setUseLrf] = useState(false)
 
 	const invalidDeckToast: ToastT = {
 		open: true,
@@ -99,15 +99,13 @@ function CustomGame({setMenuSection}: Props) {
 		)
 	})
 
-	function onCheck(expansionName: string) {
+	function onExpansionCheck(expansionName: string) {
 		const newDisabled = [...customDisabled.filter((e) => e !== expansionName)]
-		setCustomSettings(true)
 		setCustomDisabled(newDisabled)
 	}
 
-	function onUncheck(expansionName: string) {
+	function onExpansionUncheck(expansionName: string) {
 		const newDisabled = [...customDisabled, expansionName]
-		setCustomSettings(true)
 		setCustomDisabled(newDisabled)
 	}
 
@@ -119,20 +117,28 @@ function CustomGame({setMenuSection}: Props) {
 			className={css.customGameMenu}
 		>
 			<div>
-				<h2>Enable Expansions</h2>
+				<h2>Deck Building Settings</h2>
 				<div className={css.stats}>
 					{Object.keys(EXPANSIONS.expansions).map((expansion, key) => {
 						return (
 							<div className={css.stat} key={key}>
 								<Checkbox
 									defaultChecked={!EXPANSIONS.disabled.includes(expansion)}
-									onCheck={() => onCheck(expansion)}
-									onUncheck={() => onUncheck(expansion)}
+									onCheck={() => onExpansionCheck(expansion)}
+									onUncheck={() => onExpansionUncheck(expansion)}
 								/>
 								<span>Enable {(EXPANSIONS.expansions as ExpansionMap)[expansion]}</span>
 							</div>
 						)
 					})}
+					<div className={css.stat}>
+						<Checkbox
+							defaultChecked={false}
+							onCheck={() => setUseLrf(true)}
+							onUncheck={() => setUseLrf(false)}
+						/>
+						<span>Use Low Rarity Format</span>
+					</div>
 				</div>
 				<Button variant="default" id={css.privateCreate} onClick={handleCreatePrivateGame}>
 					Create Custom Game

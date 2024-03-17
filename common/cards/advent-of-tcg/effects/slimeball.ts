@@ -11,7 +11,7 @@ class SlimeballEffectCard extends EffectCard {
 			id: 'slimeball',
 			numericId: 204,
 			name: 'Slimeball',
-			rarity: 'ultra_rare',
+			rarity: 'rare',
 			description:
 				"Attach to any Hermit, including your opponent's. That Hermit and its attached items will not be removed from the slot they are attached to, unless that Hermit is knocked out. After either player attempts to remove any of these cards, Slimeball will be discarded.",
 		})

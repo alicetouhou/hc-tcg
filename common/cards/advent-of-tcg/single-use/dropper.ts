@@ -8,7 +8,7 @@ class DropperSingleUseCard extends SingleUseCard {
 			id: 'dropper',
 			numericId: 222,
 			name: 'Dropper',
-			rarity: 'rare',
+			rarity: 'common',
 			description: "Place 1 fletching table at the top of your opponent's deck.",
 		})
 	}

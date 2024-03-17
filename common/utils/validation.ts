@@ -4,7 +4,8 @@ import {getDeckCost} from './ranks'
 
 export function validateDeck(
 	deckCards: Array<string>,
-	customDisabled: Array<string> | null = null
+	customDisabled: Array<string> | null = null,
+	useLrf: boolean = false
 ) {
 	if (DEBUG_CONFIG.disableDeckValidation) return
 
@@ -38,8 +39,16 @@ export function validateDeck(
 
 	// more than max tokens
 	const deckCost = getDeckCost(deckCards)
-	if (deckCost > limits.maxDeckCost)
+	if (!useLrf && deckCost > limits.maxDeckCost)
 		return `Deck cannot cost more than ${limits.maxDeckCost} tokens.`
+
+	// Low token rarity modes
+	if (useLrf) {
+		if (deckCards.filter((card) => CARDS[card].rarity === 'ultra_rare').length > 3)
+			return 'Your deck cannot have more than 3 ultra rare cards.'
+		if (deckCards.filter((card) => CARDS[card].rarity === 'rare').length > 12)
+			return 'Your deck cannot have more than 12 rare cards.'
+	}
 
 	const exactAmount = limits.minCards === limits.maxCards
 	const exactAmountText = `Deck must have exactly ${limits.minCards} cards.`

@@ -9,7 +9,7 @@ class LanternSingleUseCard extends SingleUseCard {
 			id: 'lantern',
 			numericId: 225,
 			name: 'Lantern',
-			rarity: 'rare',
+			rarity: 'ultra_rare',
 			description:
 				'Look at the top 4 cards of your deck, and choose 2 to draw. Show these 2 cards to your opponent.',
 		})

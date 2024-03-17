@@ -9,7 +9,7 @@ class BrushSingleUseCard extends SingleUseCard {
 			id: 'brush',
 			numericId: 221,
 			name: 'Brush',
-			rarity: 'rare',
+			rarity: 'common',
 			description:
 				'View the top 3 cards of your deck, then choose any number to keep on the top of your deck. The rest will be placed on the bottom in their original order.',
 		})
