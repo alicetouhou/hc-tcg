@@ -1,3 +1,7 @@
+import {CardPosModel} from '../../../models/card-pos-model'
+import {GameModel} from '../../../models/game-model'
+import {getActiveRow} from '../../../utils/board'
+import {flipCoin} from '../../../utils/coinFlips'
 import HermitCard from '../../base/hermit-card'
 
 class DreamRareHermitCard extends HermitCard {
@@ -21,6 +25,25 @@ class DreamRareHermitCard extends HermitCard {
 				damage: 90,
 				power: 'Flip a Coin.\n\nIf heads, HP is set randomly between 10-290.',
 			},
+		})
+	}
+
+	override onAttach(game: GameModel, instance: string, pos: CardPosModel) {
+		const {player} = pos
+
+		player.hooks.onAttack.add(instance, (attack) => {
+			const attackId = this.getInstanceKey(instance)
+			if (attack.id !== attackId || attack.type !== 'secondary') return
+
+			const coinFlip = flipCoin(player, this.id)
+
+			if (coinFlip[0] === 'tails') return
+
+			const activeRow = getActiveRow(player)
+
+			if (!activeRow) return
+
+			activeRow.health = (Math.floor(Math.random() * 28) + 1) * 10
 		})
 	}
 
