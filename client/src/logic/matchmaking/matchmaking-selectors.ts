@@ -12,6 +12,10 @@ export const getCode = (state: RootState) => {
 	return getMatchmaking(state).code
 }
 
+export const getCustomSettings = (state: RootState) => {
+	return getMatchmaking(state).customSettings
+}
+
 export const getInvalidCode = (state: RootState) => {
 	return getMatchmaking(state).invalidCode
 }

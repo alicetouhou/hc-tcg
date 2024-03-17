@@ -6,6 +6,7 @@ import {getGamePlayerOutcome, getWinner, getGameOutcome} from '../utils/win-cond
 import {getLocalGameState} from '../utils/state-gen'
 import {PlayerModel} from 'common/models/player-model'
 import root from '../serverRoot'
+import {validateDeck} from 'common/utils/validation'
 
 export type ClientMessage = {
 	type: string
@@ -167,6 +168,16 @@ function* joinQueue(msg: ClientMessage) {
 		return
 	}
 
+	// Validate their deck
+	if (validateDeck(player.playerDeck.cards.map((card) => card.cardId))) {
+		console.log(
+			'[Join queue] Player attempted to join the queue with an invalid deck:',
+			player.playerName
+		)
+		broadcast([player], 'JOIN_QUEUE_FAILURE')
+		return
+	}
+
 	// Add them to the queue
 	root.queue.push(playerId)
 	broadcast([player], 'JOIN_QUEUE_SUCCESS')
@@ -195,7 +206,10 @@ function* leaveQueue(msg: ClientMessage) {
 }
 
 function* createPrivateGame(msg: ClientMessage) {
-	const {playerId} = msg
+	const {
+		playerId,
+		payload: {customSettings, disabled},
+	} = msg
 	const player = root.players[playerId]
 	if (!player) {
 		console.log('[Create private game] Player not found: ', playerId)
@@ -213,6 +227,7 @@ function* createPrivateGame(msg: ClientMessage) {
 	root.privateQueue[gameCode] = {
 		createdTime: Date.now(),
 		playerId,
+		customSettings,
 	}
 
 	// Send code to player
@@ -236,6 +251,7 @@ function* joinPrivateGame(msg: ClientMessage) {
 	}
 
 	// Find the code in the private queue
+	console.log(code)
 	const info = root.privateQueue[code]
 	if (!info) {
 		broadcast([player], 'INVALID_CODE')
@@ -243,34 +259,48 @@ function* joinPrivateGame(msg: ClientMessage) {
 	}
 
 	// If there is another player, start game, otherwise, add us to queue
-	if (info.playerId) {
-		// Create new game for these 2 players
-		const existingPlayer = root.players[info.playerId]
-		if (!existingPlayer) {
-			console.log('[Join private game]: Player waiting in queue no longer exists! Code: ' + code)
-			delete root.privateQueue[code]
-
-			broadcast([player], 'JOIN_PRIVATE_GAME_FAILURE')
-			return
-		}
-
-		const newGame = new GameModel(player, existingPlayer, code)
-		root.addGame(newGame)
-
-		// Remove this game from the queue, it's started
-		delete root.privateQueue[code]
-
-		console.log(`Joining private game: ${player.playerName}.`, `Code: ${code}`)
-
-		broadcast([player], 'JOIN_PRIVATE_GAME_SUCCESS')
-		yield* fork(gameManager, newGame)
-	} else {
+	if (!info.playerId) {
 		// Assign this player to the game
 		root.privateQueue[code].playerId = playerId
 		broadcast([player], 'WAITING_FOR_PLAYER')
 
 		console.log(`Joining empty private game: ${player.playerName}.`, `Code: ${code}`)
+		return
 	}
+
+	broadcast([player], 'JOIN_PRIVATE_GAME_SUCCESS', root.privateQueue[code].customSettings)
+}
+
+function* beginPrivateGame(msg: ClientMessage) {
+	const {playerId, payload: code} = msg
+	const player = root.players[playerId]
+	const info = root.privateQueue[code]
+	if (!info) {
+		broadcast([player], 'INVALID_CODE')
+		return
+	}
+
+	if (!info.playerId) return
+
+	// Create new game for these 2 players
+	const existingPlayer = root.players[info.playerId]
+	if (!existingPlayer) {
+		console.log('[Join private game]: Player waiting in queue no longer exists! Code: ' + code)
+		delete root.privateQueue[code]
+
+		broadcast([player], 'JOIN_PRIVATE_GAME_FAILURE')
+		return
+	}
+
+	const newGame = new GameModel(player, existingPlayer, code, null)
+	root.addGame(newGame)
+
+	// Remove this game from the queue, it's started
+	delete root.privateQueue[code]
+
+	console.log(`Joining private game: ${player.playerName}.`, `Code: ${code}`)
+
+	yield* fork(gameManager, newGame)
 }
 
 function* cancelPrivateGame(msg: ClientMessage) {
@@ -324,6 +354,7 @@ function* matchmakingSaga() {
 
 		takeEvery('CREATE_PRIVATE_GAME', createPrivateGame),
 		takeEvery('JOIN_PRIVATE_GAME', joinPrivateGame),
+		takeEvery('CONFIRM_PRIVATE_GAME', beginPrivateGame),
 		takeEvery('CANCEL_PRIVATE_GAME', cancelPrivateGame),
 	])
 }

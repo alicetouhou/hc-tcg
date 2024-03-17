@@ -4,12 +4,14 @@ import {MatchmakingStatus} from './matchmaking-types'
 type MatchmakingState = {
 	status: MatchmakingStatus
 	code: string | null
+	customSettings: Record<string, any>
 	invalidCode: boolean
 }
 
 const defaultState: MatchmakingState = {
 	status: null,
 	code: null,
+	customSettings: {},
 	invalidCode: false,
 }
 
@@ -54,12 +56,18 @@ const matchmakingReducer = (state = defaultState, action: AnyAction): Matchmakin
 				code: action.payload,
 				status: 'loading',
 			}
+		case 'SET_CUSTOM_SETTINGS':
+			return {
+				...state,
+				customSettings: action.payload,
+			}
 		case 'DISCONNECT':
 		case 'GAME_STATE':
 		case 'LEAVE_MATCHMAKING':
 			return {
 				...state,
 				code: null,
+				customSettings: {},
 				status: null,
 				invalidCode: false,
 			}
@@ -67,8 +75,19 @@ const matchmakingReducer = (state = defaultState, action: AnyAction): Matchmakin
 			return {
 				...state,
 				code: null,
+				customSettings: {},
 				status: null,
 				invalidCode: false,
+			}
+		case 'PLAYER_CONFIRMATION':
+			return {
+				...state,
+				status: 'player_confirmation',
+			}
+		case 'CONFIRM_PRIVATE_GAME':
+			return {
+				...state,
+				status: 'confirmation_waiting',
 			}
 		case 'GAME_START':
 			return {

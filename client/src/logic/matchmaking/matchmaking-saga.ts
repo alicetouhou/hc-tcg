@@ -1,14 +1,21 @@
-import {call, cancelled, fork, put, putResolve, race, take, takeEvery} from 'typed-redux-saga'
+import {call, cancelled, fork, put, race, take, takeEvery} from 'typed-redux-saga'
 import {sendMsg, receiveMsg} from 'logic/socket/socket-saga'
 import gameSaga from 'logic/game/game-saga'
 import {gameEnd} from 'logic/game/game-actions'
-import {codeReceived, invalidCode, waitingForPlayer, clearMatchmaking} from './matchmaking-actions'
+import {
+	codeReceived,
+	invalidCode,
+	waitingForPlayer,
+	clearMatchmaking,
+	playerConfirmation,
+	setCustomSettings,
+} from './matchmaking-actions'
 
-function* createPrivateGameSaga() {
+function* createPrivateGameSaga(action: any) {
 	function* matchmaking() {
 		try {
 			// Send message to server to create the game
-			yield* call(sendMsg, 'CREATE_PRIVATE_GAME')
+			yield* call(sendMsg, 'CREATE_PRIVATE_GAME', action.payload)
 
 			// Wait for response
 			const createGameResponse = yield* race({
@@ -85,6 +92,12 @@ function* joinPrivateGameSaga() {
 						yield put(waitingForPlayer())
 					}
 
+					const customSettings = result.success?.payload
+					yield* put(setCustomSettings(customSettings))
+
+					// Wait for the joined player to confirm
+					yield* put(playerConfirmation(customSettings))
+
 					// Private game joined successfully - wait for game start or timeout
 					const queueResponse = yield* race({
 						gameStart: call(receiveMsg, 'GAME_START'),
@@ -122,6 +135,11 @@ function* joinPrivateGameSaga() {
 		// If we are waiting for a game here - i.e. we are in the private queue - Then cancel it
 		yield* call(sendMsg, 'CANCEL_PRIVATE_GAME')
 	}
+}
+
+function* confirmPrivateGameSaga(action: any) {
+	console.log(action)
+	yield* call(sendMsg, 'CONFIRM_PRIVATE_GAME', action.payload)
 }
 
 function* joinQueueSaga() {
@@ -183,6 +201,7 @@ function* matchmakingSaga() {
 	yield* takeEvery('JOIN_QUEUE', joinQueueSaga)
 	yield* takeEvery('CREATE_PRIVATE_GAME', createPrivateGameSaga)
 	yield* takeEvery('JOIN_PRIVATE_GAME', joinPrivateGameSaga)
+	yield* takeEvery('CONFIRM_PRIVATE_GAME', confirmPrivateGameSaga)
 	yield* fork(reconnectSaga)
 }
 

@@ -8,7 +8,10 @@ export class RootModel {
 	public games: Record<string, GameModel> = {}
 	public queue: Array<string> = []
 	/** Game code ->  time code was created, and info */
-	public privateQueue: Record<string, {createdTime: number; playerId: string | null}> = {}
+	public privateQueue: Record<
+		string,
+		{createdTime: number; playerId: string | null; customSettings: Record<string, any> | null}
+	> = {}
 	public hooks = {
 		newGame: new Hook<(game: GameModel) => void>(),
 		gameRemoved: new Hook<(game: GameModel) => void>(),

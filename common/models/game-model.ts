@@ -12,7 +12,6 @@ import {getGameState} from '../utils/state-gen'
 import {ModalRequest, PickRequest} from '../types/server-requests'
 import {SlotPos} from '../types/cards'
 import {BattleLog} from './battle-log'
-import {getActiveRow} from 'common/utils/board'
 
 export class GameModel {
 	private internalCreatedTime: number
@@ -25,6 +24,8 @@ export class GameModel {
 	public task: any
 	public state: GameState
 
+	public customSettings: Record<string, any> | null
+
 	public endInfo: {
 		deadPlayerIds: Array<string>
 		winner: string | null
@@ -32,7 +33,12 @@ export class GameModel {
 		reason: 'hermits' | 'lives' | 'cards' | 'time' | null
 	}
 
-	constructor(player1: PlayerModel, player2: PlayerModel, code: string | null = null) {
+	constructor(
+		player1: PlayerModel,
+		player2: PlayerModel,
+		code: string | null = null,
+		customSettings: Record<string, PlayerModel> | null = null
+	) {
 		this.internalCreatedTime = Date.now()
 		this.internalId = 'game_' + Math.random().toString()
 		this.internalCode = code
@@ -54,6 +60,8 @@ export class GameModel {
 		}
 
 		this.state = getGameState(this)
+
+		this.customSettings = customSettings
 	}
 
 	public get currentPlayerId() {

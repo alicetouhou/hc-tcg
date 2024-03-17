@@ -6,15 +6,20 @@ import SingleUseCard from 'common/cards/base/single-use-card'
 import {getCardRank} from 'common/utils/ranks'
 import {EXPANSIONS} from 'common/config'
 import classNames from 'classnames'
+import {getSettings} from 'logic/local-settings/local-settings-selectors'
 
 export type EffectCardProps = {
 	card: EffectCard | SingleUseCard
 }
 
 const EffectCardModule = ({card}: EffectCardProps) => {
+	const settings = useSelector(getSettings)
 	const rank = getCardRank(card.id)
 	const showCost = !useSelector(getGameState)
-	const disabled = EXPANSIONS.disabled.includes(card.getExpansion()) ? 'disabled' : 'enabled'
+	const disabled =
+		EXPANSIONS.disabled.includes(card.getExpansion()) && settings.allowDisabledCards === 'off'
+			? 'disabled'
+			: 'enabled'
 
 	return (
 		<svg

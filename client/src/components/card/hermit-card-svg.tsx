@@ -5,6 +5,7 @@ import {useSelector} from 'react-redux'
 import {getGameState} from 'logic/game/game-selectors'
 import {getCardRank} from 'common/utils/ranks'
 import {EXPANSIONS} from 'common/config'
+import {getSettings} from 'logic/local-settings/local-settings-selectors'
 
 export type HermitCardProps = {
 	card: HermitCard
@@ -21,13 +22,17 @@ const COST_X = [
 const HermitCardModule = ({card}: HermitCardProps) => {
 	const hermitFullName = card.id.split('_')[0]
 
+	const settings = useSelector(getSettings)
 	const rank = getCardRank(card.id)
 	const palette = card.getPalette()
 	const expansion = card.getExpansion()
 	const backgroundName = card.getBackground()
 	const showCost = !useSelector(getGameState)
 	const nameLength = card.name.length
-	const disabled = EXPANSIONS.disabled.includes(card.getExpansion()) ? 'disabled' : 'enabled'
+	const disabled =
+		EXPANSIONS.disabled.includes(card.getExpansion()) && settings.allowDisabledCards === 'off'
+			? 'disabled'
+			: 'enabled'
 
 	return (
 		<svg

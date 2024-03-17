@@ -47,6 +47,7 @@ export function registerApis(app: import('express').Express) {
 					root.privateQueue[code] = {
 						createdTime: Date.now(),
 						playerId: null,
+						customSettings: {},
 					}
 
 					console.log(`Private game created via api.`, `Code: ${code}`)

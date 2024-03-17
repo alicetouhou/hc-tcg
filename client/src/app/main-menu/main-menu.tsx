@@ -1,5 +1,5 @@
 import {useDispatch, useSelector} from 'react-redux'
-import {joinQueue, createPrivateGame, joinPrivateGame} from 'logic/matchmaking/matchmaking-actions'
+import {joinQueue, joinPrivateGame} from 'logic/matchmaking/matchmaking-actions'
 import {logout} from 'logic/session/session-actions'
 import {getSession} from 'logic/session/session-selectors'
 import css from './main-menu.module.scss'
@@ -7,6 +7,8 @@ import TcgLogo from 'components/tcg-logo'
 import Beef from 'components/beef'
 import Button from 'components/button'
 import {VersionLinks} from 'components/link-container'
+import {ToastT} from 'common/types/app'
+import {validateDeck} from 'common/utils/validation'
 
 type Props = {
 	setMenuSection: (section: string) => void
@@ -14,7 +16,22 @@ type Props = {
 function MainMenu({setMenuSection}: Props) {
 	const dispatch = useDispatch()
 	const {playerName, playerDeck} = useSelector(getSession)
-	const handleJoinQueue = () => dispatch(joinQueue())
+
+	const dispatchToast = (toast: ToastT) => dispatch({type: 'SET_TOAST', payload: toast})
+
+	const invalidDeckToast: ToastT = {
+		open: true,
+		title: 'Cannot join queue!',
+		description: `${playerDeck.name} is not a valid deck.`,
+		image: `images/types/type-${playerDeck.icon}.png`,
+	}
+
+	const handleJoinQueue = () => {
+		if (validateDeck(playerDeck.cards.map((card) => card.cardId))) {
+			return dispatchToast(invalidDeckToast)
+		}
+		dispatch(joinQueue())
+	}
 	const handleCreateCustomGame = () => setMenuSection('custom-game')
 	const handleJoinPrivateGame = () => dispatch(joinPrivateGame())
 	const handleLogOut = () => dispatch(logout())

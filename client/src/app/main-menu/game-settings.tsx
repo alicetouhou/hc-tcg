@@ -44,6 +44,9 @@ function GameSettings({setMenuSection}: Props) {
 			localStorage.setItem('minecraftName', username)
 		}
 	}
+	const handleDisabledCardsChange = () => {
+		dispatch(setSetting('allowDisabledCards', settings.allowDisabledCards !== 'off' ? 'off' : 'on'))
+	}
 
 	return (
 		<MenuLayout
@@ -65,6 +68,9 @@ function GameSettings({setMenuSection}: Props) {
 				</Button>
 				<Button variant="stone" onClick={handleProfanityChange}>
 					Profanity Filter: {getDescriptor(settings.profanityFilter)}
+				</Button>
+				<Button variant="stone" onClick={handleDisabledCardsChange}>
+					Allow Disabled Cards in Custom Games: {getDescriptor(settings.allowDisabledCards)}
 				</Button>
 				<div className={css.minecraftNameArea}>
 					<div className={css.upper}>

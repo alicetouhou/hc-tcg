@@ -29,6 +29,7 @@ const defaultState: LocalSettings = {
 	panorama: 'hermit-hill',
 	gameSide: 'Left',
 	minecraftName: 'alex',
+	allowDisabledCards: 'off',
 	...getSettings(),
 }
 

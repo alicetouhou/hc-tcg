@@ -140,12 +140,6 @@ const Deck = ({setMenuSection}: Props) => {
 		description: `${loadedDeck.name} is now your active deck`,
 		image: `images/types/type-${loadedDeck.icon}.png`,
 	}
-	const lastValidDeckToast: ToastT = {
-		open: true,
-		title: 'Deck Selected!',
-		description: `${playerDeck.name} is now your active deck`,
-		image: `images/types/type-${playerDeck.icon}.png`,
-	}
 
 	// MENU LOGIC
 	const backToMenu = () => {
@@ -164,8 +158,13 @@ const Deck = ({setMenuSection}: Props) => {
 	}
 	const handleInvalidDeck = () => {
 		saveDeck(playerDeck)
+		setActiveDeck(loadedDeck.name)
+		dispatch({
+			type: 'UPDATE_DECK',
+			payload: loadedDeck,
+		})
 		setMenuSection('mainmenu')
-		dispatchToast(lastValidDeckToast)
+		dispatchToast(selectedDeckToast)
 	}
 	const handleImportDeck = (deck: PlayerDeckT) => {
 		setImportedDeck(deck)
@@ -298,7 +297,7 @@ const Deck = ({setMenuSection}: Props) => {
 					action={handleInvalidDeck}
 					title="Invalid Deck"
 					description={`The "${loadedDeck.name}" deck is invalid and cannot be used in
-					matches. If you continue, your last valid deck will be used instead.`}
+					public matches. If you continue, you won't be able to join a public match.`}
 					actionText="Main Menu"
 				/>
 				<AlertModal

@@ -1,5 +1,5 @@
 import {useDeferredValue, useRef, useState} from 'react'
-import {useDispatch} from 'react-redux'
+import {useDispatch, useSelector} from 'react-redux'
 import classNames from 'classnames'
 import {sortCards, cardGroupHeader} from './deck'
 import css from './deck.module.scss'
@@ -21,6 +21,7 @@ import {deleteDeck, getSavedDeckNames} from 'logic/saved-decks/saved-decks'
 import {getCardExpansion} from 'common/utils/cards'
 import {getCardRank, getDeckCost} from 'common/utils/ranks'
 import {validateDeck} from 'common/utils/validation'
+import {getSettings} from 'logic/local-settings/local-settings-selectors'
 
 const RANK_NAMES = ['any', ...Object.keys(RANKS.ranks)]
 const DECK_ICONS = [
@@ -35,15 +36,6 @@ const DECK_ICONS = [
 	'redstone',
 	'speedrunner',
 	'terraform',
-]
-
-const EXPANSION_NAMES = [
-	'any',
-	...Object.keys(EXPANSIONS.expansions).filter((expansion) => {
-		return Object.values(CARDS).some(
-			(card) => card.getExpansion() === expansion && !EXPANSIONS.disabled.includes(expansion)
-		)
-	}),
 ]
 
 const iconDropdownOptions = DECK_ICONS.map((option) => ({
@@ -61,11 +53,6 @@ const rarityDropdownOptions = RANK_NAMES.map((option) => ({
 export interface ExpansionMap {
 	[key: string]: string
 }
-const expansionDropdownOptions = EXPANSION_NAMES.map((option) => ({
-	name: (EXPANSIONS.expansions as ExpansionMap)[option] || 'Any',
-	key: option,
-	icon: `/images/expansion-icons/${option}.png`,
-}))
 
 type DeckNameT = {
 	loadedDeck: PlayerDeckT
@@ -116,6 +103,7 @@ type Props = {
 
 function EditDeck({back, title, saveDeck, deck}: Props) {
 	const dispatch = useDispatch()
+	const settings = useSelector(getSettings)
 
 	// STATE
 	const [textQuery, setTextQuery] = useState<string>('')
@@ -151,7 +139,8 @@ function EditDeck({back, title, saveDeck, deck}: Props) {
 			// Card Expansion Filter
 			(expansionQuery === '' || getCardExpansion(card.cardId) === expansionQuery) &&
 			// Don't show disabled cards
-			!EXPANSIONS.disabled.includes(getCardExpansion(card.cardId))
+			(!EXPANSIONS.disabled.includes(getCardExpansion(card.cardId)) ||
+				settings.allowDisabledCards === 'on')
 	)
 	const selectedCards = {
 		hermits: loadedDeck.cards.filter((card) => TYPED_CARDS[card.cardId].type === 'hermit'),
@@ -163,6 +152,24 @@ function EditDeck({back, title, saveDeck, deck}: Props) {
 			(card) => TYPED_CARDS[card.cardId].type === 'single_use'
 		),
 	}
+
+	//EXPANSION DROPDOWN
+	const EXPANSION_NAMES = [
+		'any',
+		...Object.keys(EXPANSIONS.expansions).filter((expansion) => {
+			return Object.values(CARDS).some(
+				(card) =>
+					card.getExpansion() === expansion &&
+					(!EXPANSIONS.disabled.includes(expansion) || settings.allowDisabledCards === 'on')
+			)
+		}),
+	]
+
+	const expansionDropdownOptions = EXPANSION_NAMES.map((option) => ({
+		name: (EXPANSIONS.expansions as ExpansionMap)[option] || 'Any',
+		key: option,
+		icon: `/images/expansion-icons/${option}.png`,
+	}))
 
 	//CARD LOGIC
 	const clearDeck = () => {
