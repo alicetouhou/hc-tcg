@@ -339,3 +339,13 @@ export type GameLog = {
 	startTimestamp: number
 	startDeck: string
 }
+
+export type CustomSettingsT = {
+	disabledExpansions?: Array<string>
+	creativeMode?: boolean
+	useLrf?: boolean
+	maxDuplicates?: number
+	maxDeckCost?: number
+	minCards?: number
+	maxCards?: number
+}

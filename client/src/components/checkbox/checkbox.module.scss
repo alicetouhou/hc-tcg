@@ -13,7 +13,7 @@ button {
 	pointer-events: all;
 }
 .CheckboxRoot:hover {
-	background-color: black;
+	background-color: var(--gray-300);
 }
 .CheckboxRoot:focus {
 	box-shadow: 0 0 0 2px black;

@@ -169,7 +169,12 @@ function* joinQueue(msg: ClientMessage) {
 	}
 
 	// Validate their deck
-	if (validateDeck(player.playerDeck.cards.map((card) => card.cardId))) {
+	if (
+		validateDeck(
+			player.playerDeck.cards.map((card) => card.cardId),
+			{}
+		)
+	) {
 		console.log(
 			'[Join queue] Player attempted to join the queue with an invalid deck:',
 			player.playerName
@@ -206,10 +211,7 @@ function* leaveQueue(msg: ClientMessage) {
 }
 
 function* createPrivateGame(msg: ClientMessage) {
-	const {
-		playerId,
-		payload: {customSettings, disabled},
-	} = msg
+	const {playerId, payload: customSettings} = msg
 	const player = root.players[playerId]
 	if (!player) {
 		console.log('[Create private game] Player not found: ', playerId)

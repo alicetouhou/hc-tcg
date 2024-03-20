@@ -1,25 +1,28 @@
 import {CONFIG, DEBUG_CONFIG, EXPANSIONS} from '../config'
 import {CARDS} from '../cards'
 import {getDeckCost} from './ranks'
+import {CustomSettingsT} from '../types/game-state'
 
-export function validateDeck(
-	deckCards: Array<string>,
-	customDisabled: Array<string> | null = null,
-	useLrf: boolean = false
-) {
+export function validateDeck(deckCards: Array<string>, customSettings: CustomSettingsT) {
 	if (DEBUG_CONFIG.disableDeckValidation) return
+	if (customSettings.creativeMode) return
 
 	const limits = CONFIG.limits
+
+	const disabledExpansions = customSettings.disabledExpansions
+		? customSettings.disabledExpansions
+		: []
+	const useLrf = customSettings.useLrf ? customSettings.useLrf : false
+	const maxDuplicates =
+		customSettings.maxDuplicates !== undefined ? customSettings.maxDuplicates : limits.maxDuplicates
+	const maxDeckCost =
+		customSettings.maxDeckCost !== undefined ? customSettings.maxDeckCost : limits.maxDeckCost
+	const minCards = customSettings.minCards !== undefined ? customSettings.minCards : limits.minCards
+	const maxCards = customSettings.maxCards !== undefined ? customSettings.maxCards : limits.maxCards
+
 	deckCards = deckCards.filter((cardId) => CARDS[cardId])
 
 	// order validation by simplest problem first, so that a player can easily identify why their deck isn't valid
-
-	// Contains disabled cards
-	const disabled = customDisabled ? customDisabled : EXPANSIONS.disabled
-	const hasDisabledCards = deckCards.some((cardId) =>
-		disabled.includes(CARDS[cardId].getExpansion())
-	)
-	if (hasDisabledCards) return 'Deck must not include removed cards.'
 
 	// less than one hermit
 	const hasHermit = deckCards.some((cardId) => CARDS[cardId].type === 'hermit')
@@ -27,20 +30,19 @@ export function validateDeck(
 
 	// more than max duplicates
 	const tooManyDuplicates =
-		limits.maxDuplicates &&
+		maxDuplicates &&
 		deckCards.some((cardId) => {
 			if (CARDS[cardId].type === 'item') return false
 			const duplicates = deckCards.filter((filterCardId) => filterCardId === cardId)
-			return duplicates.length > limits.maxDuplicates
+			return duplicates.length > maxDuplicates
 		})
 
 	if (tooManyDuplicates)
-		return `You cannot have more than ${limits.maxDuplicates} duplicate cards unless they are item cards.`
+		return `You cannot have more than ${maxDuplicates} duplicate cards unless they are item cards.`
 
 	// more than max tokens
 	const deckCost = getDeckCost(deckCards)
-	if (!useLrf && deckCost > limits.maxDeckCost)
-		return `Deck cannot cost more than ${limits.maxDeckCost} tokens.`
+	if (!useLrf && deckCost > maxDeckCost) return `Deck cannot cost more than ${maxDeckCost} tokens.`
 
 	// Low token rarity modes
 	if (useLrf) {
@@ -50,11 +52,18 @@ export function validateDeck(
 			return 'Your deck cannot have more than 12 rare cards.'
 	}
 
-	const exactAmount = limits.minCards === limits.maxCards
-	const exactAmountText = `Deck must have exactly ${limits.minCards} cards.`
+	const exactAmount = minCards === maxCards
+	const exactAmountText = `Deck must have exactly ${minCards} cards.`
 
-	if (deckCards.length < limits.minCards)
-		return exactAmount ? exactAmountText : `Deck must have at least ${limits.minCards} cards.`
-	if (deckCards.length > limits.maxCards)
-		return exactAmount ? exactAmountText : `Deck can not have more than ${limits.maxCards} cards.`
+	if (deckCards.length < minCards)
+		return exactAmount ? exactAmountText : `Deck must have at least ${minCards} cards.`
+	if (deckCards.length > maxCards)
+		return exactAmount ? exactAmountText : `Deck can not have more than ${maxCards} cards.`
+
+	// Contains disabled cards
+	const disabled = disabledExpansions ? disabledExpansions : EXPANSIONS.disabled
+	const hasDisabledCards = deckCards.some((cardId) =>
+		disabled.includes(CARDS[cardId].getExpansion())
+	)
+	if (hasDisabledCards) return 'Deck must not include removed cards.'
 }

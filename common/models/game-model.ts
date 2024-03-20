@@ -6,6 +6,7 @@ import {
 	TurnActions,
 	BattleLogT,
 	PlayerState,
+	CustomSettingsT,
 } from '../types/game-state'
 import {MessageInfoT} from '../types/chat'
 import {getGameState} from '../utils/state-gen'
@@ -24,7 +25,7 @@ export class GameModel {
 	public task: any
 	public state: GameState
 
-	public customSettings: Record<string, any> | null
+	public customSettings: CustomSettingsT
 
 	public endInfo: {
 		deadPlayerIds: Array<string>
@@ -37,7 +38,7 @@ export class GameModel {
 		player1: PlayerModel,
 		player2: PlayerModel,
 		code: string | null = null,
-		customSettings: Record<string, PlayerModel> | null = null
+		customSettings: CustomSettingsT | null = null
 	) {
 		this.internalCreatedTime = Date.now()
 		this.internalId = 'game_' + Math.random().toString()
@@ -61,7 +62,7 @@ export class GameModel {
 
 		this.state = getGameState(this)
 
-		this.customSettings = customSettings
+		this.customSettings = customSettings ? customSettings : {}
 	}
 
 	public get currentPlayerId() {

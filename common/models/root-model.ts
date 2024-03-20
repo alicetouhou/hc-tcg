@@ -2,6 +2,7 @@ import {plugins} from '../../server/src/plugins'
 import {PlayerModel} from './player-model'
 import {GameModel} from './game-model'
 import {Hook} from '../../common/types/hooks'
+import {CustomSettingsT} from '../types/game-state'
 
 export class RootModel {
 	public players: Record<string, PlayerModel> = {}
@@ -10,7 +11,7 @@ export class RootModel {
 	/** Game code ->  time code was created, and info */
 	public privateQueue: Record<
 		string,
-		{createdTime: number; playerId: string | null; customSettings: Record<string, any> | null}
+		{createdTime: number; playerId: string | null; customSettings: CustomSettingsT}
 	> = {}
 	public hooks = {
 		newGame: new Hook<(game: GameModel) => void>(),

@@ -1,10 +1,11 @@
 import {AnyAction} from 'redux'
 import {MatchmakingStatus} from './matchmaking-types'
+import {CustomSettingsT} from 'common/types/game-state'
 
 type MatchmakingState = {
 	status: MatchmakingStatus
 	code: string | null
-	customSettings: Record<string, any>
+	customSettings: CustomSettingsT
 	invalidCode: boolean
 }
 

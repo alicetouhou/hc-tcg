@@ -247,7 +247,10 @@ function EditDeck({back, title, saveDeck, deck}: Props) {
 		})
 		back()
 	}
-	const validationMessage = validateDeck(loadedDeck.cards.map((card) => card.cardId))
+	const validationMessage = validateDeck(
+		loadedDeck.cards.map((card) => card.cardId),
+		{}
+	)
 
 	return (
 		<>

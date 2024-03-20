@@ -64,7 +64,7 @@ function MatchMaking() {
 		const deckCards = deck.cards?.filter((card: CardT) => CARDS[card.cardId])
 		const validation = validateDeck(
 			deckCards.map((card) => card.cardId),
-			customSettings.disabled ? customSettings.disabled : EXPANSIONS.disabled
+			customSettings
 		)
 		return (
 			<Tooltip
@@ -114,7 +114,7 @@ function MatchMaking() {
 		if (
 			validateDeck(
 				playerDeck.cards.map((card) => card.cardId),
-				customSettings.disabled ? customSettings.disabled : EXPANSIONS.disabled
+				customSettings
 			)
 		) {
 			return dispatchToast(invalidDeckToast)
@@ -184,9 +184,13 @@ function MatchMaking() {
 							<h4>Custom game rules</h4>
 							<div>
 								Enabled expansions:{' '}
-								{customSettings.disabled &&
+								{customSettings.disabledExpansions &&
 									Object.keys(EXPANSIONS.expansions)
-										.filter((e) => !customSettings.disabled.includes(e))
+										.filter(
+											(e) =>
+												customSettings.disabledExpansions &&
+												!customSettings.disabledExpansions.includes(e)
+										)
 										.map((expansion) => (EXPANSIONS.expansions as ExpansionMap)[expansion])
 										.join(', ')}
 							</div>

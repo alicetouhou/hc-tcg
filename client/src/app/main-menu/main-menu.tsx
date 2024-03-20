@@ -27,7 +27,12 @@ function MainMenu({setMenuSection}: Props) {
 	}
 
 	const handleJoinQueue = () => {
-		if (validateDeck(playerDeck.cards.map((card) => card.cardId))) {
+		if (
+			validateDeck(
+				playerDeck.cards.map((card) => card.cardId),
+				{}
+			)
+		) {
 			return dispatchToast(invalidDeckToast)
 		}
 		dispatch(joinQueue())

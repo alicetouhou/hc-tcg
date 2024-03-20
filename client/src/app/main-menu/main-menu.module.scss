@@ -147,6 +147,19 @@ nav {
 	}
 }
 
+.deckBuildingSetting {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 1vh 0;
+	color: var(--text-light);
+
+	> span {
+		font-size: 2vh;
+		user-select: text;
+	}
+}
+
 .customInput {
 	position: relative;
 	height: 5.5vh;
@@ -183,6 +196,10 @@ nav {
 			filter: drop-shadow(1px 1px 1px black);
 		}
 	}
+}
+
+.settingsInput {
+	font-family: 'Minecraft';
 }
 
 .minecraftNameArea {
