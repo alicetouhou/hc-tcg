@@ -3,7 +3,12 @@ import {CARDS} from '../cards'
 import {getDeckCost} from './ranks'
 import {CustomSettingsT} from '../types/game-state'
 
-export function validateDeck(deckCards: Array<string>, customSettings: CustomSettingsT) {
+export function validateDeck(
+	deckCards: Array<string>,
+	customSettings: CustomSettingsT | null = null
+) {
+	if (!customSettings) customSettings = {}
+
 	if (DEBUG_CONFIG.disableDeckValidation) return
 	if (customSettings.creativeMode) return
 

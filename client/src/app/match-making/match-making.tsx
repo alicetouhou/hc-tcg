@@ -122,6 +122,44 @@ function MatchMaking() {
 		dispatch(startPrivateGame(code))
 	}
 
+	function getCustomSettingsText() {
+		if (customSettings.creativeMode) {
+			return (
+				<div>
+					<div>Creative Mode Enabled</div>
+				</div>
+			)
+		}
+		return (
+			<div>
+				{customSettings.disabledExpansions && (
+					<div>
+						Enabled expansions:
+						{Object.keys(EXPANSIONS.expansions)
+							.filter(
+								(e) =>
+									customSettings.disabledExpansions &&
+									!customSettings.disabledExpansions.includes(e)
+							)
+							.map((expansion) => (EXPANSIONS.expansions as ExpansionMap)[expansion])
+							.join(', ')}
+					</div>
+				)}
+				{customSettings.maxCards !== undefined && <div>Max Cards: {customSettings.maxCards}</div>}
+				{customSettings.minCards !== undefined && (
+					<div>Minimum Cards: {customSettings.minCards}</div>
+				)}
+				{customSettings.maxDuplicates !== undefined && (
+					<div>Max Duplicates: {customSettings.maxDuplicates}</div>
+				)}
+				{!customSettings.useLrf && customSettings.maxDeckCost && (
+					<div>Max Deck Cost: {customSettings.maxDeckCost}</div>
+				)}
+				{customSettings.useLrf && <div>Low Rarity Mode Enabled</div>}
+			</div>
+		)
+	}
+
 	const Status = () => {
 		switch (status) {
 			default:
@@ -182,18 +220,7 @@ function MatchMaking() {
 					<div className={css.confirmationGrid}>
 						<div className={css.confirmationGridSection}>
 							<h4>Custom game rules</h4>
-							<div>
-								Enabled expansions:{' '}
-								{customSettings.disabledExpansions &&
-									Object.keys(EXPANSIONS.expansions)
-										.filter(
-											(e) =>
-												customSettings.disabledExpansions &&
-												!customSettings.disabledExpansions.includes(e)
-										)
-										.map((expansion) => (EXPANSIONS.expansions as ExpansionMap)[expansion])
-										.join(', ')}
-							</div>
+							<div>{getCustomSettingsText()}</div>
 						</div>
 						<div className={css.confirmationGridSection}>{deckList}</div>
 						<Button
