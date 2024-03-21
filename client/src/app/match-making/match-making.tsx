@@ -134,7 +134,7 @@ function MatchMaking() {
 			<div>
 				{customSettings.disabledExpansions && (
 					<div>
-						Enabled expansions:
+						Enabled expansions:{' '}
 						{Object.keys(EXPANSIONS.expansions)
 							.filter(
 								(e) =>
