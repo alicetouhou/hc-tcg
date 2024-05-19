@@ -34,8 +34,10 @@ class DreamRareHermitCard extends HermitCard {
 		player.hooks.onAttack.add(instance, (attack) => {
 			const attackId = this.getInstanceKey(instance)
 			if (attack.id !== attackId || attack.type !== 'secondary') return
+			const attacker = attack.getAttacker()
+			if (!attacker) return
 
-			const coinFlip = flipCoin(player, this.id)
+			const coinFlip = flipCoin(player, attacker.row.hermitCard)
 
 			if (coinFlip[0] === 'tails') return
 
