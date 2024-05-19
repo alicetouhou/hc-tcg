@@ -99,28 +99,6 @@ function MainMenu({setMenuSection}: Props) {
 					<Beef />
 					<VersionLinks />
 				</div>
-				<nav>
-					<Button variant="stone" id={css.public} onClick={handleJoinQueue}>
-						Public Game
-					</Button>
-					<Button variant="stone" id={css.privateCreate} onClick={handleCreateCustomGame}>
-						Create Custom Game
-					</Button>
-					<Button variant="stone" id={css.privateJoin} onClick={handleJoinPrivateGame}>
-						Join Private Game
-					</Button>
-					<Button variant="stone" id={css.deck} onClick={handleDeck}>
-						Customize Deck
-					</Button>
-					<Button variant="stone" id={css.settings} onClick={handleSettings}>
-						More
-					</Button>
-					<Button variant="stone" id={css.logout} onClick={handleLogOut}>
-						Log Out
-					</Button>
-				</nav>
-				<Beef />
-				<VersionLinks />
 			</div>
 		</>
 	)
