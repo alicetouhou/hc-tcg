@@ -21,7 +21,8 @@ class WelsknightRareHermitCard extends HermitCard {
 				name: 'Vengeance',
 				cost: ['pvp', 'pvp', 'pvp'],
 				damage: 100,
-				power: 'Add 20hp damage if your HP is orange. Add 40hp damage if your HP is red.',
+				power:
+					"If this Hermit's HP is orange (190-100), do an additional 20hp damage.\n\nIf this Hermit's HP is red (90 or lower), do an additional 40hp damage.",
 			},
 		})
 	}
@@ -32,11 +33,11 @@ class WelsknightRareHermitCard extends HermitCard {
 		player.hooks.onAttack.add(instance, (attack) => {
 			const attackId = this.getInstanceKey(instance)
 			if (attack.id !== attackId || attack.type !== 'secondary') return
+			const attacker = attack.getAttacker()
+			if (!attacker) return
 
-			if (!attack.attacker) return
-
-			if (attack.attacker.row.health < 200) attack.addDamage(this.id, 20)
-			if (attack.attacker.row.health < 100) attack.addDamage(this.id, 20)
+			if (attacker.row.health < 200) attack.addDamage(this.id, 20)
+			if (attacker.row.health < 100) attack.addDamage(this.id, 20)
 		})
 	}
 

@@ -15,7 +15,7 @@ class PotatoBoyRareHermitCard extends HermitCard {
 				name: 'Peace & Love',
 				cost: ['farm'],
 				damage: 0,
-				power: 'Heals Hermit directly above and below for 40hp.',
+				power: 'Heal all Hermits that are adjacent to your active Hermit 40hp.',
 			},
 			secondary: {
 				name: 'Volcarbo',
@@ -43,7 +43,8 @@ class PotatoBoyRareHermitCard extends HermitCard {
 				if (!row.hermitCard) return
 				const hermitInfo = HERMIT_CARDS[row.hermitCard.cardId]
 				if (hermitInfo) {
-					row.health = Math.min(row.health + 40, hermitInfo.health)
+					const maxHealth = Math.max(row.health, hermitInfo.health)
+					row.health = Math.min(row.health + 40, maxHealth)
 				}
 			})
 		})

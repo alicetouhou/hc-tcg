@@ -25,7 +25,7 @@ class TinFoilChefUltraRareHermitCard extends HermitCard {
 				cost: ['miner', 'miner', 'miner'],
 				damage: 100,
 				power:
-					'Flip a Coin.\n\nIf heads, opponent is forced to discard effect card attached to active Hermit.\n\nOnly one effect card per opposing Hermit can be discarded.',
+					'Flip a coin.\n\nIf heads, your opponent must discard any effect card attached to their active Hermit.\n\nOnly one effect card per Hermit can be discarded using this ability.',
 			},
 		})
 	}
@@ -35,7 +35,8 @@ class TinFoilChefUltraRareHermitCard extends HermitCard {
 
 		player.hooks.beforeAttack.add(instance, (attack) => {
 			const attackId = this.getInstanceKey(instance)
-			if (attack.id !== attackId || attack.type !== 'secondary') return
+			const attacker = attack.getAttacker()
+			if (attack.id !== attackId || attack.type !== 'secondary' || !attacker) return
 
 			if (opponentPlayer.board.activeRow === null) return 'NO'
 			const opponentActiveRow = opponentPlayer.board.rows[opponentPlayer.board.activeRow]
@@ -45,7 +46,7 @@ class TinFoilChefUltraRareHermitCard extends HermitCard {
 			const limit = player.custom[this.getInstanceKey(instance)] || {}
 			if (limit[opponentActiveRow.hermitCard.cardInstance]) return
 
-			const coinFlip = flipCoin(player, this.id)
+			const coinFlip = flipCoin(player, attacker.row.hermitCard)
 			if (coinFlip[0] === 'tails') return
 
 			limit[opponentActiveRow.hermitCard.cardInstance] = true

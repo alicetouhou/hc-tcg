@@ -3,7 +3,6 @@ import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import {HermitAttackType} from '../../../types/attack'
 import {PickRequest} from '../../../types/server-requests'
-import {createWeaknessAttack} from '../../../utils/attacks'
 import {getActiveRow, getNonEmptyRows} from '../../../utils/board'
 import {discardCard} from '../../../utils/movement'
 import HermitCard from '../../base/hermit-card'
@@ -33,7 +32,7 @@ class HypnotizdRareHermitCard extends HermitCard {
 				cost: ['miner', 'any'],
 				damage: 70,
 				power:
-					"You can choose to attack an opponent's AFK Hermit.\n\nIf AFK Hermit is attacked, you must discard 1 attached item card.",
+					"You can choose to attack one of your opponent's AFK Hermits. If you do this, you must discard 1 item card attached to your active Hermit.",
 			},
 		})
 	}
@@ -60,16 +59,13 @@ class HypnotizdRareHermitCard extends HermitCard {
 		if (!targetRow.hermitCard) return attacks
 
 		// Change attack target
-		hermitAttack.target = {
+		hermitAttack.setTarget(this.id, {
 			player: opponentPlayer,
 			rowIndex: targetIndex,
 			row: targetRow,
-		}
+		})
 
 		const newAttacks = [hermitAttack]
-
-		const weaknessAttack = createWeaknessAttack(hermitAttack)
-		if (weaknessAttack) newAttacks.push(weaknessAttack)
 
 		// Delete the target info now
 		delete player.custom[targetKey]
@@ -92,7 +88,7 @@ class HypnotizdRareHermitCard extends HermitCard {
 				id: this.id,
 				message: 'Choose an item to discard from your active Hermit.',
 				onResult(pickResult) {
-					if (pickResult.playerId !== player.id) return 'FAILURE_WRONG_PLAYER'
+					if (pickResult.playerId !== player.id) return 'FAILURE_INVALID_PLAYER'
 
 					const rowIndex = pickResult.rowIndex
 					if (rowIndex === undefined) return 'FAILURE_INVALID_SLOT'
@@ -123,7 +119,7 @@ class HypnotizdRareHermitCard extends HermitCard {
 				id: this.id,
 				message: "Pick one of your opponent's Hermits",
 				onResult(pickResult) {
-					if (pickResult.playerId !== opponentPlayer.id) return 'FAILURE_WRONG_PLAYER'
+					if (pickResult.playerId !== opponentPlayer.id) return 'FAILURE_INVALID_PLAYER'
 
 					const rowIndex = pickResult.rowIndex
 					if (rowIndex === undefined) return 'FAILURE_INVALID_SLOT'

@@ -1,3 +1,4 @@
+import {CARDS} from '../..'
 import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
@@ -11,21 +12,19 @@ class BowSingleUseCard extends SingleUseCard {
 			numericId: 3,
 			name: 'Bow',
 			rarity: 'common',
-			description: 'Do 40hp damage to an AFK Hermit of your choice.',
+			description: "Do 40hp damage to one of your opponent's AFK Hermits.",
 		})
 	}
 
 	override canAttach(game: GameModel, pos: CardPosModel) {
-		const canAttach = super.canAttach(game, pos)
-		if (canAttach !== 'YES') return canAttach
-
+		const result = super.canAttach(game, pos)
 		const {opponentPlayer} = pos
 
 		// Check if there is an AFK Hermit
 		const inactiveRows = getNonEmptyRows(opponentPlayer, true)
-		if (inactiveRows.length === 0) return 'NO'
+		if (inactiveRows.length === 0) result.push('UNMET_CONDITION')
 
-		return 'YES'
+		return result
 	}
 
 	override onAttach(game: GameModel, instance: string, pos: CardPosModel) {
@@ -38,7 +37,7 @@ class BowSingleUseCard extends SingleUseCard {
 				id: this.id,
 				message: "Pick one of your opponent's AFK Hermits",
 				onResult(pickResult) {
-					if (pickResult.playerId !== opponentPlayer.id) return 'FAILURE_WRONG_PLAYER'
+					if (pickResult.playerId !== opponentPlayer.id) return 'FAILURE_INVALID_PLAYER'
 
 					const rowIndex = pickResult.rowIndex
 					if (rowIndex === undefined) return 'FAILURE_INVALID_SLOT'
@@ -85,7 +84,12 @@ class BowSingleUseCard extends SingleUseCard {
 			const attackId = this.getInstanceKey(instance)
 			if (attack.id !== attackId) return
 
-			applySingleUse(game)
+			const targetHermitId = opponentPlayer.board.rows[player.custom[targetKey]].hermitCard?.cardId
+
+			applySingleUse(game, [
+				[`to attack `, 'plain'],
+				[`${targetHermitId ? CARDS[targetHermitId].name : ''} `, 'opponent'],
+			])
 		})
 	}
 

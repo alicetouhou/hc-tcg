@@ -11,7 +11,7 @@ class InvisibilityPotionSingleUseCard extends SingleUseCard {
 			name: 'Invisibility Potion',
 			rarity: 'rare',
 			description:
-				"Flip a coin.\n\nIf heads, your opponent's next attack misses.\n\nIf tails, it does double the damage.",
+				"Flip a coin.\n\nIf heads, your opponent's next attack misses. If tails, their attack damage doubles.",
 		})
 	}
 
@@ -24,11 +24,11 @@ class InvisibilityPotionSingleUseCard extends SingleUseCard {
 		const usedKey = this.getInstanceKey(instance, 'used')
 
 		player.hooks.onApply.add(instance, () => {
-			const coinFlip = flipCoin(player, this.id)
+			const coinFlip = flipCoin(player, {cardId: this.id, cardInstance: instance})
 			const multiplier = coinFlip[0] === 'heads' ? 0 : 2
 
 			opponentPlayer.hooks.beforeAttack.add(instance, (attack) => {
-				if (attack.isType('weakness', 'effect', 'status-effect') || attack.isBacklash) return
+				if (attack.isType('weakness', 'effect', 'status-effect')) return
 
 				player.custom[usedKey] = true
 				attack.multiplyDamage(this.id, multiplier)
@@ -47,6 +47,15 @@ class InvisibilityPotionSingleUseCard extends SingleUseCard {
 	override onDetach(game: GameModel, instance: string, pos: CardPosModel) {
 		const {player} = pos
 		player.hooks.onApply.remove(instance)
+	}
+
+	override sidebarDescriptions() {
+		return [
+			{
+				type: 'glossary',
+				name: 'missed',
+			},
+		]
 	}
 }
 

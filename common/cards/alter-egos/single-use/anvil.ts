@@ -2,6 +2,7 @@ import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import {applySingleUse, getActiveRowPos} from '../../../utils/board'
+import {hasActive} from '../../../utils/game'
 import SingleUseCard from '../../base/single-use-card'
 
 class AnvilSingleUseCard extends SingleUseCard {
@@ -12,12 +13,13 @@ class AnvilSingleUseCard extends SingleUseCard {
 			name: 'Anvil',
 			rarity: 'rare',
 			description:
-				"Do 30hp damage to your opponent's Hermit directly opposite your active Hermit on the board and 10hp damage to each of their Hermits below it.",
+				'Do 30hp damage to the Hermit card directly opposite your active Hermit on the game board and 10hp damage to each Hermit below it.',
 		})
 	}
 
 	override onAttach(game: GameModel, instance: string, pos: CardPosModel) {
 		const {player, opponentPlayer} = pos
+		const targetsKey = this.getInstanceKey(instance, 'targets')
 
 		player.hooks.getAttacks.add(instance, () => {
 			const activePos = getActiveRowPos(player)
@@ -44,6 +46,8 @@ class AnvilSingleUseCard extends SingleUseCard {
 				attacks.push(attack)
 			}
 
+			player.custom[targetsKey] = attacks.length
+
 			return attacks
 		})
 
@@ -52,7 +56,12 @@ class AnvilSingleUseCard extends SingleUseCard {
 			const inactiveAttackId = this.getInstanceKey(instance, 'active')
 			if (attack.id !== attackId && attackId !== inactiveAttackId) return
 
-			applySingleUse(game)
+			applySingleUse(game, [
+				[`to attack `, 'plain'],
+				[`${player.custom[targetsKey]} hermits `, 'opponent'],
+			])
+
+			delete player.custom[targetsKey]
 
 			player.hooks.onAttack.remove(instance)
 		})
@@ -62,17 +71,18 @@ class AnvilSingleUseCard extends SingleUseCard {
 		const {player} = pos
 		player.hooks.getAttacks.remove(instance)
 		player.hooks.onAttack.remove(instance)
+
+		const targetsKey = this.getInstanceKey(instance, 'targets')
+		delete player.custom[targetsKey]
 	}
 
 	override canAttach(game: GameModel, pos: CardPosModel) {
-		const canAttach = super.canAttach(game, pos)
-		if (canAttach !== 'YES') return canAttach
+		const result = super.canAttach(game, pos)
 
 		const {player} = pos
-		const activeRow = player.board.activeRow
-		if (activeRow === null) return 'NO'
+		if (!hasActive(player)) result.push('UNMET_CONDITION')
 
-		return 'YES'
+		return result
 	}
 
 	override getExpansion() {

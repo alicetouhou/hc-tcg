@@ -1,6 +1,6 @@
-import {CardPosModel} from '../../../models/card-pos-model'
+import {CARDS} from '../..'
+import {CardPosModel, getCardPos} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
-import {createWeaknessAttack} from '../../../utils/attacks'
 import {applySingleUse, getNonEmptyRows} from '../../../utils/board'
 import SingleUseCard from '../../base/single-use-card'
 
@@ -17,14 +17,13 @@ class TargetBlockSingleUseCard extends SingleUseCard {
 	}
 
 	override canAttach(game: GameModel, pos: CardPosModel) {
-		const canAttach = super.canAttach(game, pos)
-		if (canAttach !== 'YES') return canAttach
+		const result = super.canAttach(game, pos)
 		const {opponentPlayer} = pos
 
 		// Inactive Hermits
-		if (getNonEmptyRows(opponentPlayer, true).length === 0) return 'NO'
+		if (getNonEmptyRows(opponentPlayer, true).length === 0) result.push('UNMET_CONDITION')
 
-		return 'YES'
+		return result
 	}
 
 	override onAttach(game: GameModel, instance: string, pos: CardPosModel) {
@@ -36,7 +35,7 @@ class TargetBlockSingleUseCard extends SingleUseCard {
 			id: this.id,
 			message: "Pick one of your opponent's AFK Hermits",
 			onResult(pickResult) {
-				if (pickResult.playerId !== opponentPlayer.id) return 'FAILURE_WRONG_PLAYER'
+				if (pickResult.playerId !== opponentPlayer.id) return 'FAILURE_INVALID_PLAYER'
 
 				const rowIndex = pickResult.rowIndex
 				if (rowIndex === undefined) return 'FAILURE_INVALID_SLOT'
@@ -49,30 +48,20 @@ class TargetBlockSingleUseCard extends SingleUseCard {
 				if (!row.hermitCard) return 'FAILURE_INVALID_SLOT'
 
 				// Apply the card
-				applySingleUse(game)
+				applySingleUse(game, [
+					[`to target `, 'plain'],
+					[`${CARDS[row.hermitCard.cardId].name} `, 'opponent'],
+				])
 
 				// Redirect all future attacks this turn
 				player.hooks.beforeAttack.add(instance, (attack) => {
 					if (attack.isType('status-effect') || attack.isBacklash) return
 
-					attack.target = {
+					attack.setTarget(this.id, {
 						player: opponentPlayer,
 						rowIndex,
 						row,
-					}
-
-					if (attack.isType('primary', 'secondary')) {
-						const weaknessAttack = createWeaknessAttack(attack)
-						if (weaknessAttack) {
-							attack.addNewAttack(weaknessAttack)
-							player.custom[ignoreThisWeakness] = true
-						}
-					} else if (attack.type === 'weakness') {
-						if (!player.custom[ignoreThisWeakness]) {
-							attack.target = null
-						}
-						delete player.custom[ignoreThisWeakness]
-					}
+					})
 				})
 
 				return 'SUCCESS'
@@ -82,6 +71,7 @@ class TargetBlockSingleUseCard extends SingleUseCard {
 		player.hooks.onTurnEnd.add(instance, () => {
 			player.hooks.beforeAttack.remove(instance)
 			player.hooks.onTurnEnd.remove(instance)
+			opponentPlayer.hooks.onDefence.remove(instance)
 			delete player.custom[ignoreThisWeakness]
 		})
 	}

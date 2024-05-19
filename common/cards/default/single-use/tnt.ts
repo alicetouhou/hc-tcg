@@ -1,3 +1,4 @@
+import {CARDS} from '../..'
 import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
@@ -11,7 +12,8 @@ class TNTSingleUseCard extends SingleUseCard {
 			numericId: 100,
 			name: 'TNT',
 			rarity: 'common',
-			description: 'Do an additional 60hp damage. You also take 20hp damage.',
+			description:
+				"Do 60hp damage to your opponent's active Hermit. Your active Hermit also takes 20hp damage.",
 		})
 	}
 
@@ -49,7 +51,11 @@ class TNTSingleUseCard extends SingleUseCard {
 			if (attack.id !== backlashId) return
 
 			// We've executed our final attack, apply effect
-			applySingleUse(game)
+			const opponentActiveHermitId = getActiveRowPos(opponentPlayer)?.row.hermitCard.cardId
+			applySingleUse(game, [
+				[`to attack `, 'plain'],
+				[`${opponentActiveHermitId ? CARDS[opponentActiveHermitId].name : ''} `, 'opponent'],
+			])
 		})
 	}
 

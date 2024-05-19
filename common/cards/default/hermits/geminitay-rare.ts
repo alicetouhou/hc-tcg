@@ -23,7 +23,7 @@ class GeminiTayRareHermitCard extends HermitCard {
 				name: 'Geminislay',
 				cost: ['terraform', 'terraform'],
 				damage: 80,
-				power: 'You may play an additional single use effect card at the end of your turn.',
+				power: 'At the end of your turn, you may use an additional single use effect card.',
 			},
 		})
 	}
@@ -31,8 +31,6 @@ class GeminiTayRareHermitCard extends HermitCard {
 	override onAttach(game: GameModel, instance: string, pos: CardPosModel) {
 		const {player} = pos
 
-		// @TODO egg confusion, and how can we get rid of follow up
-		// is that even in the scope of this refactor?
 		player.hooks.afterAttack.add(instance, (attack) => {
 			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary') return
 
@@ -44,7 +42,7 @@ class GeminiTayRareHermitCard extends HermitCard {
 			// We are hooking into afterAttack, so we just remove the blocks on actions
 			// The beauty of this is that there is no need to replicate any of the existing logic anymore
 			game.removeCompletedActions('SINGLE_USE_ATTACK', 'PLAY_SINGLE_USE_CARD')
-			game.removeBlockedActions(null, 'PLAY_SINGLE_USE_CARD')
+			game.removeBlockedActions('game', 'PLAY_SINGLE_USE_CARD')
 		})
 	}
 

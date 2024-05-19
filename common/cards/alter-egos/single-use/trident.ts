@@ -1,3 +1,4 @@
+import {CARDS} from '../..'
 import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
@@ -14,7 +15,7 @@ class TridentSingleUseCard extends SingleUseCard {
 			name: 'Trident',
 			rarity: 'rare',
 			description:
-				'Add 30hp damage at the end of your attack.\n\nFlip a coin.\n\nIf heads, this card is returned to your hand.',
+				"Do 30hp damage to your opponent's active Hermit.\n\nFlip a coin.\n\nIf heads, this card is returned to your hand.",
 		})
 	}
 
@@ -41,9 +42,16 @@ class TridentSingleUseCard extends SingleUseCard {
 			const attackId = this.getInstanceKey(instance)
 			if (attack.id !== attackId) return
 
-			player.custom[this.getInstanceKey(instance)] = flipCoin(player, this.id)[0]
+			player.custom[this.getInstanceKey(instance)] = flipCoin(player, {
+				cardId: this.id,
+				cardInstance: instance,
+			})[0]
 
-			applySingleUse(game)
+			const opponentActiveHermitId = getActiveRowPos(opponentPlayer)?.row.hermitCard.cardId
+			applySingleUse(game, [
+				[`to attack `, 'plain'],
+				[`${opponentActiveHermitId ? CARDS[opponentActiveHermitId].name : ''} `, 'opponent'],
+			])
 		})
 
 		player.hooks.onApply.add(instance, () => {

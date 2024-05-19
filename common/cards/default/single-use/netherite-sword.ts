@@ -1,3 +1,4 @@
+import {CARDS} from '../..'
 import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
@@ -11,7 +12,7 @@ class NetheriteSwordSingleUseCard extends SingleUseCard {
 			numericId: 83,
 			name: 'Netherite Sword',
 			rarity: 'ultra_rare',
-			description: 'Do an additional 60hp damage.',
+			description: "Do 60hp damage to your opponent's active Hermit.",
 		})
 	}
 
@@ -39,7 +40,11 @@ class NetheriteSwordSingleUseCard extends SingleUseCard {
 			if (attack.id !== attackId) return
 
 			// We've executed our attack, apply effect
-			applySingleUse(game)
+			const opponentActiveHermitId = getActiveRowPos(opponentPlayer)?.row.hermitCard.cardId
+			applySingleUse(game, [
+				[`to attack `, 'plain'],
+				[`${opponentActiveHermitId ? CARDS[opponentActiveHermitId].name : ''} `, 'opponent'],
+			])
 		})
 	}
 

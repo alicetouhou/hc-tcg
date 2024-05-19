@@ -2,7 +2,7 @@ import {HERMIT_CARDS} from '../..'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import HermitCard from '../../base/hermit-card'
-import {applyStatusEffect, removeStatusEffect} from '../../../utils/board'
+import {applyStatusEffect, getActiveRow, removeStatusEffect} from '../../../utils/board'
 
 class BdoubleO100RareHermitCard extends HermitCard {
 	constructor() {
@@ -24,20 +24,23 @@ class BdoubleO100RareHermitCard extends HermitCard {
 				cost: ['balanced', 'balanced', 'any'],
 				damage: 0,
 				power:
-					'Sleep for the following 2 turns. Restore Full Health. Can not attack. Can not go AFK.\n\nCan still draw and attach cards while sleeping.',
+					'This Hermit restores all HP, then sleeps for the rest of this turn, and the following two turns, before waking up.',
 			},
 		})
 	}
 
 	override onAttach(game: GameModel, instance: string, pos: CardPosModel) {
-		const {player, row} = pos
+		const {player} = pos
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			const attacker = attack.attacker
+			const attacker = attack.getAttacker()
 			if (!attacker) return
 			const attackId = this.getInstanceKey(instance)
 			if (attack.id !== attackId || attack.type !== 'secondary') return
-			if (!row || !row.hermitCard) return
+
+			const row = getActiveRow(player)
+
+			if (!row) return
 
 			// Add new sleeping statusEffect
 			applyStatusEffect(game, 'sleeping', row.hermitCard.cardInstance)
@@ -48,6 +51,15 @@ class BdoubleO100RareHermitCard extends HermitCard {
 		const {player} = pos
 		// Remove hooks
 		player.hooks.onAttack.remove(instance)
+	}
+
+	override sidebarDescriptions() {
+		return [
+			{
+				type: 'statusEffect',
+				name: 'sleeping',
+			},
+		]
 	}
 }
 

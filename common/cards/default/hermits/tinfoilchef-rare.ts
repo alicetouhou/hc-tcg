@@ -22,7 +22,7 @@ class TinFoilChefRareHermitCard extends HermitCard {
 				name: 'Branch Mine',
 				cost: ['miner', 'miner'],
 				damage: 80,
-				power: 'Flip a Coin.\n\nIf heads, player draws another card at the end of their turn.',
+				power: 'Flip a coin.\n\nIf heads, you draw an extra card at the end of your turn.',
 			},
 		})
 	}
@@ -32,9 +32,10 @@ class TinFoilChefRareHermitCard extends HermitCard {
 
 		player.hooks.onAttack.add(instance, (attack) => {
 			const attackId = this.getInstanceKey(instance)
-			if (attack.id !== attackId || attack.type !== 'secondary') return
+			const attacker = attack.getAttacker()
+			if (attack.id !== attackId || attack.type !== 'secondary' || !attacker) return
 
-			const coinFlip = flipCoin(player, this.id)
+			const coinFlip = flipCoin(player, attacker.row.hermitCard)
 			if (coinFlip[0] === 'tails') return
 
 			const drawCard = player.pile.shift()

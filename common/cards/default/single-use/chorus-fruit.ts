@@ -10,7 +10,7 @@ class ChorusFruitSingleUseCard extends SingleUseCard {
 			numericId: 5,
 			name: 'Chorus Fruit',
 			rarity: 'common',
-			description: 'Swap your active Hermit with one of your AFK Hermits after attacking.',
+			description: 'After your attack, choose an AFK Hermit to set as your active Hermit.',
 		})
 	}
 
@@ -19,18 +19,22 @@ class ChorusFruitSingleUseCard extends SingleUseCard {
 
 		player.hooks.afterAttack.add(instance, (attack) => {
 			// Remove change active hermit from the blocked actions so it can be done once more
-			game.removeBlockedActions(null, 'CHANGE_ACTIVE_HERMIT')
+			game.removeBlockedActions('game', 'CHANGE_ACTIVE_HERMIT')
 
 			// Apply the card
-			applySingleUse(game)
+			applySingleUse(game, [
+				[`with `, 'plain'],
+				[`your `, 'plain', 'player'],
+				[`their `, 'plain', 'opponent'],
+				[`attack `, 'plain'],
+			])
 
 			player.hooks.afterAttack.remove(instance)
 		})
 	}
 
 	override canAttach(game: GameModel, pos: CardPosModel) {
-		const canAttach = super.canAttach(game, pos)
-		if (canAttach !== 'YES') return canAttach
+		const result = super.canAttach(game, pos)
 
 		const {player} = pos
 		const activeRow = getActiveRow(player)
@@ -39,9 +43,9 @@ class ChorusFruitSingleUseCard extends SingleUseCard {
 			(a) =>
 				a.targetInstance == activeRow?.hermitCard?.cardInstance && a.statusEffectId == 'sleeping'
 		)
-		if (isSleeping) return 'NO'
+		if (isSleeping) result.push('UNMET_CONDITION')
 
-		return 'YES'
+		return result
 	}
 
 	override onDetach(game: GameModel, instance: string, pos: CardPosModel) {

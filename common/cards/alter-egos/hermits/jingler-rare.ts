@@ -23,7 +23,8 @@ class JinglerRareHermitCard extends HermitCard {
 				name: 'Deception',
 				cost: ['speedrunner', 'speedrunner', 'any'],
 				damage: 80,
-				power: 'Flip a coin. If heads, opponent must discard a card from their hand.',
+				power:
+					'Flip a coin.\n\nIf heads, your opponent must choose a card to discard from their hand.',
 			},
 		})
 	}
@@ -34,8 +35,9 @@ class JinglerRareHermitCard extends HermitCard {
 
 		player.hooks.afterAttack.add(instance, (attack) => {
 			if (attack.id !== this.getInstanceKey(instance)) return
-			if (attack.type !== 'secondary' || !attack.target) return
-			const coinFlip = flipCoin(player, this.id)
+			const attacker = attack.getAttacker()
+			if (attack.type !== 'secondary' || !attack.getTarget() || !attacker) return
+			const coinFlip = flipCoin(player, attacker.row.hermitCard)
 			if (coinFlip[0] === 'tails') return
 
 			// Add a new pick request for the opponent player
@@ -45,7 +47,7 @@ class JinglerRareHermitCard extends HermitCard {
 				message: 'Pick 1 card from your hand to discard',
 				onResult(pickResult) {
 					// Validation
-					if (pickResult.playerId !== opponentPlayer.id) return 'FAILURE_WRONG_PLAYER'
+					if (pickResult.playerId !== opponentPlayer.id) return 'FAILURE_INVALID_PLAYER'
 					if (pickResult.slot.type !== 'hand') return 'FAILURE_INVALID_SLOT'
 
 					discardFromHand(opponentPlayer, pickResult.card)

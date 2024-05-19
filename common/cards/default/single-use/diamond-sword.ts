@@ -1,3 +1,4 @@
+import {CARDS} from '../..'
 import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
@@ -11,7 +12,7 @@ class DiamondSwordSingleUseCard extends SingleUseCard {
 			numericId: 14,
 			name: 'Diamond Sword',
 			rarity: 'rare',
-			description: 'Do an additional 40hp damage.',
+			description: "Do 40hp damage to your opponent's active Hermit.",
 		})
 	}
 
@@ -46,7 +47,11 @@ class DiamondSwordSingleUseCard extends SingleUseCard {
 			if (attack.id !== attackId) return
 
 			// We've executed our attack, apply effect
-			applySingleUse(game)
+			const opponentActiveHermitId = getActiveRowPos(opponentPlayer)?.row.hermitCard.cardId
+			applySingleUse(game, [
+				[`to attack `, 'plain'],
+				[`${opponentActiveHermitId ? CARDS[opponentActiveHermitId].name : ''} `, 'opponent'],
+			])
 		})
 	}
 

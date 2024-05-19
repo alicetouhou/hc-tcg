@@ -11,20 +11,17 @@ class ChestSingleUseCard extends SingleUseCard {
 			numericId: 4,
 			name: 'Chest',
 			rarity: 'rare',
-			description:
-				'Look through your discard pile and select 1 card to return to your hand.\n\nCan not return "Clock" to your hand.',
+			description: 'Choose one card from your discard pile to return to your hand.',
 		})
 	}
 
 	override canAttach(game: GameModel, pos: CardPosModel) {
-		const canAttach = super.canAttach(game, pos)
-		if (canAttach !== 'YES') return canAttach
-
+		const result = super.canAttach(game, pos)
 		const {player} = pos
-		// Cannot play chest with no items in discard
-		if (player.discarded.length <= 0) return 'NO'
 
-		return 'YES'
+		if (player.discarded.length <= 0) result.push('UNMET_CONDITION')
+
+		return result
 	}
 
 	override onAttach(game: GameModel, instance: string, pos: CardPosModel) {
@@ -51,7 +48,7 @@ class ChestSingleUseCard extends SingleUseCard {
 				if (modalResult.cards.length !== 1) return 'FAILURE_CANNOT_COMPLETE'
 				if (modalResult.cards[0].cardId === 'clock') return 'FAILURE_CANNOT_COMPLETE'
 
-				applySingleUse(game)
+				applySingleUse(game, [])
 				retrieveCard(game, modalResult.cards[0])
 
 				return 'SUCCESS'

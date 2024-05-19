@@ -13,7 +13,7 @@ class TotemEffectCard extends EffectCard {
 			name: 'Totem',
 			rarity: 'ultra_rare',
 			description:
-				'Recover 10hp and remain in battle after you are knocked out.\n\nDoes not count as a knockout. Discard after use.',
+				'If the Hermit this card is attached to is knocked out, they are revived with 10hp.\n\nDoes not count as a knockout. Discard after use.',
 		})
 	}
 
@@ -23,8 +23,9 @@ class TotemEffectCard extends EffectCard {
 		// If we are attacked from any source
 		// Add before any other hook so they can know a hermits health reliably
 		player.hooks.afterDefence.addBefore(instance, (attack) => {
-			if (!isTargetingPos(attack, pos) || !attack.target) return
-			const {row} = attack.target
+			const target = attack.getTarget()
+			if (!isTargetingPos(attack, pos) || !target) return
+			const {row} = target
 			if (row.health) return
 
 			row.health = 10
@@ -43,8 +44,9 @@ class TotemEffectCard extends EffectCard {
 		// Also hook into afterAttack of opponent before other hooks, so that health will always be the same when their hooks are called
 		// @TODO this is slightly more hacky than I'd like
 		opponentPlayer.hooks.afterAttack.addBefore(instance, (attack) => {
-			if (!isTargetingPos(attack, pos) || !attack.target) return
-			const {row} = attack.target
+			const target = attack.getTarget()
+			if (!isTargetingPos(attack, pos) || !target) return
+			const {row} = target
 			if (row.health) return
 
 			row.health = 10
@@ -66,6 +68,15 @@ class TotemEffectCard extends EffectCard {
 	override onDetach(game: GameModel, instance: string, pos: CardPosModel) {
 		pos.player.hooks.afterDefence.remove(instance)
 		pos.opponentPlayer.hooks.afterAttack.remove(instance)
+	}
+
+	override sidebarDescriptions() {
+		return [
+			{
+				type: 'glossary',
+				name: 'knockout',
+			},
+		]
 	}
 }
 

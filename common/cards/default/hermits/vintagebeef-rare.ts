@@ -23,7 +23,8 @@ class VintageBeefRareHermitCard extends HermitCard {
 				name: 'Beefy Tunes',
 				cost: ['builder', 'builder'],
 				damage: 80,
-				power: 'Flip a coin. If heads, all status effects are removed from your Hermits.',
+				power:
+					'Flip a coin.\n\nIf heads, all status effects are removed from your active and AFK Hermits.',
 			},
 		})
 	}
@@ -32,9 +33,11 @@ class VintageBeefRareHermitCard extends HermitCard {
 		const {player} = pos
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary') return
+			const attacker = attack.getAttacker()
+			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary' || !attacker)
+				return
 
-			const coinFlip = flipCoin(player, this.id)
+			const coinFlip = flipCoin(player, attacker.row.hermitCard)
 			if (coinFlip[0] !== 'heads') return
 
 			player.board.rows.forEach((row) => {

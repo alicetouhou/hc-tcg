@@ -25,7 +25,7 @@ class GoatfatherRareHermitCard extends HermitCard {
 				cost: ['prankster', 'prankster'],
 				damage: 80,
 				power:
-					"Flip a coin. If heads, do an additional 30hp damage to your opponent's active Hermit and 10hp damage to each Hermit directly below it.",
+					"Flip a coin.\n\nIf heads, do an additional 30hp damage to your opponent's active Hermit and 10hp damage to each Hermit below it on the game board.",
 			},
 		})
 	}
@@ -40,15 +40,15 @@ class GoatfatherRareHermitCard extends HermitCard {
 
 		const {player, opponentPlayer, row, rowIndex} = pos
 
-		if (attacks[0].type !== 'secondary') return attacks
+		if (attacks[0].type !== 'secondary' || !row?.hermitCard) return attacks
 
-		const coinFlip = flipCoin(player, this.id)
+		const coinFlip = flipCoin(player, row.hermitCard)
 
 		if (coinFlip[0] === 'tails') return attacks
 
 		const activeRow = opponentPlayer.board.activeRow
 		const rows = opponentPlayer.board.rows
-		if (activeRow === null || rowIndex === null || !row || !row.hermitCard) return attacks
+		if (activeRow === null || rowIndex === null) return attacks
 		for (let i = activeRow; i < rows.length; i++) {
 			const targetRow = rows[i]
 			if (!targetRow.hermitCard) continue

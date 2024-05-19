@@ -1,6 +1,6 @@
 import StatusEffect from './status-effect'
 import {GameModel} from '../models/game-model'
-import {CardPosModel} from '../models/card-pos-model'
+import {CardPosModel, getBasicCardPos} from '../models/card-pos-model'
 import {StatusEffectT} from '../types/game-state'
 import {discardCard} from '../utils/movement'
 
@@ -14,6 +14,7 @@ class SmeltingStatusEffect extends StatusEffect {
 			duration: 3,
 			counter: true,
 			damageEffect: false,
+			visible: true,
 		})
 	}
 
