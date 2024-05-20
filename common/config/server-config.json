@@ -7,10 +7,10 @@
 	"limits": {
 		"maxTurnTime": 90,
 		"extraActionTime": 30,
-		"minCards": 42,
-		"maxCards": 42,
-		"maxDuplicates": 3,
-		"maxDeckCost": 42
+		"minCards": 10,
+		"maxCards": 10,
+		"maxDuplicates": 1,
+		"maxDeckCost": 99
 	},
 	"logoSubText": "Woof woof.",
 	"botUrl": "http://51.83.19.63:8194",

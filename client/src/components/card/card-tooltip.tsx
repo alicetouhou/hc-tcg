@@ -145,6 +145,16 @@ const getRank = (card: Card): React.ReactNode => {
 	)
 }
 
+const getRarity = (card: Card): React.ReactNode => {
+	const highlight = card.rarity === 'common' ? '■' : '★'
+	return (
+		<div className={classNames(css.rarity, css[card.rarity])}>
+			{highlight} {card.rarity.charAt(0).toUpperCase() + card.rarity.replace('_', ' ').slice(1)}{' '}
+			Rank {highlight}
+		</div>
+	)
+}
+
 const getExpansion = (card: Card): React.ReactNode => {
 	if (card.getExpansion() !== 'default') {
 		const expansion = card.getExpansion() as
@@ -226,7 +236,7 @@ const CardTooltip = ({card}: Props) => {
 				</div>
 				<div className={css.description}>
 					{getExpansion(card)}
-					{getRank(card)}
+					{getRarity(card)}
 					{getStrengthsAndWeaknesses(card)}
 					{getDescription(card)}
 				</div>

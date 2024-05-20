@@ -395,9 +395,21 @@ function EditDeck({back, title, saveDeck, deck}: Props) {
 									{loadedDeck.cards.length}/{CONFIG.limits.maxCards}
 									<span className={css.hideOnMobile}>cards</span>
 								</p>
-								<div className={classNames(css.cardCount, css.dark, css.tokens)}>
-									{getDeckCost(loadedDeck.cards.map((card) => card.cardId))}/
-									{CONFIG.limits.maxDeckCost} <span className={css.hideOnMobile}>tokens</span>
+								<div className={classNames(css.cardCount, css.dark)}>
+									{loadedDeck.cards.reduce((sum, card) => {
+										if (CARDS[card.cardId].rarity === 'common') return (sum += 1)
+										return sum
+									}, 0)}
+									-
+									{loadedDeck.cards.reduce((sum, card) => {
+										if (CARDS[card.cardId].rarity === 'rare') return (sum += 1)
+										return sum
+									}, 0)}
+									-
+									{loadedDeck.cards.reduce((sum, card) => {
+										if (CARDS[card.cardId].rarity === 'ultra_rare') return (sum += 1)
+										return sum
+									}, 0)}
 								</div>
 							</div>
 						</>

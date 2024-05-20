@@ -1,6 +1,5 @@
 import {CONFIG, DEBUG_CONFIG, EXPANSIONS} from '../config'
 import {CARDS} from '../cards'
-import {getDeckCost} from './ranks'
 
 export function validateDeck(deckCards: Array<string>) {
 	if (DEBUG_CONFIG.disableDeckValidation) return
@@ -16,9 +15,13 @@ export function validateDeck(deckCards: Array<string>) {
 	)
 	if (hasDisabledCards) return 'Deck must not include removed cards.'
 
-	// less than one hermit
-	const hasHermit = deckCards.some((cardId) => CARDS[cardId].type === 'hermit')
-	if (!hasHermit) return 'Deck must have at least one Hermit.'
+	// less/more than one hermit
+	const hermitNumber = deckCards.reduce((sum, cardId) => {
+		if (CARDS[cardId].type === 'hermit') return (sum += 1)
+		return sum
+	}, 0)
+
+	if (hermitNumber !== 1) return 'Deck must have exactly one Hermit.'
 
 	// more than max duplicates
 	const tooManyDuplicates =
@@ -32,10 +35,11 @@ export function validateDeck(deckCards: Array<string>) {
 	if (tooManyDuplicates)
 		return `You cannot have more than ${limits.maxDuplicates} duplicate cards unless they are item cards.`
 
-	// more than max tokens
-	const deckCost = getDeckCost(deckCards)
-	if (deckCost > limits.maxDeckCost)
-		return `Deck cannot cost more than ${limits.maxDeckCost} tokens.`
+	if (deckCards.filter((card) => CARDS[card].rarity === 'ultra_rare').length > 1)
+		return 'Your deck cannot have more than 1 ultra rare card.'
+
+	if (deckCards.filter((card) => CARDS[card].rarity === 'rare').length > 2)
+		return 'Your deck cannot have more than 2 rare cards.'
 
 	const exactAmount = limits.minCards === limits.maxCards
 	const exactAmountText = `Deck must have exactly ${limits.minCards} cards.`
