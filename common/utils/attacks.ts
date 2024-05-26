@@ -7,7 +7,7 @@ import {EnergyT, RowPos} from '../types/cards'
 import {DEBUG_CONFIG} from '../config'
 import {GameModel} from '../models/game-model'
 
-function executeAttack(attack: AttackModel) {
+function resolveAttack(attack: AttackModel) {
 	const target = attack.getTarget()
 	if (!target) return
 
@@ -150,59 +150,44 @@ export function executeAttacks(
 	withoutBlockingActions = false
 ) {
 	// Outer attack loop
-	while (attacks.length > 0) {
-		const allAttacks: Array<AttackModel> = []
+	// Main attack loop
 
-		// Main attack loop
-		while (attacks.length > 0) {
-			// STEP 1 - Call before attack and defence for all attacks
-			runBeforeAttackHooks(attacks)
-			runBeforeDefenceHooks(attacks)
+	// STEP 1 - Call before attack and defence for all attacks
+	runBeforeAttackHooks(attacks)
+	runBeforeDefenceHooks(attacks)
 
-			// STEP 2 - Call on attack and defence for all attacks
-			runOnAttackHooks(attacks)
-			runOnDefenceHooks(attacks)
+	// STEP 2 - Call on attack and defence for all attacks
+	runOnAttackHooks(attacks)
+	runOnDefenceHooks(attacks)
 
-			// STEP 3 - Execute all attacks
-			for (let i = 0; i < attacks.length; i++) {
-				executeAttack(attacks[i])
+	// STEP 3 - Execute all attacks
+	for (let i = 0; i < attacks.length; i++) {
+		resolveAttack(attacks[i])
 
-				// Add this attack to the final list
-				allAttacks.push(attacks[i])
-			}
-
-			const newAttacks: Array<AttackModel> = []
-			for (let i = 0; i < attacks.length; i++) {
-				newAttacks.push(...attacks[i].nextAttacks)
-			}
-			attacks = newAttacks
-		}
-
-		if (!withoutBlockingActions) {
-			// STEP 5 - All attacks have been completed, mark actions appropriately
-			game.addCompletedActions('SINGLE_USE_ATTACK', 'PRIMARY_ATTACK', 'SECONDARY_ATTACK')
-			game.addBlockedActions(
-				'game',
-				'PLAY_HERMIT_CARD',
-				'PLAY_ITEM_CARD',
-				'PLAY_EFFECT_CARD',
-				'PLAY_SINGLE_USE_CARD',
-				'CHANGE_ACTIVE_HERMIT'
-			)
-
-			// We might loop around again, don't block actions anymore
-			withoutBlockingActions = true
-		}
-
-		// STEP 6 - Aafter all attacks have been executed, call after attack and defence hooks
-		runAfterAttackHooks(allAttacks)
-		runAfterDefenceHooks(allAttacks)
-
-		// STEP 7 - If we added any new attacks in afterAttack or afterDefense, loop around
-		for (let i = 0; i < allAttacks.length; i++) {
-			attacks.push(...allAttacks[i].nextAttacks)
+		if (attacks[i].nextAttacks.length > 0) {
+			executeAttacks(game, attacks[i].nextAttacks, withoutBlockingActions)
 		}
 	}
+
+	if (!withoutBlockingActions) {
+		// STEP 5 - All attacks have been completed, mark actions appropriately
+		game.addCompletedActions('SINGLE_USE_ATTACK', 'PRIMARY_ATTACK', 'SECONDARY_ATTACK')
+		game.addBlockedActions(
+			'game',
+			'PLAY_HERMIT_CARD',
+			'PLAY_ITEM_CARD',
+			'PLAY_EFFECT_CARD',
+			'PLAY_SINGLE_USE_CARD',
+			'CHANGE_ACTIVE_HERMIT'
+		)
+
+		// We might loop around again, don't block actions anymore
+		withoutBlockingActions = true
+	}
+
+	// STEP 6 - After all attacks have been executed, call after attack and defence hooks
+	runAfterAttackHooks(attacks)
+	runAfterDefenceHooks(attacks)
 }
 
 export function executeExtraAttacks(

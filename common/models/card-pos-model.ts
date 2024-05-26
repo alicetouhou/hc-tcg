@@ -15,7 +15,7 @@ export type BasicHermitCardPos = {
 	opponentPlayer: PlayerState
 	rowIndex: number
 	row: RowStateWithHermit
-	slot: Slot
+	instance: string
 }
 
 /**
@@ -106,7 +106,7 @@ export function getHermitCardPos(game: GameModel, instance: string): BasicHermit
 					opponentPlayer,
 					rowIndex,
 					row,
-					slot: {type: 'hermit', index: 0},
+					instance,
 				}
 			}
 		}

@@ -61,8 +61,8 @@ class MuseumCollectionStatusEffect extends StatusEffect {
 				const additionalAttack = new AttackModel({
 					game: game,
 					creator: statusEffectInfo.statusEffectInstance,
-					attacker: attack.getAttacker()?.row.hermitCard.cardInstance,
-					target: attack.getTarget()?.row.hermitCard.cardInstance,
+					attacker: attack.getAttacker()?.instance,
+					target: attack.getTarget()?.instance,
 					type: 'secondary',
 				})
 				additionalAttack.addDamage(this.id, 20)

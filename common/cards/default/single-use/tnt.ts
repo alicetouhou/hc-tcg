@@ -41,7 +41,7 @@ class TNTSingleUseCard extends SingleUseCard {
 				type: 'effect',
 				isBacklash: true,
 				log: (values) => `and took ${values.damage} backlash damage`,
-			}).addDamage(this.id, 30)
+			}).addDamage(this.id, 20)
 
 			tntAttack.addNewAttack(backlashAttack)
 
@@ -49,8 +49,7 @@ class TNTSingleUseCard extends SingleUseCard {
 		})
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.getCreator() !== instance && !attack.isBacklash) return
-
+			if (attack.getCreator() !== instance || !attack.isBacklash) return
 			// We've executed our attack, apply effect
 			applySingleUse(game)
 		})

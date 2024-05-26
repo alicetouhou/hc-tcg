@@ -55,8 +55,8 @@ class WolfEffectCard extends EffectCard {
 			const backlashAttack = new AttackModel({
 				game: game,
 				creator: instance,
-				attacker: attack.getAttacker()?.row.hermitCard.cardInstance,
-				target: attack.getAttacker()?.row.hermitCard.cardInstance,
+				attacker: attack.getAttacker()?.instance,
+				target: attack.getAttacker()?.instance,
 				type: 'effect',
 				isBacklash: true,
 				log: (values) => `${values.target} took ${values.damage} damage from $eWolf$`,

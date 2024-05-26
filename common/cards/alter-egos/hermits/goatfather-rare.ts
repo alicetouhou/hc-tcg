@@ -40,9 +40,9 @@ class GoatfatherRareHermitCard extends HermitCard {
 
 		if (!attack) return
 
-		const {player, opponentPlayer, row, rowIndex} = pos
+		const {player, opponentPlayer, row} = pos
 
-		if (attack.type !== 'secondary' || !row?.hermitCard) return
+		if (!attack.isType('secondary') || !row?.hermitCard) return
 
 		const coinFlip = flipCoin(player, row.hermitCard)
 
@@ -59,7 +59,7 @@ class GoatfatherRareHermitCard extends HermitCard {
 			const targetRow = rows[i]
 			if (!targetRow.hermitCard) continue
 
-			const attack = new AttackModel({
+			const newAttack = new AttackModel({
 				game: game,
 				creator: instance,
 				attacker: row.hermitCard.cardInstance,
@@ -67,7 +67,7 @@ class GoatfatherRareHermitCard extends HermitCard {
 				type: hermitAttackType,
 				log: (values) => `, ${values.target} for ${values.damage} damage`,
 			}).addDamage(this.id, 10)
-			attack.addNewAttack(attack)
+			attack.addNewAttack(newAttack)
 		}
 
 		return attack

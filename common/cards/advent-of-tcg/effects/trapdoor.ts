@@ -42,7 +42,7 @@ class TrapdoorEffectCard extends EffectCard {
 				const newAttack: AttackModel = new AttackModel({
 					game: game,
 					creator: instance,
-					attacker: attack.getAttacker()?.row.hermitCard.cardInstance,
+					attacker: attack.getAttacker()?.instance,
 					target: pos.row?.hermitCard?.cardInstance,
 					type: attack.type,
 					createWeakness: ['primary', 'secondary'].includes(attack.type) ? 'ifWeak' : 'never',
