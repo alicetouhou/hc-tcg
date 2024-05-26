@@ -258,9 +258,9 @@ function createWeaknessAttack(attack: AttackModel): AttackModel | null {
 
 	const weaknessAttack = new AttackModel({
 		game: attack.getGame(),
-		creator: attack.getCreator(),
-		attacker: attacker.row.hermitCard.cardInstance,
-		target: target.row.hermitCard.cardInstance,
+		creator: attack.getHistory('creator')[0].value,
+		attacker: attacker.row.hermitCard,
+		target: target.row.hermitCard,
 		type: 'weakness',
 	})
 

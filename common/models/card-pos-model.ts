@@ -1,5 +1,5 @@
 import {Slot} from '../types/cards'
-import {PlayerState, RowState, RowStateWithHermit} from '../types/game-state'
+import {CardT, PlayerState, RowState, RowStateWithHermit} from '../types/game-state'
 import {GameModel} from './game-model'
 
 export type BasicCardPos = {
@@ -15,7 +15,7 @@ export type BasicHermitCardPos = {
 	opponentPlayer: PlayerState
 	rowIndex: number
 	row: RowStateWithHermit
-	instance: string
+	card: CardT
 }
 
 /**
@@ -106,7 +106,7 @@ export function getHermitCardPos(game: GameModel, instance: string): BasicHermit
 					opponentPlayer,
 					rowIndex,
 					row,
-					instance,
+					card: {cardId: row.hermitCard.cardId, cardInstance: instance},
 				}
 			}
 		}

@@ -68,9 +68,9 @@ class BowSingleUseCard extends SingleUseCard {
 
 			const bowAttack = new AttackModel({
 				game: game,
-				creator: instance,
-				attacker: playerActiveRow?.hermitCard.cardInstance,
-				target: opponentRow.hermitCard.cardInstance,
+				creator: pos.card,
+				attacker: playerActiveRow?.hermitCard,
+				target: opponentRow.hermitCard,
 				type: 'effect',
 				log: (values) => `${values.header} to attack ${values.target} for ${values.damage} damage`,
 			}).addDamage(this.id, 40)

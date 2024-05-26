@@ -27,9 +27,9 @@ class SplashPotionOfHarmingSingleUseCard extends SingleUseCard {
 				if (!row || !row.hermitCard) return r
 				const newAttack = new AttackModel({
 					game: game,
-					creator: instance,
-					attacker: getActiveRow(player)?.hermitCard.cardInstance,
-					target: row.hermitCard.cardInstance,
+					creator: pos.card,
+					attacker: getActiveRow(player)?.hermitCard,
+					target: row.hermitCard,
 					type: 'effect',
 					log: (values) =>
 						i === activeIndex

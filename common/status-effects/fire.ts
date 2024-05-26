@@ -33,12 +33,16 @@ class FireStatusEffect extends StatusEffect {
 
 		opponentPlayer.hooks.onTurnEnd.add(statusEffectInfo.statusEffectInstance, () => {
 			const activeRow = getActiveRow(opponentPlayer)
+			const targetPos = getBasicCardPos(game, statusEffectInfo.targetInstance)
 
 			const statusEffectAttack = new AttackModel({
 				game: game,
-				creator: statusEffectInfo.statusEffectInstance,
-				attacker: activeRow?.hermitCard.cardInstance,
-				target: statusEffectInfo.targetInstance,
+				creator: {
+					cardId: statusEffectInfo.statusEffectId,
+					cardInstance: statusEffectInfo.statusEffectInstance,
+				},
+				attacker: activeRow?.hermitCard,
+				target: targetPos?.row?.hermitCard,
 				type: 'status-effect',
 				log: (values) => `${values.target} took ${values.damage} damage from $bBurn$`,
 			})

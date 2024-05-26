@@ -59,9 +59,9 @@ class EnderPearlSingleUseCard extends SingleUseCard {
 					// Do 10 damage
 					const attack = new AttackModel({
 						game: game,
-						creator: instance,
-						attacker: activeRow.hermitCard.cardInstance,
-						target: activeRow.hermitCard.cardInstance,
+						creator: pos.card,
+						attacker: activeRow.hermitCard,
+						target: activeRow.hermitCard,
 						type: 'effect',
 						isBacklash: true,
 					}).addDamage(this.id, 10)

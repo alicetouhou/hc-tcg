@@ -66,7 +66,7 @@ class EggSingleUseCard extends SingleUseCard {
 			if (!pickInfo || !pickInfo.rowIndex) return
 			const activeRow = getActiveRow(player)
 			const opponentRow = opponentPlayer.board.rows[pickInfo.rowIndex]
-			if (!opponentRow.hermitCard) return
+			if (!opponentRow || !activeRow) return
 
 			applySingleUse(game, pickInfo)
 
@@ -74,9 +74,9 @@ class EggSingleUseCard extends SingleUseCard {
 			if (coinFlip[0] === 'heads') {
 				const eggAttack = new AttackModel({
 					game: game,
-					creator: instance,
-					attacker: activeRow?.hermitCard.cardInstance,
-					target: opponentRow.hermitCard.cardInstance,
+					creator: pos.card,
+					attacker: activeRow.hermitCard,
+					target: opponentRow.hermitCard,
 					log: (values) =>
 						`$p{You|${values.player}}$ flipped $gheads$ on $eEgg$ and did an additional ${values.damage} to ${values.target}`,
 					type: 'effect',

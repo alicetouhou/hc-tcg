@@ -38,9 +38,12 @@ class PoisonStatusEffect extends StatusEffect {
 
 			const statusEffectAttack = new AttackModel({
 				game: game,
-				creator: statusEffectInfo.statusEffectInstance,
-				attacker: activeRow?.hermitCard.cardInstance,
-				target: statusEffectInfo.targetInstance,
+				creator: {
+					cardId: statusEffectInfo.statusEffectId,
+					cardInstance: statusEffectInfo.statusEffectInstance,
+				},
+				attacker: activeRow?.hermitCard,
+				target: targetPos?.row?.hermitCard,
 				type: 'status-effect',
 				log: (values) => `${values.target} took ${values.damage} damage from $bPoison$`,
 			})

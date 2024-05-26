@@ -55,9 +55,9 @@ class BigBSt4tzRareHermitCard extends HermitCard {
 
 				const statusEffectAttack = new AttackModel({
 					game: game,
-					creator: instance,
-					attacker: activeRow?.hermitCard.cardInstance,
-					target: opponentActiveRow?.hermitCard.cardInstance,
+					creator: pos.card,
+					attacker: activeRow?.hermitCard,
+					target: opponentActiveRow?.hermitCard,
 					type: 'status-effect',
 				})
 				statusEffectAttack.addDamage(this.id, 140)

@@ -26,18 +26,18 @@ class TNTSingleUseCard extends SingleUseCard {
 
 			const tntAttack = new AttackModel({
 				game: game,
-				creator: instance,
-				attacker: playerActiveRow?.hermitCard.cardInstance,
-				target: opponentActiveRow?.hermitCard.cardInstance,
+				creator: pos.card,
+				attacker: playerActiveRow?.hermitCard,
+				target: opponentActiveRow?.hermitCard,
 				type: 'effect',
 				log: (values) => `${values.header} to attack ${values.target} for ${values.damage} damage`,
 			}).addDamage(this.id, 60)
 
 			const backlashAttack = new AttackModel({
 				game: game,
-				creator: instance,
-				attacker: playerActiveRow?.hermitCard.cardInstance,
-				target: playerActiveRow?.hermitCard.cardInstance,
+				creator: pos.card,
+				attacker: playerActiveRow?.hermitCard,
+				target: playerActiveRow?.hermitCard,
 				type: 'effect',
 				isBacklash: true,
 				log: (values) => `and took ${values.damage} backlash damage`,

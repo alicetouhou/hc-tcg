@@ -135,9 +135,9 @@ class IskallmanRareHermitCard extends HermitCard {
 
 			const backlashAttack = new AttackModel({
 				game: game,
-				creator: instance,
-				attacker: attacker.row.hermitCard.cardInstance,
-				target: attacker.row.hermitCard.cardInstance,
+				creator: pos.card,
+				attacker: attacker.row.hermitCard,
+				target: attacker.row.hermitCard,
 				type: 'effect',
 				isBacklash: true,
 			})

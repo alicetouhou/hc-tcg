@@ -33,9 +33,9 @@ class ThornsIIIEffectCard extends EffectCard {
 
 				const backlashAttack = new AttackModel({
 					game: game,
-					creator: instance,
-					attacker: attack.getAttacker()?.instance,
-					target: attack.getAttacker()?.instance,
+					creator: pos.card,
+					attacker: attack.getAttacker()?.card,
+					target: attack.getAttacker()?.card,
 					type: 'effect',
 					isBacklash: true,
 					log: (values) => `${values.target} took ${values.damage} damage from $eThorns III$`,

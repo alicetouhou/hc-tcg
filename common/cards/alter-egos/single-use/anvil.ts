@@ -28,9 +28,9 @@ class AnvilSingleUseCard extends SingleUseCard {
 				if (!row || !row.hermitCard) return r
 				const newAttack = new AttackModel({
 					game: game,
-					creator: instance,
-					attacker: activeRow?.hermitCard.cardInstance,
-					target: row.hermitCard.cardInstance,
+					creator: pos.card,
+					attacker: activeRow?.hermitCard,
+					target: row.hermitCard,
 					type: 'effect',
 					log: (values) =>
 						i === player.board.activeRow

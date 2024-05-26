@@ -29,9 +29,9 @@ class TridentSingleUseCard extends SingleUseCard {
 
 			const tridentAttack = new AttackModel({
 				game: game,
-				creator: instance,
-				attacker: playerActiveRow?.hermitCard.cardInstance,
-				target: opponentActiveRow?.hermitCard.cardInstance,
+				creator: pos.card,
+				attacker: playerActiveRow?.hermitCard,
+				target: opponentActiveRow?.hermitCard,
 				type: 'effect',
 				log: (values) =>
 					`${values.header} to attack ${values.target} for ${values.damage} damage, then ${values.coinFlip}`,
