@@ -1,7 +1,7 @@
 import {HERMIT_CARDS} from '../..'
 import {CardPosModel, getBasicCardPos} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
-import {getActiveRowPos} from '../../../utils/board'
+import {getActiveRow} from '../../../utils/board'
 import {flipCoin} from '../../../utils/coinFlips'
 import HermitCard from '../../base/hermit-card'
 
@@ -39,11 +39,11 @@ class EvilXisumaRareHermitCard extends HermitCard {
 			const attacker = attack.getAttacker()
 			if (attack.type !== 'secondary' || !attacker) return
 
-			const opponentActiveRow = getActiveRowPos(opponentPlayer)
+			const opponentActiveRow = getActiveRow(opponentPlayer)
 			if (!opponentActiveRow) return
-			if (opponentActiveRow.row.health <= 0) return
+			if (opponentActiveRow.health <= 0) return
 
-			if (!HERMIT_CARDS[opponentActiveRow.row.hermitCard.cardId]) return
+			if (!HERMIT_CARDS[opponentActiveRow.hermitCard.cardId]) return
 
 			const coinFlip = flipCoin(player, attacker.row.hermitCard)
 

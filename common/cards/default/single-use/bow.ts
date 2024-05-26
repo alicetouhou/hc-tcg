@@ -2,7 +2,7 @@ import {CARDS} from '../..'
 import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
-import {applySingleUse, getActiveRow, getActiveRowPos, getNonEmptyRows} from '../../../utils/board'
+import {applySingleUse, getActiveRow, getNonEmptyRows} from '../../../utils/board'
 import SingleUseCard from '../../base/single-use-card'
 
 class BowSingleUseCard extends SingleUseCard {

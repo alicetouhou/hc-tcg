@@ -1,7 +1,7 @@
 import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
-import {applySingleUse, getActiveRow, getActiveRowPos} from '../../../utils/board'
+import {applySingleUse, getActiveRow} from '../../../utils/board'
 import SingleUseCard from '../../base/single-use-card'
 
 class GoldenAxeSingleUseCard extends SingleUseCard {

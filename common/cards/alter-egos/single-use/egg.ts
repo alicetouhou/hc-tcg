@@ -3,7 +3,7 @@ import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import {PickInfo} from '../../../types/server-requests'
-import {applySingleUse, getActiveRow, getActiveRowPos, getNonEmptyRows} from '../../../utils/board'
+import {applySingleUse, getActiveRow, getNonEmptyRows} from '../../../utils/board'
 import {flipCoin} from '../../../utils/coinFlips'
 import SingleUseCard from '../../base/single-use-card'
 

@@ -4,7 +4,6 @@ import {GameModel} from '../../../models/game-model'
 import {
 	applySingleUse,
 	getActiveRow,
-	getActiveRowPos,
 	getNonEmptyRows,
 	getSlotPos,
 	rowHasEmptyItemSlot,
@@ -103,19 +102,26 @@ class LeadSingleUseCard extends SingleUseCard {
 				// Get the index of the chosen item
 				const itemIndex: number | undefined = player.custom[itemIndexKey]
 
-				const opponentActivePos = getActiveRowPos(opponentPlayer)
+				const opponentActiveRow = getActiveRow(opponentPlayer)
 
-				if (itemIndex === undefined || !opponentActivePos) {
+				if (itemIndex === undefined || !opponentActiveRow) {
 					// Something went wrong, just return success
 					// To clarify, the problem here is that if itemIndex is null this pick request will never be able to succeed if we don't do this
 					// @TODO is a better failsafe mechanism needed for 2 picks in a row?
 					return 'SUCCESS'
 				}
 
+				if (!opponentPlayer.board.activeRow) return 'FAILURE_INVALID_SLOT'
+
 				// Make sure we can attach the item
-				const itemPos = getSlotPos(opponentPlayer, opponentActivePos.rowIndex, 'item', itemIndex)
+				const itemPos = getSlotPos(
+					opponentPlayer,
+					opponentPlayer.board.activeRow,
+					'item',
+					itemIndex
+				)
 				const targetPos = getSlotPos(opponentPlayer, rowIndex, 'item', pickResult.slot.index)
-				const itemCard = opponentActivePos.row.itemCards[itemIndex]
+				const itemCard = opponentActiveRow.itemCards[itemIndex]
 				if (canAttachToSlot(game, targetPos, itemCard!, true).length > 0) {
 					return 'FAILURE_INVALID_SLOT'
 				}

@@ -3,7 +3,7 @@ import {GameModel} from '../models/game-model'
 import {RowPos} from '../types/cards'
 import {CardPosModel, getBasicCardPos} from '../models/card-pos-model'
 import {AttackModel} from '../models/attack-model'
-import {getActiveRow, getActiveRowPos, removeStatusEffect} from '../utils/board'
+import {getActiveRow, removeStatusEffect} from '../utils/board'
 import {StatusEffectT} from '../types/game-state'
 import {executeExtraAttacks} from '../utils/attacks'
 

@@ -20,17 +20,6 @@ export function getActiveRow(player: PlayerState) {
 	return row
 }
 
-export function getActiveRowPos(player: PlayerState): RowPos | null {
-	const rowIndex = player.board.activeRow
-	if (rowIndex === null) return null
-	const row = player.board.rows[rowIndex]
-	if (!row.hermitCard) return null
-	return {
-		player: player,
-		rowIndex,
-		row,
-	}
-}
 export function getRowPos(cardPos: CardPosModel): RowPos | null {
 	const rowIndex = cardPos.rowIndex
 	if (rowIndex === null) return null

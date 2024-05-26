@@ -1,7 +1,7 @@
 import {CARDS} from '../..'
 import {CardPosModel, getCardPos} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
-import {getActiveRowPos, getSlotPos} from '../../../utils/board'
+import {getActiveRow, getSlotPos} from '../../../utils/board'
 import {isRemovable} from '../../../utils/cards'
 import {flipCoin} from '../../../utils/coinFlips'
 import {canAttachToSlot, discardCard, swapSlots} from '../../../utils/movement'
@@ -50,10 +50,10 @@ class GrianRareHermitCard extends HermitCard {
 			const attacker = attack.getAttacker()
 			if (attack.type !== 'primary' || !attacker) return
 
-			const opponentRowPos = getActiveRowPos(opponentPlayer)
-			if (rowIndex === null || !row || !opponentRowPos) return
+			const opponentActiveRow = getActiveRow(opponentPlayer)
+			if (rowIndex === null || !row || !opponentActiveRow) return
 
-			const opponentEffectCard = opponentRowPos.row.effectCard
+			const opponentEffectCard = opponentActiveRow.effectCard
 			if (!opponentEffectCard || !isRemovable(opponentEffectCard)) return
 
 			const coinFlip = flipCoin(player, attacker.row.hermitCard)
@@ -79,8 +79,14 @@ class GrianRareHermitCard extends HermitCard {
 						// Discard our current attached card if there is one
 						discardCard(game, row.effectCard)
 
+						if (!opponentPlayer.board.activeRow) return 'FAILURE_INVALID_DATA'
+
 						// Move their effect card over
-						const opponentEffectSlot = getSlotPos(opponentPlayer, opponentRowPos.rowIndex, 'effect')
+						const opponentEffectSlot = getSlotPos(
+							opponentPlayer,
+							opponentPlayer.board.activeRow,
+							'effect'
+						)
 						swapSlots(game, effectSlot, opponentEffectSlot)
 
 						const newPos = getCardPos(game, opponentEffectCard.cardInstance)

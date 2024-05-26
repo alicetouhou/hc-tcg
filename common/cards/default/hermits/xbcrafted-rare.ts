@@ -1,9 +1,9 @@
 import {CardPosModel, getCardPos} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import {HermitAttackType} from '../../../types/attack'
+import {getActiveRow} from '../../../utils/board'
 import HermitCard from '../../base/hermit-card'
-import {isTargetingPos} from '../../../utils/attacks'
-import {getActiveRowPos} from '../../../utils/board'
+
 class XBCraftedRareHermitCard extends HermitCard {
 	constructor() {
 		super({
@@ -52,8 +52,6 @@ class XBCraftedRareHermitCard extends HermitCard {
 
 		player.hooks.beforeAttack.addBefore(instance, (attack) => {
 			if (!player.custom[ignoreKey]) return
-			const opponentActivePos = getActiveRowPos(opponentPlayer)
-			if (!opponentActivePos) return
 
 			// All attacks from our side should ignore opponent attached effect card this turn
 			attack.shouldIgnoreCards.push((instance) => {
@@ -63,7 +61,7 @@ class XBCraftedRareHermitCard extends HermitCard {
 				if (pos.slot.type !== 'effect') return false
 
 				// Not attached to the same row as the opponent's active Hermit, do not ignore it
-				if (pos.rowIndex !== opponentActivePos.rowIndex) return false
+				if (pos.rowIndex !== opponentPlayer.board.activeRow) return false
 
 				// Do not ignore the player's effect.
 				if (pos.player === player) return false
