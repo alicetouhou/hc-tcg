@@ -2,7 +2,7 @@ import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import {executeAttacks} from '../../../utils/attacks'
-import {applySingleUse, getActiveRowPos} from '../../../utils/board'
+import {applySingleUse, getActiveRow} from '../../../utils/board'
 import {hasActive} from '../../../utils/game'
 import SingleUseCard from '../../base/single-use-card'
 
@@ -32,7 +32,6 @@ class EnderPearlSingleUseCard extends SingleUseCard {
 
 	override onAttach(game: GameModel, instance: string, pos: CardPosModel) {
 		const {player} = pos
-		const attackId = this.getInstanceKey(instance)
 
 		game.addPickRequest({
 			playerId: player.id,
@@ -55,13 +54,14 @@ class EnderPearlSingleUseCard extends SingleUseCard {
 				if (player.board.activeRow === null) return 'FAILURE_INVALID_DATA'
 				game.swapRows(player, player.board.activeRow, rowIndex)
 
-				const activeRow = getActiveRowPos(player)
+				const activeRow = getActiveRow(player)
 				if (activeRow) {
 					// Do 10 damage
 					const attack = new AttackModel({
-						id: attackId,
-						attacker: activeRow,
-						target: activeRow,
+						game: game,
+						creator: instance,
+						attacker: activeRow.hermitCard.cardInstance,
+						target: activeRow.hermitCard.cardInstance,
 						type: 'effect',
 						isBacklash: true,
 					}).addDamage(this.id, 10)

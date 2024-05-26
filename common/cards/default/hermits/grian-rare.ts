@@ -46,7 +46,7 @@ class GrianRareHermitCard extends HermitCard {
 		const {player, opponentPlayer, rowIndex, row} = pos
 
 		player.hooks.afterAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance)) return
+			if (attack.getCreator() !== instance) return
 			const attacker = attack.getAttacker()
 			if (attack.type !== 'primary' || !attacker) return
 

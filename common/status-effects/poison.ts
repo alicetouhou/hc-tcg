@@ -3,7 +3,7 @@ import {GameModel} from '../models/game-model'
 import {RowPos} from '../types/cards'
 import {CardPosModel, getBasicCardPos} from '../models/card-pos-model'
 import {AttackModel} from '../models/attack-model'
-import {getActiveRowPos, removeStatusEffect} from '../utils/board'
+import {getActiveRow, getActiveRowPos, removeStatusEffect} from '../utils/board'
 import {StatusEffectT} from '../types/game-state'
 import {executeExtraAttacks} from '../utils/attacks'
 
@@ -33,36 +33,21 @@ class PoisonStatusEffect extends StatusEffect {
 		game.state.statusEffects.push(statusEffectInfo)
 
 		opponentPlayer.hooks.onTurnEnd.add(statusEffectInfo.statusEffectInstance, () => {
+			const activeRow = getActiveRow(opponentPlayer)
 			const targetPos = getBasicCardPos(game, statusEffectInfo.targetInstance)
-			if (!targetPos || !targetPos.row || targetPos.rowIndex === null) return
-			if (!targetPos.row.hermitCard) return
-
-			const activeRowPos = getActiveRowPos(opponentPlayer)
-			const sourceRow: RowPos | null = activeRowPos
-				? {
-						player: activeRowPos.player,
-						rowIndex: activeRowPos.rowIndex,
-						row: activeRowPos.row,
-				  }
-				: null
-
-			const targetRow: RowPos = {
-				player: targetPos.player,
-				rowIndex: targetPos.rowIndex,
-				row: targetPos.row,
-			}
 
 			const statusEffectAttack = new AttackModel({
-				id: this.getInstanceKey(statusEffectInfo.statusEffectInstance, 'statusEffectAttack'),
-				attacker: sourceRow,
-				target: targetRow,
+				game: game,
+				creator: statusEffectInfo.statusEffectInstance,
+				attacker: activeRow?.hermitCard.cardInstance,
+				target: statusEffectInfo.targetInstance,
 				type: 'status-effect',
-				log: (values) => `${values.target} took ${values.damage} damage from $bBurn$`,
+				log: (values) => `${values.target} took ${values.damage} damage from $bPoison$`,
 			})
 
-			if (targetPos.row.health >= 30) {
+			if (targetPos?.row?.health && targetPos.row.health >= 30) {
 				statusEffectAttack.addDamage(this.id, 20)
-			} else if (targetPos.row.health == 20) {
+			} else {
 				statusEffectAttack.addDamage(this.id, 10)
 			}
 

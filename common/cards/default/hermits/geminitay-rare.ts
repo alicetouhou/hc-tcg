@@ -32,7 +32,7 @@ class GeminiTayRareHermitCard extends HermitCard {
 		const {player} = pos
 
 		player.hooks.afterAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary') return
+			if (attack.getCreator() !== instance || attack.type !== 'secondary') return
 
 			// To keep this simple gem will discard the single use card, if it's used
 			if (player.board.singleUseCardUsed) {

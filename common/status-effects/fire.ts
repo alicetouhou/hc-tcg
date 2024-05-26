@@ -1,9 +1,8 @@
 import StatusEffect from './status-effect'
 import {GameModel} from '../models/game-model'
-import {RowPos} from '../types/cards'
 import {CardPosModel, getBasicCardPos} from '../models/card-pos-model'
 import {AttackModel} from '../models/attack-model'
-import {getActiveRowPos, removeStatusEffect} from '../utils/board'
+import {getActiveRow, removeStatusEffect} from '../utils/board'
 import {StatusEffectT} from '../types/game-state'
 import {executeExtraAttacks} from '../utils/attacks'
 
@@ -33,29 +32,13 @@ class FireStatusEffect extends StatusEffect {
 		game.state.statusEffects.push(statusEffectInfo)
 
 		opponentPlayer.hooks.onTurnEnd.add(statusEffectInfo.statusEffectInstance, () => {
-			const targetPos = getBasicCardPos(game, statusEffectInfo.targetInstance)
-			if (!targetPos || !targetPos.row || targetPos.rowIndex === null) return
-			if (!targetPos.row.hermitCard) return
-
-			const activeRowPos = getActiveRowPos(opponentPlayer)
-			const sourceRow: RowPos | null = activeRowPos
-				? {
-						player: activeRowPos.player,
-						rowIndex: activeRowPos.rowIndex,
-						row: activeRowPos.row,
-				  }
-				: null
-
-			const targetRow: RowPos = {
-				player: targetPos.player,
-				rowIndex: targetPos.rowIndex,
-				row: targetPos.row,
-			}
+			const activeRow = getActiveRow(opponentPlayer)
 
 			const statusEffectAttack = new AttackModel({
-				id: this.getInstanceKey(statusEffectInfo.statusEffectInstance, 'statusEffectAttack'),
-				attacker: sourceRow,
-				target: targetRow,
+				game: game,
+				creator: statusEffectInfo.statusEffectInstance,
+				attacker: activeRow?.hermitCard.cardInstance,
+				target: statusEffectInfo.targetInstance,
 				type: 'status-effect',
 				log: (values) => `${values.target} took ${values.damage} damage from $bBurn$`,
 			})

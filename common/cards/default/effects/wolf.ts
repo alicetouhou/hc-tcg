@@ -1,7 +1,6 @@
 import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
-import {getActiveRowPos, getRowPos} from '../../../utils/board'
 import EffectCard from '../../base/effect-card'
 
 class WolfEffectCard extends EffectCard {
@@ -53,12 +52,11 @@ class WolfEffectCard extends EffectCard {
 
 			// Add a backlash attack, targeting the opponent's active hermit.
 			// Note that the opponent active row could be null, but then the attack will just do nothing.
-			const opponentActiveRow = getActiveRowPos(opponentPlayer)
-
 			const backlashAttack = new AttackModel({
-				id: this.getInstanceKey(instance, 'backlash'),
-				attacker: getRowPos(pos),
-				target: opponentActiveRow,
+				game: game,
+				creator: instance,
+				attacker: attack.getAttacker()?.row.hermitCard.cardInstance,
+				target: attack.getAttacker()?.row.hermitCard.cardInstance,
 				type: 'effect',
 				isBacklash: true,
 				log: (values) => `${values.target} took ${values.damage} damage from $eWolf$`,

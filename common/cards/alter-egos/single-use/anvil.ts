@@ -1,7 +1,7 @@
 import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
-import {applySingleUse, getActiveRowPos} from '../../../utils/board'
+import {applySingleUse, getActiveRow, getActiveRowPos} from '../../../utils/board'
 import {hasActive} from '../../../utils/game'
 import SingleUseCard from '../../base/single-use-card'
 
@@ -21,28 +21,22 @@ class AnvilSingleUseCard extends SingleUseCard {
 		const {player, opponentPlayer} = pos
 
 		player.hooks.getAttacks.add(instance, () => {
-			const activePos = getActiveRowPos(player)
-			if (!activePos) return
-			const activeIndex = activePos.rowIndex
-
+			const activeRow = getActiveRow(player)
 			const opponentRows = opponentPlayer.board.rows
 
 			const attack = opponentRows.reduce((r: undefined | AttackModel, row, i) => {
 				if (!row || !row.hermitCard) return r
 				const newAttack = new AttackModel({
-					id: this.getInstanceKey(instance, activeIndex === i ? 'active' : 'inactive'),
-					attacker: activePos,
-					target: {
-						player: opponentPlayer,
-						rowIndex: i,
-						row: row,
-					},
+					game: game,
+					creator: instance,
+					attacker: activeRow?.hermitCard.cardInstance,
+					target: row.hermitCard.cardInstance,
 					type: 'effect',
 					log: (values) =>
-						i === activeIndex
+						i === player.board.activeRow
 							? `${values.header} to attack ${values.target} for ${values.damage} damage`
 							: `, ${values.target} for ${values.damage} damage`,
-				}).addDamage(this.id, i === activeIndex ? 30 : 10)
+				}).addDamage(this.id, i === player.board.activeRow ? 30 : 10)
 
 				if (r) return r.addNewAttack(newAttack)
 
@@ -55,7 +49,7 @@ class AnvilSingleUseCard extends SingleUseCard {
 		player.hooks.onAttack.add(instance, (attack) => {
 			const attackId = this.getInstanceKey(instance, 'active')
 			const inactiveAttackId = this.getInstanceKey(instance, 'active')
-			if (attack.id !== attackId && attackId !== inactiveAttackId) return
+			if (attack.getCreator() !== instance && attackId !== inactiveAttackId) return
 
 			applySingleUse(game)
 

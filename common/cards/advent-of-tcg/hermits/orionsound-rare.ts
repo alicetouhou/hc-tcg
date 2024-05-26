@@ -35,7 +35,7 @@ class OrionSoundRareHermitCard extends HermitCard {
 		player.custom[instanceKey] = []
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'primary') return
+			if (attack.getCreator() !== instance || attack.type !== 'primary') return
 
 			game.addPickRequest({
 				playerId: player.id,

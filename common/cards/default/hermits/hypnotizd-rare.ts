@@ -57,11 +57,7 @@ class HypnotizdRareHermitCard extends HermitCard {
 		if (!targetRow.hermitCard) return attack
 
 		// Change attack target
-		attack.setTarget(this.id, {
-			player: opponentPlayer,
-			rowIndex: targetIndex,
-			row: targetRow,
-		})
+		attack.setTarget(this.id, targetRow.hermitCard.cardInstance)
 
 		const newAttacks = attack
 

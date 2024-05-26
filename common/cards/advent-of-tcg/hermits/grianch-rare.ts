@@ -36,7 +36,7 @@ class GrianchRareHermitCard extends HermitCard {
 
 		player.hooks.onAttack.add(instance, (attack) => {
 			const attacker = attack.getAttacker()
-			if (attack.id !== instanceKey || attack.type !== 'secondary' || !attacker) return
+			if (attack.getCreator() !== instance || attack.type !== 'secondary' || !attacker) return
 
 			const coinFlip = flipCoin(player, attacker.row.hermitCard)
 
@@ -52,7 +52,7 @@ class GrianchRareHermitCard extends HermitCard {
 		})
 
 		player.hooks.afterAttack.add(instance, (attack) => {
-			if (attack.id !== instanceKey || attack.type !== 'primary') return
+			if (attack.getCreator() !== instance || attack.type !== 'primary') return
 
 			const nonEmptyRows = getNonEmptyRows(player, true, true)
 			if (nonEmptyRows.length === 0) return

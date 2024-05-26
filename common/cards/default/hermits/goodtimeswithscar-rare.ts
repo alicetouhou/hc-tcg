@@ -36,7 +36,7 @@ class GoodTimesWithScarRareHermitCard extends HermitCard {
 			{}) // Singleton pattern so a player has one persistent Deathloop record
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary') return
+			if (attack.getCreator() !== instance || attack.type !== 'secondary') return
 
 			const attackerInstance = attack.getAttacker()?.row.hermitCard.cardInstance
 			if (!attackerInstance) return

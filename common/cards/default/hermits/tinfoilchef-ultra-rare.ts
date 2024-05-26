@@ -34,9 +34,8 @@ class TinFoilChefUltraRareHermitCard extends HermitCard {
 		const {player, opponentPlayer} = pos
 
 		player.hooks.beforeAttack.add(instance, (attack) => {
-			const attackId = this.getInstanceKey(instance)
 			const attacker = attack.getAttacker()
-			if (attack.id !== attackId || attack.type !== 'secondary' || !attacker) return
+			if (attack.getCreator() !== instance || attack.type !== 'secondary' || !attacker) return
 
 			if (opponentPlayer.board.activeRow === null) return 'NO'
 			const opponentActiveRow = opponentPlayer.board.rows[opponentPlayer.board.activeRow]

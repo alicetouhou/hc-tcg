@@ -31,9 +31,8 @@ class OverseerRareHermitCard extends HermitCard {
 		const {player} = pos
 
 		player.hooks.beforeAttack.add(instance, (attack) => {
-			const attackId = this.getInstanceKey(instance)
 			const target = attack.getTarget()
-			if (attack.id !== attackId || attack.type !== 'secondary' || !target) return
+			if (attack.getCreator() !== instance || attack.type !== 'secondary' || !target) return
 
 			const isFarmer =
 				target.row.hermitCard && HERMIT_CARDS[target.row.hermitCard.cardId]?.hermitType === 'farm'

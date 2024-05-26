@@ -1,5 +1,5 @@
 import {Slot} from '../types/cards'
-import {PlayerState, RowState} from '../types/game-state'
+import {PlayerState, RowState, RowStateWithHermit} from '../types/game-state'
 import {GameModel} from './game-model'
 
 export type BasicCardPos = {
@@ -7,6 +7,14 @@ export type BasicCardPos = {
 	opponentPlayer: PlayerState
 	rowIndex: number | null
 	row: RowState | null
+	slot: Slot
+}
+
+export type BasicHermitCardPos = {
+	player: PlayerState
+	opponentPlayer: PlayerState
+	rowIndex: number
+	row: RowStateWithHermit
 	slot: Slot
 }
 
@@ -68,6 +76,37 @@ export function getBasicCardPos(game: GameModel, instance: string): BasicCardPos
 							slot: {type: 'item', index: i},
 						}
 					}
+				}
+			}
+		}
+	}
+
+	return null
+}
+
+export function getHermitCardPos(game: GameModel, instance: string): BasicHermitCardPos | null {
+	const ids = game.getPlayerIds()
+	for (let i = 0; i < ids.length; i++) {
+		const playerId = ids[i]
+		const player = game.state.players[playerId]
+
+		const opponentPlayerId = ids.find((id) => id !== playerId)
+		if (!opponentPlayerId) continue
+		const opponentPlayer = game.state.players[opponentPlayerId]
+
+		const board = game.state.players[playerId].board
+
+		// go through rows to find instance
+		for (let rowIndex = 0; rowIndex < board.rows.length; rowIndex++) {
+			const row = board.rows[rowIndex]
+			if (!row.hermitCard) continue
+			if (row.hermitCard.cardInstance === instance) {
+				return {
+					player,
+					opponentPlayer,
+					rowIndex,
+					row,
+					slot: {type: 'hermit', index: 0},
 				}
 			}
 		}

@@ -2,7 +2,7 @@ import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import {RowStateWithHermit} from '../../../types/game-state'
-import {applySingleUse, getActiveRowPos} from '../../../utils/board'
+import {applySingleUse, getActiveRow, getActiveRowPos} from '../../../utils/board'
 import SingleUseCard from '../../base/single-use-card'
 
 class SplashPotionOfHarmingSingleUseCard extends SingleUseCard {
@@ -21,21 +21,16 @@ class SplashPotionOfHarmingSingleUseCard extends SingleUseCard {
 		const {opponentPlayer, player} = pos
 
 		player.hooks.getAttacks.add(instance, () => {
-			const activePos = getActiveRowPos(player)
-			if (!activePos) return
-			const activeIndex = activePos.rowIndex
+			const activeIndex = player.board.activeRow
 			const opponentRows = opponentPlayer.board.rows
 
 			const attack = opponentRows.reduce((r: undefined | AttackModel, row, i) => {
 				if (!row || !row.hermitCard) return r
 				const newAttack = new AttackModel({
-					id: this.getInstanceKey(instance),
-					attacker: activePos,
-					target: {
-						player: opponentPlayer,
-						rowIndex: i,
-						row: row,
-					},
+					game: game,
+					creator: instance,
+					attacker: getActiveRow(player)?.hermitCard.cardInstance,
+					target: row.hermitCard.cardInstance,
 					type: 'effect',
 					log: (values) =>
 						i === activeIndex
@@ -50,8 +45,7 @@ class SplashPotionOfHarmingSingleUseCard extends SingleUseCard {
 		})
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			const attackId = this.getInstanceKey(instance)
-			if (attack.id !== attackId) return
+			if (attack.getCreator() !== instance) return
 
 			applySingleUse(game)
 

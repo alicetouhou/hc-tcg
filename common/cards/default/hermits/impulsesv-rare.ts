@@ -31,7 +31,7 @@ class ImpulseSVRareHermitCard extends HermitCard {
 		const {player} = pos
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary') return
+			if (attack.getCreator() !== instance || attack.type !== 'secondary') return
 			const boomerAmount = player.board.rows.filter(
 				(row, index) =>
 					row.hermitCard &&

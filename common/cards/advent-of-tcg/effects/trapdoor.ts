@@ -40,13 +40,10 @@ class TrapdoorEffectCard extends EffectCard {
 				attack.reduceDamage(this.id, damageReduction)
 
 				const newAttack: AttackModel = new AttackModel({
-					id: instanceKey,
-					attacker: attack.getAttacker(),
-					target: {
-						player: player,
-						rowIndex: pos.rowIndex,
-						row: pos.row as RowStateWithHermit,
-					},
+					game: game,
+					creator: instance,
+					attacker: attack.getAttacker()?.row.hermitCard.cardInstance,
+					target: pos.row?.hermitCard?.cardInstance,
 					type: attack.type,
 					createWeakness: ['primary', 'secondary'].includes(attack.type) ? 'ifWeak' : 'never',
 				}).addDamage(this.id, damageReduction)

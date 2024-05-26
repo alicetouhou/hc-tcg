@@ -41,11 +41,7 @@ class LightningRodEffectCard extends EffectCard {
 			// Attack already has to be targeting us
 			if (attack.getTarget()?.player.id !== player.id) return
 
-			attack.setTarget(this.id, {
-				player,
-				rowIndex,
-				row,
-			})
+			attack.setTarget(this.id, row.hermitCard.cardInstance)
 		})
 
 		opponentPlayer.hooks.afterAttack.add(instance, (attack) => {

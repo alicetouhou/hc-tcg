@@ -33,8 +33,7 @@ class DungeonTangoRareHermitCard extends HermitCard {
 		const {player} = pos
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			const attackId = this.getInstanceKey(instance)
-			if (attack.id !== attackId || attack.type !== 'primary') return
+			if (attack.getCreator() !== instance || attack.type !== 'primary') return
 
 			let i: number = 0
 			do {

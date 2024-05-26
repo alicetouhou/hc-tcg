@@ -7,7 +7,8 @@ import {
 	WeaknessType,
 	AttackLogFactory,
 } from '../types/attack'
-import {RowPos} from '../types/cards'
+import {BasicHermitCardPos, getHermitCardPos} from './card-pos-model'
+import {GameModel} from './game-model'
 
 export class AttackModel {
 	/** The damage this attack does */
@@ -21,18 +22,20 @@ export class AttackModel {
 	/** The list of all changes made to this attack */
 	private history: Array<AttackHistory> = []
 
+	/** The instance of the creator of the attack */
+	private creator: string
 	/** The attacker */
-	private attacker: RowPos | null
+	private attacker: BasicHermitCardPos | null
 	/** The attack target */
-	private target: RowPos | null
+	private target: BasicHermitCardPos | null
+	/** Game attached to this attack model*/
+	private game: GameModel
 
 	/** The battle log attached to this attack */
 	public log: ((values: AttackLogFactory) => string) | null
 
 	// Public fields
 
-	/** Unique id for this attack */
-	public id: string | null = null
 	/** The attack type */
 	public type: AttackType
 	/** Attacks to perform after this attack */
@@ -45,12 +48,13 @@ export class AttackModel {
 	public createWeakness: WeaknessType
 
 	constructor(defs: AttackDefs) {
-		this.id = defs.id || null
 		this.type = defs.type
 		this.isBacklash = defs.isBacklash || false
+		this.game = defs.game
 
-		this.attacker = defs.attacker || null
-		this.target = defs.target || null
+		this.creator = defs.creator
+		this.attacker = defs.attacker ? getHermitCardPos(defs.game, defs.attacker) : null
+		this.target = defs.target ? getHermitCardPos(defs.game, defs.target) : null
 		this.shouldIgnoreCards = defs.shouldIgnoreCards || []
 		this.createWeakness = defs.createWeakness || 'never'
 
@@ -97,6 +101,10 @@ export class AttackModel {
 		}
 		return this.history
 	}
+	/** Returns the creator of this attack */
+	public getCreator() {
+		return this.creator
+	}
 	/** Returns the current attacker for this attack */
 	public getAttacker() {
 		return this.attacker
@@ -104,6 +112,10 @@ export class AttackModel {
 	/** Returns the current target for this attack */
 	public getTarget() {
 		return this.target
+	}
+	/** Returns the game this attack is from */
+	public getGame() {
+		return this.game
 	}
 
 	// Setters / modifier methods
@@ -138,15 +150,15 @@ export class AttackModel {
 	}
 
 	/** Sets the attacker for this attack */
-	public setAttacker(sourceId: string, attacker: RowPos | null) {
-		this.attacker = attacker
+	public setAttacker(sourceId: string, attacker: string | null) {
+		this.attacker = attacker ? getHermitCardPos(this.game, attacker) : null
 
 		this.addHistory(sourceId, 'set_attacker', attacker)
 		return this
 	}
 	/** Sets the target for this attack */
-	public setTarget(sourceId: string, target: RowPos | null) {
-		this.target = target
+	public setTarget(sourceId: string, target: string | null) {
+		this.target = target ? getHermitCardPos(this.game, target) : null
 
 		this.addHistory(sourceId, 'set_target', target)
 		return this

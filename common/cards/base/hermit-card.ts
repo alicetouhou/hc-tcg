@@ -69,17 +69,10 @@ abstract class HermitCard extends Card {
 
 		// Create an attack with default damage
 		const attack = new AttackModel({
-			id: this.getInstanceKey(instance),
-			attacker: {
-				player: pos.player,
-				rowIndex: pos.rowIndex,
-				row: pos.row,
-			},
-			target: {
-				player: opponentPlayer,
-				rowIndex: targetIndex,
-				row: targetRow,
-			},
+			game: game,
+			creator: instance,
+			attacker: pos.card?.cardInstance,
+			target: targetRow.hermitCard.cardInstance,
 			type: hermitAttackType,
 			createWeakness: 'ifWeak',
 			log: (values) =>

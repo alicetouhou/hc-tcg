@@ -2,7 +2,7 @@ import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import {PickRequest} from '../../../types/server-requests'
-import {applySingleUse, getActiveRowPos, getNonEmptyRows} from '../../../utils/board'
+import {applySingleUse, getActiveRow, getActiveRowPos, getNonEmptyRows} from '../../../utils/board'
 import SingleUseCard from '../../base/single-use-card'
 
 class CrossbowSingleUseCard extends SingleUseCard {
@@ -76,8 +76,8 @@ class CrossbowSingleUseCard extends SingleUseCard {
 		})
 
 		player.hooks.getAttacks.add(instance, () => {
-			const activePos = getActiveRowPos(player)
-			if (!activePos) return
+			const activeRow = getActiveRow(player)
+			if (!activeRow) return
 
 			const targets: Array<number> = player.custom[targetsKey]
 			if (targets === undefined) return
@@ -86,13 +86,10 @@ class CrossbowSingleUseCard extends SingleUseCard {
 				const row = opponentPlayer.board.rows[target]
 				if (!row || !row.hermitCard) return r
 				const newAttack = new AttackModel({
-					id: this.getInstanceKey(instance),
-					attacker: activePos,
-					target: {
-						player: opponentPlayer,
-						rowIndex: target,
-						row,
-					},
+					game: game,
+					creator: instance,
+					attacker: activeRow.hermitCard.cardInstance,
+					target: row.hermitCard.cardInstance,
 					type: 'effect',
 					log: (values) =>
 						i === 0
@@ -109,8 +106,7 @@ class CrossbowSingleUseCard extends SingleUseCard {
 		})
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			const attackId = this.getInstanceKey(instance)
-			if (attack.id !== attackId) return
+			if (attack.getCreator() !== instance) return
 
 			applySingleUse(game)
 

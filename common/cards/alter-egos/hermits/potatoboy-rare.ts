@@ -30,7 +30,7 @@ class PotatoBoyRareHermitCard extends HermitCard {
 		const {player} = pos
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'primary') return
+			if (attack.getCreator() !== instance || attack.type !== 'primary') return
 
 			const activeRow = player.board.activeRow
 			if (activeRow === null) return

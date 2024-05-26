@@ -31,8 +31,7 @@ class WelsknightRareHermitCard extends HermitCard {
 		const {player} = pos
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			const attackId = this.getInstanceKey(instance)
-			if (attack.id !== attackId || attack.type !== 'secondary') return
+			if (attack.getCreator() !== instance || attack.type !== 'secondary') return
 			const attacker = attack.getAttacker()
 			if (!attacker) return
 

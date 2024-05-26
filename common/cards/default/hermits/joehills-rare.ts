@@ -37,7 +37,7 @@ class JoeHillsRareHermitCard extends HermitCard {
 		player.custom[skippedKey] = null
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance)) return
+			if (attack.getCreator() !== instance) return
 			const attacker = attack.getAttacker()
 			if (!attacker || attack.type !== 'secondary') return
 

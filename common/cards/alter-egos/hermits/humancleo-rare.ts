@@ -38,7 +38,7 @@ class HumanCleoRareHermitCard extends HermitCard {
 
 		player.hooks.onAttack.add(instance, (attack) => {
 			const attacker = attack.getAttacker()
-			if (attack.id !== instanceKey || attack.type !== 'secondary' || !attacker) return
+			if (attack.getCreator() !== instance || attack.type !== 'secondary' || !attacker) return
 
 			const coinFlip = flipCoin(player, attacker.row.hermitCard, 2)
 
@@ -136,11 +136,7 @@ class HumanCleoRareHermitCard extends HermitCard {
 
 					const targetRow = opponentPlayer.board.rows[opponentTarget]
 					if (targetRow && targetRow.hermitCard) {
-						attack.setTarget(this.id, {
-							player: opponentPlayer,
-							rowIndex: opponentTarget,
-							row: targetRow,
-						})
+						attack.setTarget(this.id, targetRow.hermitCard.cardInstance)
 					}
 				}
 

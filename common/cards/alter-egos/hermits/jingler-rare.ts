@@ -34,7 +34,7 @@ class JinglerRareHermitCard extends HermitCard {
 		const followUpKey = this.getInstanceKey(instance)
 
 		player.hooks.afterAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance)) return
+			if (attack.getCreator() !== instance) return
 			const attacker = attack.getAttacker()
 			if (attack.type !== 'secondary' || !attack.getTarget() || !attacker) return
 			const coinFlip = flipCoin(player, attacker.row.hermitCard)

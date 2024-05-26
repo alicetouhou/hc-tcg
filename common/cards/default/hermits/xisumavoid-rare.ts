@@ -32,9 +32,13 @@ class XisumavoidRareHermitCard extends HermitCard {
 		const {player, opponentPlayer} = pos
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			const attackId = this.getInstanceKey(instance)
 			const attacker = attack.getAttacker()
-			if (attack.id !== attackId || attack.type !== 'secondary' || !attack.getTarget() || !attacker)
+			if (
+				attack.getCreator() !== instance ||
+				attack.type !== 'secondary' ||
+				!attack.getTarget() ||
+				!attacker
+			)
 				return
 
 			const coinFlip = flipCoin(player, attacker.row.hermitCard)

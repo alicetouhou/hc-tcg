@@ -32,11 +32,7 @@ class TangoTekRareHermitCard extends HermitCard {
 		const {player, opponentPlayer} = pos
 
 		player.hooks.afterAttack.add(instance, (attack) => {
-			if (
-				attack.id !== this.getInstanceKey(instance) ||
-				attack.type !== 'secondary' ||
-				!attack.getTarget()
-			)
+			if (attack.getCreator() !== instance || attack.type !== 'secondary' || !attack.getTarget())
 				return
 
 			const opponentInactiveRows = getNonEmptyRows(opponentPlayer, true, true)

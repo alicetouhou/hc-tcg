@@ -31,7 +31,7 @@ class Cubfan135RareHermitCard extends HermitCard {
 		const instanceKey = this.getInstanceKey(instance)
 
 		player.hooks.afterAttack.add(instance, (attack) => {
-			if (attack.id !== instanceKey || attack.type !== 'secondary') return
+			if (attack.getCreator() !== instance || attack.type !== 'secondary') return
 
 			// We used our secondary attack, activate power
 			// AKA remove change active hermit from blocked actions

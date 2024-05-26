@@ -32,7 +32,7 @@ class FiveAMPearlRareHermitCard extends HermitCard {
 		const {player} = pos
 
 		player.hooks.beforeAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary') return
+			if (attack.getCreator() !== instance || attack.type !== 'secondary') return
 
 			const effectCard = getActiveRow(player)?.effectCard
 			if (!effectCard || effectCard.cardId !== 'wolf') return

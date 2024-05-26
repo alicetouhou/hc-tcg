@@ -1,8 +1,7 @@
-import {CARDS} from '../..'
 import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
-import {applySingleUse, getActiveRowPos} from '../../../utils/board'
+import {applySingleUse, getActiveRow} from '../../../utils/board'
 import SingleUseCard from '../../base/single-use-card'
 
 class TNTSingleUseCard extends SingleUseCard {
@@ -22,27 +21,27 @@ class TNTSingleUseCard extends SingleUseCard {
 		const {player, opponentPlayer} = pos
 
 		player.hooks.getAttacks.add(instance, () => {
-			const activePos = getActiveRowPos(player)
-			if (!activePos) return
-			const opponentActivePos = getActiveRowPos(opponentPlayer)
-			if (!opponentActivePos) return
+			const playerActiveRow = getActiveRow(player)
+			const opponentActiveRow = getActiveRow(opponentPlayer)
 
 			const tntAttack = new AttackModel({
-				id: this.getInstanceKey(instance, 'attack'),
-				attacker: activePos,
-				target: opponentActivePos,
+				game: game,
+				creator: instance,
+				attacker: playerActiveRow?.hermitCard.cardInstance,
+				target: opponentActiveRow?.hermitCard.cardInstance,
 				type: 'effect',
-				log: (values) => `${values.header} to attack ${values.target} for ${values.damage} damage `,
+				log: (values) => `${values.header} to attack ${values.target} for ${values.damage} damage`,
 			}).addDamage(this.id, 60)
 
 			const backlashAttack = new AttackModel({
-				id: this.getInstanceKey(instance, 'backlash'),
-				attacker: activePos,
-				target: activePos,
+				game: game,
+				creator: instance,
+				attacker: playerActiveRow?.hermitCard.cardInstance,
+				target: playerActiveRow?.hermitCard.cardInstance,
 				type: 'effect',
 				isBacklash: true,
 				log: (values) => `and took ${values.damage} backlash damage`,
-			}).addDamage(this.id, 20)
+			}).addDamage(this.id, 30)
 
 			tntAttack.addNewAttack(backlashAttack)
 
@@ -50,8 +49,7 @@ class TNTSingleUseCard extends SingleUseCard {
 		})
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			const backlashId = this.getInstanceKey(instance, 'backlash')
-			if (attack.id !== backlashId) return
+			if (attack.getCreator() !== instance && !attack.isBacklash) return
 
 			// We've executed our attack, apply effect
 			applySingleUse(game)

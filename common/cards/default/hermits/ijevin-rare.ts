@@ -32,7 +32,7 @@ class IJevinRareHermitCard extends HermitCard {
 		const {player, opponentPlayer} = pos
 
 		player.hooks.afterAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance)) return
+			if (attack.getCreator() !== instance) return
 			if (attack.type !== 'secondary' || !attack.getTarget()) return
 
 			const opponentInactiveRows = getNonEmptyRows(opponentPlayer, true, true)

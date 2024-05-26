@@ -2,7 +2,7 @@ import {CARDS} from '../..'
 import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
-import {applySingleUse, getActiveRowPos, getNonEmptyRows} from '../../../utils/board'
+import {applySingleUse, getActiveRow, getActiveRowPos, getNonEmptyRows} from '../../../utils/board'
 import SingleUseCard from '../../base/single-use-card'
 
 class BowSingleUseCard extends SingleUseCard {
@@ -59,8 +59,7 @@ class BowSingleUseCard extends SingleUseCard {
 		})
 
 		player.hooks.getAttacks.add(instance, () => {
-			const activePos = getActiveRowPos(player)
-			if (!activePos) return
+			const playerActiveRow = getActiveRow(player)
 
 			const opponentIndex = player.custom[targetKey]
 			if (opponentIndex === null || opponentIndex === undefined) return
@@ -68,13 +67,10 @@ class BowSingleUseCard extends SingleUseCard {
 			if (!opponentRow || !opponentRow.hermitCard) return
 
 			const bowAttack = new AttackModel({
-				id: this.getInstanceKey(instance),
-				attacker: activePos,
-				target: {
-					player: opponentPlayer,
-					rowIndex: opponentIndex,
-					row: opponentRow,
-				},
+				game: game,
+				creator: instance,
+				attacker: playerActiveRow?.hermitCard.cardInstance,
+				target: opponentRow.hermitCard.cardInstance,
 				type: 'effect',
 				log: (values) => `${values.header} to attack ${values.target} for ${values.damage} damage`,
 			}).addDamage(this.id, 40)
@@ -83,8 +79,7 @@ class BowSingleUseCard extends SingleUseCard {
 		})
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			const attackId = this.getInstanceKey(instance)
-			if (attack.id !== attackId) return
+			if (attack.getCreator() !== instance) return
 
 			applySingleUse(game)
 		})

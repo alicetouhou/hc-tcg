@@ -35,8 +35,8 @@ class BdoubleO100RareHermitCard extends HermitCard {
 		player.hooks.onAttack.add(instance, (attack) => {
 			const attacker = attack.getAttacker()
 			if (!attacker) return
-			const attackId = this.getInstanceKey(instance)
-			if (attack.id !== attackId || attack.type !== 'secondary') return
+
+			if (attack.getCreator() !== instance || attack.type !== 'secondary') return
 
 			const row = getActiveRow(player)
 

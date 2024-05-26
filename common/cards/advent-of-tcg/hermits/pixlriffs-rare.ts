@@ -37,7 +37,7 @@ class PixlriffsRareHermitCard extends HermitCard {
 		})
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary') return
+			if (attack.getCreator() !== instance || attack.type !== 'secondary') return
 
 			if (player.custom[instance] !== player.board.activeRow) attack.addDamage(this.id, 40)
 			delete player.custom[instance]

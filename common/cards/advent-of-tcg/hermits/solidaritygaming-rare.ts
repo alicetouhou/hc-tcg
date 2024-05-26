@@ -37,7 +37,7 @@ class SolidaritygamingRareHermitCard extends HermitCard {
 		const instanceKey = this.getInstanceKey(instance)
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'primary') return
+			if (attack.getCreator() !== instance || attack.type !== 'primary') return
 			const playerInactiveRows = getNonEmptyRows(player, true)
 			if (playerInactiveRows.length === 0) return
 

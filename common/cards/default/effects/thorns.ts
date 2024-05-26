@@ -32,12 +32,13 @@ class ThornsEffectCard extends EffectCard {
 				player.custom[triggeredKey] = true
 
 				const backlashAttack = new AttackModel({
-					id: this.getInstanceKey(instance, 'backlash'),
-					attacker: attack.getTarget(),
-					target: attack.getAttacker(),
+					game: game,
+					creator: instance,
+					attacker: attack.getAttacker()?.row.hermitCard.cardInstance,
+					target: attack.getAttacker()?.row.hermitCard.cardInstance,
 					type: 'effect',
 					isBacklash: true,
-					log: (values) => `${values.target} took ${values.damage} damage from $eThorns$`,
+					log: (values) => `${values.target} took ${values.damage} damage from $eThorns II$`,
 				}).addDamage(this.id, 20)
 
 				backlashAttack.shouldIgnoreCards.push((instance) => {

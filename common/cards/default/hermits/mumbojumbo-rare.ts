@@ -37,8 +37,7 @@ class MumboJumboRareHermitCard extends HermitCard {
 
 		player.hooks.onAttack.add(instance, (attack) => {
 			const attacker = attack.getAttacker()
-			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary' || !attacker)
-				return
+			if (attack.getCreator() !== instance || attack.type !== 'secondary' || !attacker) return
 
 			const coinFlip = flipCoin(player, attacker.row.hermitCard, 2)
 			const headsAmount = coinFlip.filter((flip) => flip === 'heads').length

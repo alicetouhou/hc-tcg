@@ -36,7 +36,7 @@ class ShubbleYTRareHermitCard extends HermitCard {
 		const {player} = pos
 
 		player.hooks.afterAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance)) return
+			if (attack.getCreator() !== instance) return
 			if (attack.type !== 'secondary') return
 
 			game.addModalRequest({

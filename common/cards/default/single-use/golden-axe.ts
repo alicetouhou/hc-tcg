@@ -1,9 +1,7 @@
-import {CARDS} from '../..'
 import {AttackModel} from '../../../models/attack-model'
-import {CardPosModel, getCardPos} from '../../../models/card-pos-model'
+import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
-import {isTargetingPos} from '../../../utils/attacks'
-import {applySingleUse, getActiveRowPos} from '../../../utils/board'
+import {applySingleUse, getActiveRow, getActiveRowPos} from '../../../utils/board'
 import SingleUseCard from '../../base/single-use-card'
 
 class GoldenAxeSingleUseCard extends SingleUseCard {
@@ -22,28 +20,23 @@ class GoldenAxeSingleUseCard extends SingleUseCard {
 		const {player, opponentPlayer} = pos
 
 		player.hooks.getAttacks.add(instance, () => {
-			const activePos = getActiveRowPos(player)
-			if (!activePos) return
-			const opponentActivePos = getActiveRowPos(opponentPlayer)
-			if (!opponentActivePos) return
+			const playerActiveRow = getActiveRow(player)
+			const opponentActiveRow = getActiveRow(opponentPlayer)
 
 			const axeAttack = new AttackModel({
-				id: this.getInstanceKey(instance),
-				attacker: activePos,
-				target: opponentActivePos,
+				game: game,
+				creator: instance,
+				attacker: playerActiveRow?.hermitCard.cardInstance,
+				target: opponentActiveRow?.hermitCard.cardInstance,
 				type: 'effect',
-				log: (values) => `${values.header} to attack ${values.target} for ${values.damage} damage`,
+				log: (values) => `${values.header} to attack ${values.target} for ${values.damage} damage,`,
 			}).addDamage(this.id, 40)
 
 			return axeAttack
 		})
 
 		player.hooks.beforeAttack.addBefore(instance, (attack) => {
-			const attackId = this.getInstanceKey(instance)
-			const opponentActivePos = getActiveRowPos(opponentPlayer)
-			if (!opponentActivePos) return
-
-			if (attack.id === attackId) {
+			if (attack.getCreator() === instance) {
 				applySingleUse(game)
 			}
 
@@ -54,7 +47,7 @@ class GoldenAxeSingleUseCard extends SingleUseCard {
 				if (pos.slot.type !== 'effect') return false
 
 				// Not attached to the same row as the opponent's active Hermit, do not ignore it
-				if (pos.rowIndex !== opponentActivePos.rowIndex) return false
+				if (pos.rowIndex !== opponentPlayer.board.activeRow) return false
 
 				// Do not ignore the player's effect.
 				if (pos.player === player) return false

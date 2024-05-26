@@ -2,7 +2,7 @@ import {CARDS} from '../..'
 import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
-import {applySingleUse, getActiveRowPos} from '../../../utils/board'
+import {applySingleUse, getActiveRow, getActiveRowPos} from '../../../utils/board'
 import {flipCoin} from '../../../utils/coinFlips'
 import {discardSingleUse} from '../../../utils/movement'
 import SingleUseCard from '../../base/single-use-card'
@@ -24,15 +24,14 @@ class TridentSingleUseCard extends SingleUseCard {
 		const {player, opponentPlayer} = pos
 
 		player.hooks.getAttacks.add(instance, () => {
-			const activePos = getActiveRowPos(player)
-			if (!activePos) return
-			const opponentActivePos = getActiveRowPos(opponentPlayer)
-			if (!opponentActivePos) return
+			const playerActiveRow = getActiveRow(player)
+			const opponentActiveRow = getActiveRow(opponentPlayer)
 
 			const tridentAttack = new AttackModel({
-				id: this.getInstanceKey(instance),
-				attacker: activePos,
-				target: opponentActivePos,
+				game: game,
+				creator: instance,
+				attacker: playerActiveRow?.hermitCard.cardInstance,
+				target: opponentActiveRow?.hermitCard.cardInstance,
 				type: 'effect',
 				log: (values) =>
 					`${values.header} to attack ${values.target} for ${values.damage} damage, then ${values.coinFlip}`,
@@ -42,8 +41,7 @@ class TridentSingleUseCard extends SingleUseCard {
 		})
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			const attackId = this.getInstanceKey(instance)
-			if (attack.id !== attackId) return
+			if (attack.getCreator() !== instance) return
 
 			player.custom[this.getInstanceKey(instance)] = flipCoin(player, {
 				cardId: this.id,

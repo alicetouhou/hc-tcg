@@ -81,8 +81,7 @@ class KeralisRareHermitCard extends HermitCard {
 
 		// Heals the afk hermit *before* we actually do damage
 		player.hooks.onAttack.add(instance, (attack) => {
-			const attackId = this.getInstanceKey(instance)
-			if (attack.id !== attackId || attack.type !== 'secondary') return
+			if (attack.getCreator() !== instance || attack.type !== 'secondary') return
 
 			const pickedPlayer = game.state.players[player.custom[playerKey]]
 			if (!pickedPlayer) return

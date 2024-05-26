@@ -36,7 +36,7 @@ class BigBSt4tzRareHermitCard extends HermitCard {
 		const dealDamageNextTurn = this.getInstanceKey(instance, 'dealDamageNextTurn')
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary') return
+			if (attack.getCreator() !== instance || attack.type !== 'secondary') return
 
 			player.custom[dealDamageNextTurn] = true
 		})
@@ -52,24 +52,12 @@ class BigBSt4tzRareHermitCard extends HermitCard {
 				const activeRow = getActiveRow(player)
 				const opponentActiveRow = getActiveRow(opponentPlayer)
 				if (activeRowIndex === null || opponentActiveRowIndex === null) return
-				if (!activeRow || !opponentActiveRow) return
-
-				const sourceRow: RowPos = {
-					player: player,
-					rowIndex: activeRowIndex,
-					row: activeRow,
-				}
-
-				const targetRow: RowPos = {
-					player: opponentPlayer,
-					rowIndex: opponentActiveRowIndex,
-					row: opponentActiveRow,
-				}
 
 				const statusEffectAttack = new AttackModel({
-					id: this.getInstanceKey(instance),
-					attacker: sourceRow,
-					target: targetRow,
+					game: game,
+					creator: instance,
+					attacker: activeRow?.hermitCard.cardInstance,
+					target: opponentActiveRow?.hermitCard.cardInstance,
 					type: 'status-effect',
 				})
 				statusEffectAttack.addDamage(this.id, 140)

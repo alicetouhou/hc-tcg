@@ -47,6 +47,7 @@ class HotguyRareHermitCard extends HermitCard {
 		const {player} = pos
 
 		// How do I avoid using the cardId here? | Impossible so long as this is about a specific card - sense
+		// @TODO Check still works
 		player.hooks.beforeAttack.add(instance, (attack) => {
 			const singleUseCard = player.board.singleUseCard
 			if (
@@ -56,8 +57,7 @@ class HotguyRareHermitCard extends HermitCard {
 			)
 				return
 
-			const bowId = SINGLE_USE_CARDS['bow'].getInstanceKey(singleUseCard.cardInstance)
-			if (attack.id === bowId) {
+			if (attack.getCreator() === singleUseCard.cardInstance) {
 				attack.addDamage(this.id, attack.getDamage())
 			}
 		})

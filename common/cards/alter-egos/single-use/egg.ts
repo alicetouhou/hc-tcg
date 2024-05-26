@@ -3,7 +3,7 @@ import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import {PickInfo} from '../../../types/server-requests'
-import {applySingleUse, getActiveRowPos, getNonEmptyRows} from '../../../utils/board'
+import {applySingleUse, getActiveRow, getActiveRowPos, getNonEmptyRows} from '../../../utils/board'
 import {flipCoin} from '../../../utils/coinFlips'
 import SingleUseCard from '../../base/single-use-card'
 
@@ -62,11 +62,9 @@ class EggSingleUseCard extends SingleUseCard {
 		})
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			const activePos = getActiveRowPos(player)
-			if (!activePos) return []
-
 			const pickInfo: PickInfo = player.custom[targetKey]
 			if (!pickInfo || !pickInfo.rowIndex) return
+			const activeRow = getActiveRow(player)
 			const opponentRow = opponentPlayer.board.rows[pickInfo.rowIndex]
 			if (!opponentRow.hermitCard) return
 
@@ -75,13 +73,10 @@ class EggSingleUseCard extends SingleUseCard {
 			const coinFlip = flipCoin(player, {cardId: this.id, cardInstance: instance})
 			if (coinFlip[0] === 'heads') {
 				const eggAttack = new AttackModel({
-					id: this.getInstanceKey(instance),
-					attacker: activePos,
-					target: {
-						player: opponentPlayer,
-						rowIndex: pickInfo.rowIndex,
-						row: opponentRow,
-					},
+					game: game,
+					creator: instance,
+					attacker: activeRow?.hermitCard.cardInstance,
+					target: opponentRow.hermitCard.cardInstance,
 					log: (values) =>
 						`$p{You|${values.player}}$ flipped $gheads$ on $eEgg$ and did an additional ${values.damage} to ${values.target}`,
 					type: 'effect',

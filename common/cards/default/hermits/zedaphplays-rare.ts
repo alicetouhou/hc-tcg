@@ -35,7 +35,7 @@ class ZedaphPlaysRareHermitCard extends HermitCard {
 
 		player.hooks.onAttack.add(instance, (attack) => {
 			const attacker = attack.getAttacker()
-			if (attack.id !== instanceKey || attack.type !== 'primary' || !attacker) return
+			if (attack.getCreator() !== instance || attack.type !== 'primary' || !attacker) return
 
 			const attackerHermit = attacker.row.hermitCard
 			const coinFlip = flipCoin(player, attackerHermit)
@@ -43,7 +43,8 @@ class ZedaphPlaysRareHermitCard extends HermitCard {
 
 			opponentPlayer.hooks.beforeAttack.add(instance, (attack) => {
 				if (!attack.isType('primary', 'secondary') || attack.isBacklash) return
-				if (!attack.getAttacker()) return
+				const attacker = attack.getAttacker()
+				if (!attacker) return
 
 				// No need to flip a coin for multiple attacks
 				if (!player.custom[coinFlipResult]) {
@@ -53,7 +54,7 @@ class ZedaphPlaysRareHermitCard extends HermitCard {
 
 				if (player.custom[coinFlipResult] === 'heads') {
 					// Change attack target - this just works
-					attack.setTarget(this.id, attack.getAttacker())
+					attack.setTarget(this.id, attacker.row.hermitCard.cardInstance)
 				}
 			})
 

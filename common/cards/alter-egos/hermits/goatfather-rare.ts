@@ -53,23 +53,17 @@ class GoatfatherRareHermitCard extends HermitCard {
 		const activeRow = opponentPlayer.board.activeRow
 		const rows = opponentPlayer.board.rows
 
-		if (activeRow === null || rowIndex === null) return
+		if (activeRow === null) return
+
 		for (let i = activeRow + 1; i < rows.length; i++) {
 			const targetRow = rows[i]
 			if (!targetRow.hermitCard) continue
 
 			const attack = new AttackModel({
-				id: this.getInstanceKey(instance),
-				attacker: {
-					player,
-					rowIndex: rowIndex,
-					row: row,
-				},
-				target: {
-					player: opponentPlayer,
-					rowIndex: i,
-					row: targetRow,
-				},
+				game: game,
+				creator: instance,
+				attacker: row.hermitCard.cardInstance,
+				target: targetRow.hermitCard.cardInstance,
 				type: hermitAttackType,
 				log: (values) => `, ${values.target} for ${values.damage} damage`,
 			}).addDamage(this.id, 10)

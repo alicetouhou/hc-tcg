@@ -261,9 +261,8 @@ function createWeaknessAttack(attack: AttackModel): AttackModel | null {
 
 	const attacker = attack.getAttacker()
 	const target = attack.getTarget()
-	const attackId = attack.id
 
-	if (!attacker || !target || !attackId) return null
+	if (!attacker || !target) return null
 
 	const attackerCardInfo = HERMIT_CARDS[attacker.row.hermitCard.cardId]
 	const targetCardInfo = HERMIT_CARDS[target.row.hermitCard.cardId]
@@ -276,9 +275,10 @@ function createWeaknessAttack(attack: AttackModel): AttackModel | null {
 	}
 
 	const weaknessAttack = new AttackModel({
-		id: attackId + 'weakness',
-		attacker,
-		target,
+		game: attack.getGame(),
+		creator: attack.getCreator(),
+		attacker: attacker.row.hermitCard.cardInstance,
+		target: target.row.hermitCard.cardInstance,
 		type: 'weakness',
 	})
 

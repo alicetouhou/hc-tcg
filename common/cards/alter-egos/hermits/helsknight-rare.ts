@@ -34,8 +34,7 @@ class HelsknightRareHermitCard extends HermitCard {
 
 		player.hooks.onAttack.add(instance, (attack) => {
 			const attacker = attack.getAttacker()
-			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary' || !attacker)
-				return
+			if (attack.getCreator() !== instance || attack.type !== 'secondary' || !attacker) return
 
 			const attackerHermit = attacker.row.hermitCard
 			opponentPlayer.hooks.onApply.add(instance, () => {
