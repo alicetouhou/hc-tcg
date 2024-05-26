@@ -56,7 +56,7 @@ class EvilXisumaRareHermitCard extends HermitCard {
 					payload: {
 						modalName: 'Evil X: Disable an attack for 1 turn',
 						modalDescription: "Which of the opponent's attacks do you want to disable?",
-						cardPos: getBasicCardPos(game, opponentActiveRow.row.hermitCard.cardInstance),
+						cardPos: getBasicCardPos(game, opponentActiveRow.hermitCard.cardInstance),
 					},
 				},
 				onResult(modalResult) {
