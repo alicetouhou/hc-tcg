@@ -149,9 +149,6 @@ export function executeAttacks(
 	attacks: Array<AttackModel>,
 	withoutBlockingActions = false
 ) {
-	// Outer attack loop
-	// Main attack loop
-
 	// STEP 1 - Call before attack and defence for all attacks
 	runBeforeAttackHooks(attacks)
 	runBeforeDefenceHooks(attacks)
