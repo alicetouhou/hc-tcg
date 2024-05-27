@@ -1,6 +1,5 @@
 import {useEffect, useRef, useState} from 'react'
 import {useSelector, useDispatch} from 'react-redux'
-import {CardT} from 'common/types/game-state'
 import CardList from 'components/card-list'
 import Board from './board'
 import css from './game.module.scss'
@@ -32,6 +31,7 @@ import {PickCardActionData} from 'common/types/action-data'
 import {equalCard} from 'common/utils/cards'
 import CopyAttackModal from './modals/copy-attack-modal'
 import {PickInfo} from 'common/types/server-requests'
+import Card from 'common/cards/base/card'
 
 const MODAL_COMPONENTS: Record<string, React.FC<any>> = {
 	attack: AttackModal,
@@ -73,7 +73,7 @@ function Game() {
 	if (!gameState || !playerState) return <p>Loading</p>
 	const [gameScale, setGameScale] = useState<number>(1)
 	const filteredCards = DEBUG_CONFIG.unlimitedCards
-		? gameState.hand.filter((c) => c.cardId.toLowerCase().includes(filter.toLowerCase()))
+		? gameState.hand.filter((c) => c.id.toLowerCase().includes(filter.toLowerCase()))
 		: gameState.hand
 
 	const gameWrapperRef = useRef<HTMLDivElement>(null)
@@ -88,7 +88,7 @@ function Game() {
 		dispatch(slotPicked(pickInfo))
 	}
 
-	const selectCard = (card: CardT) => {
+	const selectCard = (card: Card) => {
 		if (availableActions.includes('PICK_REQUEST')) {
 			const index = gameState.hand.findIndex((c) => equalCard(c, card))
 			if (index === -1) return
@@ -225,7 +225,7 @@ function Game() {
 					<CardList
 						wrap={false}
 						cards={filteredCards}
-						onClick={(card: CardT) => selectCard(card)}
+						onClick={(card: Card) => selectCard(card)}
 						selected={[selectedCard]}
 					/>
 				</div>

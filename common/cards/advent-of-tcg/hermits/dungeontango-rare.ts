@@ -37,7 +37,7 @@ class DungeonTangoRareHermitCard extends HermitCard {
 
 			let i: number = 0
 			do {
-				if (HERMIT_CARDS[player.pile[i].cardId]) {
+				if (HERMIT_CARDS[player.pile[i].id]) {
 					break
 				}
 				i++

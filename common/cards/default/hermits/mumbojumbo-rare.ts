@@ -45,7 +45,7 @@ class MumboJumboRareHermitCard extends HermitCard {
 				(row, index) =>
 					row.hermitCard &&
 					index !== player.board.activeRow &&
-					HERMIT_CARDS[row.hermitCard.cardId]?.hermitType === 'prankster'
+					HERMIT_CARDS[row.hermitCard.id]?.hermitType === 'prankster'
 			).length
 
 			attack.addDamage(this.id, headsAmount * 20)

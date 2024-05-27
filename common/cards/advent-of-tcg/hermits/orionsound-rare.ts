@@ -49,8 +49,8 @@ class OrionSoundRareHermitCard extends HermitCard {
 					if (pickResult.slot.type !== 'hermit') return 'FAILURE_INVALID_SLOT'
 					if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
 
-					applyStatusEffect(game, 'melody', pickResult.card.cardInstance)
-					player.custom[instanceKey].push(pickResult.card.cardInstance)
+					applyStatusEffect(game, 'melody', pickResult.card.instance)
+					player.custom[instanceKey].push(pickResult.card.instance)
 
 					return 'SUCCESS'
 				},

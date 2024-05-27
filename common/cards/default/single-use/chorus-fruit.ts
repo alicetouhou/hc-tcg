@@ -36,8 +36,7 @@ class ChorusFruitSingleUseCard extends SingleUseCard {
 		const activeRow = getActiveRow(player)
 
 		const isSleeping = game.state.statusEffects.some(
-			(a) =>
-				a.targetInstance == activeRow?.hermitCard?.cardInstance && a.statusEffectId == 'sleeping'
+			(a) => a.targetInstance == activeRow?.hermitCard?.instance && a.statusEffectId == 'sleeping'
 		)
 		if (isSleeping) result.push('UNMET_CONDITION')
 

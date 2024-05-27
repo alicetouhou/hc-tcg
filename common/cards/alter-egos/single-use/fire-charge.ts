@@ -31,7 +31,7 @@ class FireChargeSingleUseCard extends SingleUseCard {
 			const validTypes = new Set(['effect', 'item'])
 
 			for (const card of cards) {
-				if (card && validTypes.has(CARDS[card.cardId]?.type)) {
+				if (card && validTypes.has(CARDS[card.id]?.type)) {
 					total++
 				}
 			}
@@ -62,7 +62,7 @@ class FireChargeSingleUseCard extends SingleUseCard {
 				const row = player.board.rows[pickResult.rowIndex]
 				if (!row.hermitCard) return 'FAILURE_INVALID_SLOT'
 
-				const pos = getCardPos(game, pickResult.card.cardInstance)
+				const pos = getCardPos(game, pickResult.card.instance)
 				if (!pos) return 'FAILURE_CANNOT_COMPLETE'
 
 				// Discard the picked card and apply su card

@@ -1,6 +1,5 @@
+import Card from '../cards/base/card'
 import {GameModel} from '../models/game-model'
-import {RowPos} from './cards'
-import {CardT} from './game-state'
 
 export type HermitAttackType = 'primary' | 'secondary' | 'single-use'
 
@@ -27,14 +26,19 @@ export type AttackLogFactory = {
 
 export type AttackDefs = {
 	game: GameModel
-	creator: CardT | null
-	attacker?: CardT | null
-	target?: CardT | null
+	creator: Creator | null
+	attacker?: Card | null
+	target?: Card | null
 	type: AttackType
 	shouldIgnoreCards?: Array<ShouldIgnoreCard>
 	isBacklash?: boolean
 	createWeakness?: WeaknessType
 	log?: (values: AttackLogFactory) => string
+}
+
+export type Creator = {
+	id: string
+	instance: string
 }
 
 export type AttackHistoryType =

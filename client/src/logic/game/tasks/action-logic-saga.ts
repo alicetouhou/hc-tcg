@@ -2,11 +2,11 @@ import {select, take} from 'typed-redux-saga'
 import {call, put, fork} from 'redux-saga/effects'
 import {SagaIterator} from 'redux-saga'
 import {LocalGameState} from 'common/types/game-state'
-import {CardT} from 'common/types/game-state'
 import {CARDS} from 'common/cards'
 import {getPlayerId} from 'logic/session/session-selectors'
-import {setOpenedModal, applyEffect, modalRequest} from 'logic/game/game-actions'
+import {setOpenedModal, modalRequest} from 'logic/game/game-actions'
 import SingleUseCard from 'common/cards/base/single-use-card'
+import Card from 'common/cards/base/card'
 
 function* borrowSaga(): SagaIterator {
 	yield put(setOpenedModal('borrow'))
@@ -19,9 +19,9 @@ function* borrowSaga(): SagaIterator {
 	yield put(modalRequest({modalResult: {attach: true}}))
 }
 
-function* singleUseSaga(card: CardT): SagaIterator {
+function* singleUseSaga(card: Card): SagaIterator {
 	// We use CARDS instead of SINGLE_USE_CARDS because of Water and Milk Buckets
-	const cardInfo = CARDS[card.cardId]
+	const cardInfo = CARDS[card.id]
 	if (!cardInfo) return
 
 	if (cardInfo instanceof SingleUseCard && cardInfo.canApply()) {

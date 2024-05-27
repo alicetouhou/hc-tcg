@@ -39,19 +39,17 @@ class WaterBucketEffectCard extends EffectCard {
 					if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
 
 					const statusEffectsToRemove = game.state.statusEffects.filter((ail) => {
-						return (
-							ail.targetInstance === pickResult.card?.cardInstance && ail.statusEffectId == 'fire'
-						)
+						return ail.targetInstance === pickResult.card?.instance && ail.statusEffectId == 'fire'
 					})
 					statusEffectsToRemove.forEach((ail) => {
 						removeStatusEffect(game, pos, ail.statusEffectInstance)
 					})
 
-					if (player.board.rows[pickResult.rowIndex].effectCard?.cardId === 'string') {
+					if (player.board.rows[pickResult.rowIndex].effectCard?.id === 'string') {
 						discardCard(game, player.board.rows[pickResult.rowIndex].effectCard)
 					}
 					for (let i = 0; i < player.board.rows[pickResult.rowIndex].itemCards.length; i++) {
-						if (player.board.rows[pickResult.rowIndex].itemCards[i]?.cardId === 'string') {
+						if (player.board.rows[pickResult.rowIndex].itemCards[i]?.id === 'string') {
 							discardCard(game, player.board.rows[pickResult.rowIndex].itemCards[i])
 						}
 					}
@@ -64,7 +62,7 @@ class WaterBucketEffectCard extends EffectCard {
 		} else if (slot.type === 'effect') {
 			// Straight away remove fire
 			const fireStatusEffect = game.state.statusEffects.find((ail) => {
-				return ail.targetInstance === row?.hermitCard?.cardInstance && ail.statusEffectId == 'fire'
+				return ail.targetInstance === row?.hermitCard?.instance && ail.statusEffectId == 'fire'
 			})
 			if (fireStatusEffect) {
 				removeStatusEffect(game, pos, fireStatusEffect.statusEffectInstance)
@@ -73,7 +71,7 @@ class WaterBucketEffectCard extends EffectCard {
 			player.hooks.onDefence.add(instance, (attack) => {
 				if (!row) return
 				const statusEffectsToRemove = game.state.statusEffects.filter((ail) => {
-					return ail.targetInstance === row.hermitCard?.cardInstance && ail.statusEffectId == 'fire'
+					return ail.targetInstance === row.hermitCard?.instance && ail.statusEffectId == 'fire'
 				})
 				statusEffectsToRemove.forEach((ail) => {
 					removeStatusEffect(game, pos, ail.statusEffectInstance)
@@ -83,7 +81,7 @@ class WaterBucketEffectCard extends EffectCard {
 			opponentPlayer.hooks.afterApply.add(instance, () => {
 				if (!row) return
 				const statusEffectsToRemove = game.state.statusEffects.filter((ail) => {
-					return ail.targetInstance === row.hermitCard?.cardInstance && ail.statusEffectId == 'fire'
+					return ail.targetInstance === row.hermitCard?.instance && ail.statusEffectId == 'fire'
 				})
 				statusEffectsToRemove.forEach((ail) => {
 					removeStatusEffect(game, pos, ail.statusEffectInstance)

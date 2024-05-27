@@ -43,10 +43,10 @@ class KeralisRareHermitCard extends HermitCard {
 
 			// Make sure there is something to select
 			const playerHasAfk = getNonEmptyRows(player, true).some(
-				(rowPos) => HERMIT_CARDS[rowPos.row.hermitCard.cardId] !== undefined
+				(rowPos) => HERMIT_CARDS[rowPos.row.hermitCard.id] !== undefined
 			)
 			const opponentHasAfk = getNonEmptyRows(opponentPlayer, true).some(
-				(rowPos) => HERMIT_CARDS[rowPos.row.hermitCard.cardId] !== undefined
+				(rowPos) => HERMIT_CARDS[rowPos.row.hermitCard.id] !== undefined
 			)
 			if (!playerHasAfk && !opponentHasAfk) return
 
@@ -64,7 +64,7 @@ class KeralisRareHermitCard extends HermitCard {
 					if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
 
 					// Make sure it's an actual hermit card
-					const hermitCard = HERMIT_CARDS[pickResult.card.cardId]
+					const hermitCard = HERMIT_CARDS[pickResult.card.id]
 					if (!hermitCard) return 'FAILURE_INVALID_SLOT'
 
 					// Store the info to use later
@@ -89,7 +89,7 @@ class KeralisRareHermitCard extends HermitCard {
 			const pickedRow = pickedPlayer.board.rows[pickedRowIndex]
 			if (!pickedRow || !pickedRow.hermitCard) return
 
-			const hermitInfo = HERMIT_CARDS[pickedRow.hermitCard.cardId]
+			const hermitInfo = HERMIT_CARDS[pickedRow.hermitCard.id]
 			if (hermitInfo) {
 				// Heal
 				const maxHealth = Math.max(pickedRow.health, hermitInfo.health)

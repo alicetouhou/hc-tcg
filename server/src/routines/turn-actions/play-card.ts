@@ -22,7 +22,7 @@ function* playCardSaga(
 
 	const {playerId, rowIndex: pickedIndex, slot: pickedSlot} = pickInfo
 
-	const cardInfo = CARDS[card.cardId]
+	const cardInfo = CARDS[card.id]
 	// opponentPlayerId is relative to where the card is being placed
 	const opponentPlayerId = playerId === currentPlayer.id ? game.opponentPlayerId : currentPlayer.id
 
@@ -50,7 +50,7 @@ function* playCardSaga(
 		slot: {type: pickedSlot.type, index: pickedSlot.index},
 	}
 
-	const pos = new CardPosModel(game, basicPos, card.cardInstance, true)
+	const pos = new CardPosModel(game, basicPos, card.instance, true)
 
 	// Can't attach if card is already there
 	if (pos.card !== null) return 'FAILURE_CANNOT_COMPLETE'
@@ -124,10 +124,10 @@ function* playCardSaga(
 		game.battleLog.addPlayCardEntry(cardInfo, pos, currentPlayer.coinFlips, undefined)
 	}
 
-	cardInfo.onAttach(game, card.cardInstance, pos)
+	cardInfo.onAttach(game, card.instance, pos)
 
 	// Call onAttach hook
-	currentPlayer.hooks.onAttach.call(card.cardInstance)
+	currentPlayer.hooks.onAttach.call(card.instance)
 
 	return 'SUCCESS'
 }

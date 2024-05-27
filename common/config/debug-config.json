@@ -1,6 +1,6 @@
 {
 	"disableDeckValidation": false,
-	"extraStartingCards": ["tnt", "goatfather_rare"],
+	"extraStartingCards": ["tnt"],
 	"noItemRequirements": true,
 	"forceCoinFlip": true,
 	"oneShotMode": false,

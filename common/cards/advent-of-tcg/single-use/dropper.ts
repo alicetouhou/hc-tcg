@@ -1,3 +1,4 @@
+import {CARDS} from '../..'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import SingleUseCard from '../../base/single-use-card'
@@ -22,14 +23,10 @@ class DropperSingleUseCard extends SingleUseCard {
 
 		player.hooks.onApply.add(instance, () => {
 			for (let i = 0; i < 2; i++) {
-				const cardInfo = {
-					cardId: 'fletching_table',
-					cardInstance: Math.random().toString(),
-				}
 				opponentPlayer.pile.splice(
 					Math.round(Math.random() * opponentPlayer.pile.length),
 					0,
-					cardInfo
+					CARDS['fletching_table']
 				)
 			}
 		})

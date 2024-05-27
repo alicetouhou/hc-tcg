@@ -4,7 +4,6 @@ import {CardPosModel, getCardPos} from '../models/card-pos-model'
 import {GameModel} from '../models/game-model'
 import {BoardSlotTypeT, RowPos, SlotPos} from '../types/cards'
 import {
-	CardT,
 	StatusEffectT,
 	GenericActionResult,
 	PlayerState,
@@ -54,7 +53,7 @@ export function rowHasItem(row: RowState): boolean {
 	let total = 0
 	for (const itemCard of itemCards) {
 		if (!itemCard) continue
-		const cardInfo = ITEM_CARDS[itemCard.cardId]
+		const cardInfo = ITEM_CARDS[itemCard.id]
 		// String
 		if (!cardInfo) continue
 		total += 1
@@ -122,7 +121,7 @@ export function getAdjacentRows(playerState: PlayerState): Array<RowStateWithHer
 export function hasSingleUse(playerState: PlayerState, id: string, isUsed: boolean = false) {
 	const suCard = playerState.board.singleUseCard
 	const suUsed = playerState.board.singleUseCardUsed
-	return suCard?.cardId === id && suUsed === isUsed
+	return suCard?.id === id && suUsed === isUsed
 }
 
 export function applySingleUse(game: GameModel, pickResult?: PickInfo): GenericActionResult {
@@ -130,11 +129,11 @@ export function applySingleUse(game: GameModel, pickResult?: PickInfo): GenericA
 
 	const suCard = currentPlayer.board.singleUseCard
 	if (!suCard) return 'FAILURE_NOT_APPLICABLE'
-	const pos = getCardPos(game, suCard.cardInstance)
+	const pos = getCardPos(game, suCard.instance)
 	if (!pos) return 'FAILURE_UNKNOWN_ERROR'
 
-	const cardInstance = currentPlayer.board.singleUseCard?.cardInstance
-	if (!cardInstance) return 'FAILURE_NOT_APPLICABLE'
+	const instance = currentPlayer.board.singleUseCard?.instance
+	if (!instance) return 'FAILURE_NOT_APPLICABLE'
 
 	currentPlayer.hooks.beforeApply.call()
 
@@ -146,7 +145,7 @@ export function applySingleUse(game: GameModel, pickResult?: PickInfo): GenericA
 	game.addCompletedActions('PLAY_SINGLE_USE_CARD')
 
 	// Send the logs
-	game.battleLog.addPlayCardEntry(CARDS[suCard.cardId], pos, currentPlayer.coinFlips, pickResult)
+	game.battleLog.addPlayCardEntry(CARDS[suCard.id], pos, currentPlayer.coinFlips, pickResult)
 
 	currentPlayer.hooks.afterApply.call()
 

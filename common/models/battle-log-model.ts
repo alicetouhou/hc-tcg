@@ -1,11 +1,5 @@
 import {CARDS, HERMIT_CARDS, SINGLE_USE_CARDS} from '../cards'
-import {
-	CurrentCoinFlipT,
-	PlayerState,
-	RowStateWithHermit,
-	CardT,
-	BattleLogT,
-} from '../types/game-state'
+import {CurrentCoinFlipT, PlayerState, RowStateWithHermit, BattleLogT} from '../types/game-state'
 import {broadcast} from '../../server/src/utils/comm'
 import {AttackModel} from './attack-model'
 import {CardPosModel} from './card-pos-model'
@@ -26,10 +20,10 @@ export class BattleLogModel {
 		this.logMessageQueue = []
 	}
 
-	private generateEffectEntryHeader(card: CardT | null): string {
+	private generateEffectEntryHeader(card: Card | null): string {
 		const currentPlayer = this.game.currentPlayer.playerName
 		if (!card) return ''
-		const cardInfo = CARDS[card.cardId]
+		const cardInfo = CARDS[card.id]
 
 		return `$p{You|${currentPlayer}}$ used $e${cardInfo.name}$ `
 	}
@@ -57,8 +51,8 @@ export class BattleLogModel {
 			const description = this.generateCoinFlipDescription(coinFlip)
 
 			if (coinFlip.opponentFlip) return r
-			if (HERMIT_CARDS[coinFlip.cardId] && attack.type === 'effect') return r
-			if (SINGLE_USE_CARDS[coinFlip.cardId] && attack.type !== 'effect') return r
+			if (HERMIT_CARDS[coinFlip.id] && attack.type === 'effect') return r
+			if (SINGLE_USE_CARDS[coinFlip.id] && attack.type !== 'effect') return r
 
 			return description
 		}, null)
@@ -99,10 +93,10 @@ export class BattleLogModel {
 
 		const getCardName = (
 			player: PlayerState | undefined,
-			cardId: string,
+			id: string,
 			rowIndex: number | null | undefined
 		) => {
-			const cardInfo = CARDS[cardId]
+			const cardInfo = CARDS[id]
 			if (cardInfo.type === 'item') {
 				return `${cardInfo.name} ${cardInfo.rarity === 'rare' ? ' item x2' : 'item'}`
 			}
@@ -114,7 +108,7 @@ export class BattleLogModel {
 			return `${cardInfo.name}`
 		}
 
-		const thisFlip = coinFlips.find((flip) => flip.cardId === card.id)
+		const thisFlip = coinFlips.find((flip) => flip.id === card.id)
 		const invalid = 'INVALID VALUE'
 
 		const pickInfoPlayer = () => {
@@ -129,16 +123,16 @@ export class BattleLogModel {
 			header: `$p{You|${pos.player.playerName}}$ used $e${card.name}$ `,
 			pos: {
 				rowIndex: pos.rowIndex ? `${pos.rowIndex}` : invalid,
-				name: pos.card ? getCardName(pos.player, pos.card.cardId, pos.rowIndex) : invalid,
+				name: pos.card ? getCardName(pos.player, pos.card.id, pos.rowIndex) : invalid,
 				hermitCard: pos.row?.hermitCard
-					? getCardName(pos.player, pos.row.hermitCard.cardId, pos.rowIndex)
+					? getCardName(pos.player, pos.row.hermitCard.id, pos.rowIndex)
 					: invalid,
 				slotType: pos.slot.type,
 			},
 			pick: {
 				rowIndex: pickInfo ? `${pickInfo.rowIndex}` : invalid,
 				name: pickInfo?.card
-					? getCardName(pickInfoPlayer(), pickInfo.card.cardId, pickInfo.rowIndex)
+					? getCardName(pickInfoPlayer(), pickInfo.card.id, pickInfo.rowIndex)
 					: invalid,
 				slotType: pickInfo ? pickInfo.slot.type : invalid,
 			},
@@ -155,7 +149,7 @@ export class BattleLogModel {
 	public addAttackEntry(
 		attack: AttackModel,
 		coinFlips: Array<CurrentCoinFlipT>,
-		singleUse: CardT | null
+		singleUse: Card | null
 	) {
 		const attacker = attack.getAttacker()
 		if (!attacker) return
@@ -180,8 +174,8 @@ export class BattleLogModel {
 
 			if (subAttack.getDamage() === 0) return reducer
 
-			const attackingHermitInfo = HERMIT_CARDS[attacker.row.hermitCard.cardId]
-			const targetHermitInfo = CARDS[target.row.hermitCard.cardId]
+			const attackingHermitInfo = HERMIT_CARDS[attacker.row.hermitCard.id]
+			const targetHermitInfo = CARDS[target.row.hermitCard.id]
 
 			const targetFormatting = target.player.id === playerId ? 'p' : 'o'
 
@@ -227,7 +221,7 @@ export class BattleLogModel {
 		const player = this.game.currentPlayer
 		// Opponent coin flips
 		coinFlips.forEach((coinFlip) => {
-			const cardName = CARDS[coinFlip.cardId].name
+			const cardName = CARDS[coinFlip.id].name
 			if (!coinFlip.opponentFlip) return
 
 			this.logMessageQueue.push({
@@ -248,7 +242,7 @@ export class BattleLogModel {
 
 	public addDeathEntry(playerState: PlayerState, row: RowStateWithHermit) {
 		const card = row.hermitCard
-		const cardName = CARDS[card.cardId].name
+		const cardName = CARDS[card.id].name
 
 		const livesRemaining = 3 ? 'two lives' : 'one life'
 

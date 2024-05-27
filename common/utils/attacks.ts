@@ -246,8 +246,8 @@ function createWeaknessAttack(attack: AttackModel): AttackModel | null {
 
 	if (!attacker || !target) return null
 
-	const attackerCardInfo = HERMIT_CARDS[attacker.row.hermitCard.cardId]
-	const targetCardInfo = HERMIT_CARDS[target.row.hermitCard.cardId]
+	const attackerCardInfo = HERMIT_CARDS[attacker.row.hermitCard.id]
+	const targetCardInfo = HERMIT_CARDS[target.row.hermitCard.id]
 
 	if (!attackerCardInfo || !targetCardInfo) return null
 

@@ -55,7 +55,7 @@ class ArmorStandEffectCard extends EffectCard {
 		})
 
 		player.hooks.canAttach.add(instance, (result, pos) => {
-			if (pos.row?.hermitCard?.cardInstance !== instance) return
+			if (pos.row?.hermitCard?.instance !== instance) return
 			result.push('UNMET_CONDITION_SILENT')
 		})
 

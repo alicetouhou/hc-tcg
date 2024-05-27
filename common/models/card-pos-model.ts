@@ -1,5 +1,6 @@
+import Card from '../cards/base/card'
 import {Slot} from '../types/cards'
-import {CardT, PlayerState, RowState, RowStateWithHermit} from '../types/game-state'
+import {PlayerState, RowState, RowStateWithHermit} from '../types/game-state'
 import {GameModel} from './game-model'
 
 export type BasicCardPos = {
@@ -15,7 +16,7 @@ export type BasicHermitCardPos = {
 	opponentPlayer: PlayerState
 	rowIndex: number
 	row: RowStateWithHermit
-	card: CardT
+	card: Card
 }
 
 /**
@@ -34,7 +35,7 @@ export function getBasicCardPos(game: GameModel, instance: string): BasicCardPos
 		const board = game.state.players[playerId].board
 
 		// single use slot
-		if (board.singleUseCard?.cardInstance === instance) {
+		if (board.singleUseCard?.instance === instance) {
 			return {
 				player,
 				opponentPlayer,
@@ -48,7 +49,7 @@ export function getBasicCardPos(game: GameModel, instance: string): BasicCardPos
 		for (let rowIndex = 0; rowIndex < board.rows.length; rowIndex++) {
 			const row = board.rows[rowIndex]
 
-			if (row.hermitCard?.cardInstance === instance) {
+			if (row.hermitCard?.instance === instance) {
 				return {
 					player,
 					opponentPlayer,
@@ -56,7 +57,7 @@ export function getBasicCardPos(game: GameModel, instance: string): BasicCardPos
 					row,
 					slot: {type: 'hermit', index: 0},
 				}
-			} else if (row.effectCard?.cardInstance === instance) {
+			} else if (row.effectCard?.instance === instance) {
 				return {
 					player,
 					opponentPlayer,
@@ -67,7 +68,7 @@ export function getBasicCardPos(game: GameModel, instance: string): BasicCardPos
 			} else {
 				for (let i = 0; i < row.itemCards.length; i++) {
 					const card = row.itemCards[i]
-					if (card?.cardInstance === instance) {
+					if (card?.instance === instance) {
 						return {
 							player,
 							opponentPlayer,
@@ -100,13 +101,13 @@ export function getHermitCardPos(game: GameModel, instance: string): BasicHermit
 		for (let rowIndex = 0; rowIndex < board.rows.length; rowIndex++) {
 			const row = board.rows[rowIndex]
 			if (!row.hermitCard) continue
-			if (row.hermitCard.cardInstance === instance) {
+			if (row.hermitCard.instance === instance) {
 				return {
 					player,
 					opponentPlayer,
 					rowIndex,
 					row,
-					card: {cardId: row.hermitCard.cardId, cardInstance: instance},
+					card: row.hermitCard,
 				}
 			}
 		}

@@ -1,7 +1,6 @@
 import classNames from 'classnames'
 import {useState, ReactNode} from 'react'
 import {useSelector, useDispatch} from 'react-redux'
-import {CardT} from 'common/types/game-state'
 import CardList from 'components/card-list'
 import {CARDS} from 'common/cards'
 import {validateDeck} from 'common/utils/validation'
@@ -32,6 +31,7 @@ import HermitCard from '../../../../common/cards/base/hermit-card'
 import ItemCard from 'common/cards/base/item-card'
 import {playSound} from 'logic/sound/sound-actions'
 import {MassExportModal} from 'components/import-export/mass-export-modal'
+import Card from 'common/cards/base/card'
 
 const TYPE_ORDER = {
 	hermit: 0,
@@ -41,10 +41,10 @@ const TYPE_ORDER = {
 	health: 4,
 }
 
-export const sortCards = (cards: Array<CardT>): Array<CardT> => {
-	return cards.slice().sort((a: CardT, b: CardT) => {
-		const cardInfoA = CARDS[a.cardId]
-		const cardInfoB = CARDS[b.cardId]
+export const sortCards = (cards: Array<Card>): Array<Card> => {
+	return cards.slice().sort((a: Card, b: Card) => {
+		const cardInfoA = CARDS[a.id]
+		const cardInfoB = CARDS[b.id]
 		const cardCostA = getCardCost(cardInfoA)
 		const cardCostB = getCardCost(cardInfoB)
 
@@ -87,12 +87,12 @@ export const sortCards = (cards: Array<CardT>): Array<CardT> => {
 	})
 }
 
-export const cardGroupHeader = (title: string, cards: CardT[]) => (
+export const cardGroupHeader = (title: string, cards: Card[]) => (
 	<p className={css.cardGroupHeader}>
 		{`${title} `}
 		<span style={{fontSize: '0.9rem'}}>{`(${cards.length}) `}</span>
 		<span className={classNames(css.tokens, css.tokenHeader)}>
-			{getDeckCost(cards.map((card) => card.cardId))} tokens
+			{getDeckCost(cards.map((card) => card.id))} tokens
 		</span>
 	</p>
 )
@@ -149,7 +149,7 @@ const Deck = ({setMenuSection}: Props) => {
 
 	// MENU LOGIC
 	const backToMenu = () => {
-		if (validateDeck(loadedDeck.cards.map((card) => card.cardId))) {
+		if (validateDeck(loadedDeck.cards.map((card) => card.id))) {
 			return setShowValidateDeckModal(true)
 		}
 
@@ -183,7 +183,7 @@ const Deck = ({setMenuSection}: Props) => {
 		const deck = getSavedDeck(deckName)
 		if (!deck) return console.log(`[LoadDeck]: Could not load the ${deckName} deck.`)
 
-		const deckIds = deck.cards?.filter((card: CardT) => CARDS[card.cardId])
+		const deckIds = deck.cards?.filter((card: Card) => CARDS[card.id])
 
 		setLoadedDeck({
 			...deck,
@@ -257,12 +257,12 @@ const Deck = ({setMenuSection}: Props) => {
 			</li>
 		)
 	})
-	const validationMessage = validateDeck(loadedDeck.cards.map((card) => card.cardId))
+	const validationMessage = validateDeck(loadedDeck.cards.map((card) => card.id))
 	const selectedCards = {
-		hermits: loadedDeck.cards.filter((card) => CARDS[card.cardId]?.type === 'hermit'),
-		items: loadedDeck.cards.filter((card) => CARDS[card.cardId]?.type === 'item'),
-		attachableEffects: loadedDeck.cards.filter((card) => CARDS[card.cardId]?.type === 'effect'),
-		singleUseEffects: loadedDeck.cards.filter((card) => CARDS[card.cardId]?.type === 'single_use'),
+		hermits: loadedDeck.cards.filter((card) => CARDS[card.id]?.type === 'hermit'),
+		items: loadedDeck.cards.filter((card) => CARDS[card.id]?.type === 'item'),
+		attachableEffects: loadedDeck.cards.filter((card) => CARDS[card.id]?.type === 'effect'),
+		singleUseEffects: loadedDeck.cards.filter((card) => CARDS[card.id]?.type === 'single_use'),
 	}
 
 	//MISC
@@ -357,7 +357,7 @@ const Deck = ({setMenuSection}: Props) => {
 									</p>
 									<div className={css.cardCount}>
 										<p className={css.tokens}>
-											{getDeckCost(loadedDeck.cards.map((card) => card.cardId))}/
+											{getDeckCost(loadedDeck.cards.map((card) => card.id))}/
 											{CONFIG.limits.maxDeckCost} <span className={css.hideOnMobile}>tokens</span>
 										</p>
 									</div>

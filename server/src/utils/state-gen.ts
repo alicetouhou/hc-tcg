@@ -3,7 +3,6 @@ import {STRENGTHS} from 'common/const/strengths'
 import {CONFIG, DEBUG_CONFIG, EXPANSIONS} from 'common/config'
 import {
 	TurnActions,
-	CardT,
 	CoinFlipT,
 	LocalGameState,
 	LocalPlayerState,
@@ -152,28 +151,18 @@ export function getEmptyRow(): RowState {
 }
 
 export function getPlayerState(player: PlayerModel): PlayerState {
-	const allCards = Object.values(CARDS).map(
-		(card: Card): CardT => ({
-			cardId: card.id,
-			cardInstance: card.id,
-		})
-	)
-	let pack = DEBUG_CONFIG.unlimitedCards ? allCards : player.deck.cards
+	const allCards = Object.values(CARDS)
+	//@TODO Figure out why this is needed
+	const pack = DEBUG_CONFIG.unlimitedCards
+		? allCards
+		: player.deck.cards.map((card) => CARDS[card.id].new())
 
 	// shuffle cards
 	!DEBUG_CONFIG.unlimitedCards && pack.sort(() => 0.5 - Math.random())
 
-	// randomize instances
-	pack = pack.map((card) => {
-		return {
-			cardId: card.cardId,
-			cardInstance: Math.random().toString(),
-		}
-	})
-
 	// ensure a hermit in first 5 cards
 	const hermitIndex = pack.findIndex((card) => {
-		return CARDS[card.cardId].type === 'hermit'
+		return CARDS[card.id].type === 'hermit'
 	})
 	if (hermitIndex > 5) {
 		;[pack[0], pack[hermitIndex]] = [pack[hermitIndex], pack[0]]
@@ -185,18 +174,14 @@ export function getPlayerState(player: PlayerModel): PlayerState {
 
 	for (let i = 0; i < DEBUG_CONFIG.extraStartingCards.length; i++) {
 		const id = DEBUG_CONFIG.extraStartingCards[i]
-		const card = CARDS[id]
+		const card = CARDS[id].new()
 		if (!card) {
 			console.log('Invalid extra starting card in debug config:', id)
 			continue
 		}
 
-		const cardInfo = {
-			cardId: id,
-			cardInstance: Math.random().toString(),
-		}
-		pack.push(cardInfo)
-		hand.unshift(cardInfo)
+		pack.push(card)
+		hand.unshift(card)
 	}
 
 	const TOTAL_ROWS = 5
@@ -240,8 +225,8 @@ export function getPlayerState(player: PlayerModel): PlayerState {
 			afterAttack: new GameHook<(attack: AttackModel) => void>(),
 			afterDefence: new GameHook<(attack: AttackModel) => void>(),
 			onTurnStart: new GameHook<() => void>(),
-			onTurnEnd: new GameHook<(drawCards: Array<CardT>) => void>(),
-			onCoinFlip: new GameHook<(card: CardT, coinFlips: Array<CoinFlipT>) => Array<CoinFlipT>>(),
+			onTurnEnd: new GameHook<(drawCards: Array<Card>) => void>(),
+			onCoinFlip: new GameHook<(card: Card, coinFlips: Array<CoinFlipT>) => Array<CoinFlipT>>(),
 			beforeActiveRowChange: new GameHook<
 				(oldRow: number | null, newRow: number | null) => boolean
 			>(),

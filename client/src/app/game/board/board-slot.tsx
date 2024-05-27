@@ -1,7 +1,6 @@
 import classnames from 'classnames'
 import {CARDS} from 'common/cards'
-import Card from 'components/card'
-import {CardT, RowState} from 'common/types/game-state'
+import {RowState} from 'common/types/game-state'
 import css from './board.module.scss'
 import HermitCard from 'common/cards/base/hermit-card'
 import EffectCard from 'common/cards/base/effect-card'
@@ -12,19 +11,21 @@ import {StatusEffectT} from 'common/types/game-state'
 import StatusEffect from 'components/status-effects/status-effect'
 import {STATUS_EFFECT_CLASSES} from 'common/status-effects'
 import {SlotTypeT} from 'common/types/cards'
+import Card from 'common/cards/base/card'
+import CardComponent from 'components/card/card'
 
 export type SlotProps = {
 	type: SlotTypeT
 	onClick?: () => void
-	card: CardT | null
+	card: Card | null
 	rowState?: RowState
 	active?: boolean
 	cssId?: string
 	statusEffects: Array<StatusEffectT>
 }
 const Slot = ({type, onClick, card, rowState, active, cssId, statusEffects}: SlotProps) => {
-	let cardInfo = card?.cardId
-		? (CARDS[card.cardId] as HermitCard | EffectCard | SingleUseCard | ItemCard | HealthCard)
+	let cardInfo = card?.id
+		? (CARDS[card.id] as HermitCard | EffectCard | SingleUseCard | ItemCard | HealthCard)
 		: null
 	if (type === 'health' && rowState?.health) {
 		cardInfo = new HealthCard({
@@ -65,14 +66,14 @@ const Slot = ({type, onClick, card, rowState, active, cssId, statusEffects}: Slo
 	const hermitStatusEffects = Array.from(
 		new Set(
 			statusEffects
-				.filter((a) => rowState?.hermitCard && a.targetInstance == rowState.hermitCard.cardInstance)
+				.filter((a) => rowState?.hermitCard && a.targetInstance == rowState.hermitCard.instance)
 				.map((a) => a) || []
 		)
 	)
 	const effectStatusEffects = Array.from(
 		new Set(
 			statusEffects.filter(
-				(a) => rowState?.effectCard && a.targetInstance == rowState.effectCard.cardInstance
+				(a) => rowState?.effectCard && a.targetInstance == rowState.effectCard.instance
 			) || []
 		)
 	)
@@ -93,7 +94,7 @@ const Slot = ({type, onClick, card, rowState, active, cssId, statusEffects}: Slo
 		>
 			{cardInfo ? (
 				<div className={css.cardWrapper}>
-					<Card card={cardInfo} />
+					<CardComponent card={cardInfo} />
 					{type === 'health'
 						? renderStatusEffects(hermitStatusEffects)
 						: type === 'effect'

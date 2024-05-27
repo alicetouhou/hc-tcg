@@ -20,7 +20,7 @@ interface CardProps
 	onClick?: () => void
 }
 
-const Card = (props: CardProps) => {
+const CardComponent = (props: CardProps) => {
 	const {type} = props.card
 	const {onClick, selected, picked, ...otherProps} = props
 	let card = null
@@ -46,4 +46,4 @@ const Card = (props: CardProps) => {
 	)
 }
 
-export default Card
+export default CardComponent

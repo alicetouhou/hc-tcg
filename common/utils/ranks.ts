@@ -3,10 +3,10 @@ import {RankT} from '../types/cards'
 import Card from '../cards/base/card'
 import {CARDS} from '../cards'
 
-export function getCardRank(cardId: string): RankT {
+export function getCardRank(id: string): RankT {
 	let rank: RankT = {name: 'stone', cost: 0}
-	if ((RANKS as Record<string, any>)[cardId]) {
-		rank.cost = (RANKS as Record<string, any>)[cardId]
+	if ((RANKS as Record<string, any>)[id]) {
+		rank.cost = (RANKS as Record<string, any>)[id]
 
 		const rankKeys = Object.keys(RANKS.ranks)
 		const rankValues = Object.values(RANKS.ranks)
@@ -27,10 +27,10 @@ export function getCardCost(card: Card) {
 export function getDeckCost(deckCards: Array<string>) {
 	let tokenCost = 0
 
-	deckCards = deckCards.filter((cardId) => CARDS[cardId])
+	deckCards = deckCards.filter((id) => CARDS[id])
 
-	deckCards.forEach((cardId) => {
-		tokenCost += getCardCost(CARDS[cardId])
+	deckCards.forEach((id) => {
+		tokenCost += getCardCost(CARDS[id])
 	})
 
 	return tokenCost

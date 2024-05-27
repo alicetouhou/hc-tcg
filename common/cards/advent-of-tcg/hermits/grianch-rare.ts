@@ -71,9 +71,9 @@ class GrianchRareHermitCard extends HermitCard {
 					if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
 
 					// Make sure it's an actual hermit card
-					const hermitCard = HERMIT_CARDS[pickResult.card.cardId]
+					const hermitCard = HERMIT_CARDS[pickResult.card.id]
 					if (!hermitCard) return 'FAILURE_INVALID_SLOT'
-					const hermitId = pickedPlayer.board.rows[rowIndex].hermitCard?.cardId
+					const hermitId = pickedPlayer.board.rows[rowIndex].hermitCard?.id
 					const hermitHealth = pickedPlayer.board.rows[rowIndex].health
 
 					if (!hermitHealth || !hermitId) return 'FAILURE_INVALID_SLOT'

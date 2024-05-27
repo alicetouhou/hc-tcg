@@ -57,7 +57,7 @@ class HypnotizdRareHermitCard extends HermitCard {
 		if (!targetRow.hermitCard) return attack
 
 		// Change attack target
-		attack.setTarget(this.id, targetRow.hermitCard.cardInstance)
+		attack.setTarget(this.id, targetRow.hermitCard.instance)
 
 		const newAttacks = attack
 
@@ -91,7 +91,7 @@ class HypnotizdRareHermitCard extends HermitCard {
 					if (pickResult.slot.type !== 'item') return 'FAILURE_INVALID_SLOT'
 					if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
 
-					const itemCard = ITEM_CARDS[pickResult.card.cardId]
+					const itemCard = ITEM_CARDS[pickResult.card.id]
 					if (!itemCard) return 'FAILURE_INVALID_SLOT'
 
 					discardCard(game, pickResult.card)
@@ -126,7 +126,7 @@ class HypnotizdRareHermitCard extends HermitCard {
 
 					const isItemToDiscard = getActiveRow(player)?.itemCards.some((card) => {
 						if (!card) return false
-						if (!ITEM_CARDS[card.cardId]) return false
+						if (!ITEM_CARDS[card.id]) return false
 						return true
 					})
 					const targetingAfk = rowIndex !== opponentPlayer.board.activeRow

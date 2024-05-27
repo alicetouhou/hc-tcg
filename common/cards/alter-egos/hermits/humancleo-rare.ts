@@ -57,11 +57,11 @@ class HumanCleoRareHermitCard extends HermitCard {
 				if (!opponentActiveRow) return
 
 				const energy = opponentActiveRow.itemCards.flatMap((item) => {
-					if (item) return ITEM_CARDS[item.cardId].hermitType
+					if (item) return ITEM_CARDS[item.id].hermitType
 					return []
 				})
 
-				const opponentActiveHermit = HERMIT_CARDS[opponentActiveRow.hermitCard.cardId]
+				const opponentActiveHermit = HERMIT_CARDS[opponentActiveRow.hermitCard.id]
 
 				// Return if no energy
 				if (
@@ -136,7 +136,7 @@ class HumanCleoRareHermitCard extends HermitCard {
 
 					const targetRow = opponentPlayer.board.rows[opponentTarget]
 					if (targetRow && targetRow.hermitCard) {
-						attack.setTarget(this.id, targetRow.hermitCard.cardInstance)
+						attack.setTarget(this.id, targetRow.hermitCard.instance)
 					}
 				}
 

@@ -1,8 +1,7 @@
-import {SINGLE_USE_CARDS} from '../..'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import {HermitAttackType} from '../../../types/attack'
-import {CardT} from '../../../types/game-state'
+import Card from '../../base/card'
 import HermitCard from '../../base/hermit-card'
 
 class HotguyRareHermitCard extends HermitCard {
@@ -48,7 +47,7 @@ class HotguyRareHermitCard extends HermitCard {
 		const {player} = pos
 
 		player.hooks.beforeAttack.add(instance, (attack) => {
-			if ((attack.getHistory('creator')[0].value as CardT).cardId === 'bow') {
+			if ((attack.getHistory('creator')[0].value as Card).id === 'bow') {
 				attack.addDamage(this.id, attack.getDamage())
 			}
 		})

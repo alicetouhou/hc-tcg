@@ -54,7 +54,7 @@ class TargetBlockSingleUseCard extends SingleUseCard {
 				player.hooks.beforeAttack.add(instance, (attack) => {
 					if (attack.isType('status-effect') || attack.isBacklash) return
 
-					attack.setTarget(this.id, row.hermitCard.cardInstance)
+					attack.setTarget(this.id, row.hermitCard.instance)
 				})
 
 				return 'SUCCESS'

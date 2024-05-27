@@ -35,7 +35,7 @@ class OverseerRareHermitCard extends HermitCard {
 			if (attack.getCreator() !== instance || attack.type !== 'secondary' || !target) return
 
 			const isFarmer =
-				target.row.hermitCard && HERMIT_CARDS[target.row.hermitCard.cardId]?.hermitType === 'farm'
+				target.row.hermitCard && HERMIT_CARDS[target.row.hermitCard.id]?.hermitType === 'farm'
 					? 2
 					: 1
 

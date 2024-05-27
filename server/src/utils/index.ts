@@ -14,12 +14,12 @@ export function getItemCardsEnergy(game: GameModel, row: RowStateWithHermit): nu
 	let total = 0
 	for (const itemCard of itemCards) {
 		if (!itemCard) continue
-		const cardInfo = ITEM_CARDS[itemCard.cardId]
+		const cardInfo = ITEM_CARDS[itemCard.id]
 		// String
 		if (!cardInfo) continue
-		const pos = getCardPos(game, itemCard.cardInstance)
+		const pos = getCardPos(game, itemCard.instance)
 		if (!pos) continue
-		total += cardInfo.getEnergy(game, itemCard.cardInstance, pos).length
+		total += cardInfo.getEnergy(game, itemCard.instance, pos).length
 	}
 
 	return total
@@ -34,7 +34,7 @@ export function printHooksState(game: GameModel) {
 	// First loop to populate cardsInfo
 	for (const player of [currentPlayer, opponentPlayer]) {
 		for (const card of player.playerDeck) {
-			cardsInfo[card.cardInstance] = {
+			cardsInfo[card.instance] = {
 				card,
 				player: player,
 			}
@@ -141,7 +141,7 @@ export function printHooksState(game: GameModel) {
 
 		console.log(
 			`${info.player.playerName} | ${rowIndex}${slotType}${slotIndex}${slotType ? ' | ' : ''}${
-				info.card.cardId
+				info.card.id
 			} - ${attachedStatus}`
 		)
 		console.log(colorize(drawLine(60), 'white'))

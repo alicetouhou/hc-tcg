@@ -20,7 +20,7 @@ class LightningRodEffectCard extends EffectCard {
 		const result = super.canAttach(game, pos)
 
 		const board = pos.player.board
-		if (board.rows.find((row) => row.effectCard?.cardId === this.id)) {
+		if (board.rows.find((row) => row.effectCard?.id === this.id)) {
 			// Can't attach if there's already one attached
 			result.push('UNMET_CONDITION')
 		}
@@ -41,7 +41,7 @@ class LightningRodEffectCard extends EffectCard {
 			// Attack already has to be targeting us
 			if (attack.getTarget()?.player.id !== player.id) return
 
-			attack.setTarget(this.id, row.hermitCard.cardInstance)
+			attack.setTarget(this.id, row.hermitCard.instance)
 		})
 
 		opponentPlayer.hooks.afterAttack.add(instance, (attack) => {

@@ -1,3 +1,4 @@
+import Card from '../cards/base/card'
 import {
 	AttackHistory,
 	AttackHistoryType,
@@ -6,8 +7,8 @@ import {
 	ShouldIgnoreCard,
 	WeaknessType,
 	AttackLogFactory,
+	Creator,
 } from '../types/attack'
-import {CardT} from '../types/game-state'
 import {BasicHermitCardPos, getHermitCardPos} from './card-pos-model'
 import {GameModel} from './game-model'
 
@@ -51,13 +52,13 @@ export class AttackModel {
 		this.isBacklash = defs.isBacklash || false
 		this.game = defs.game
 
-		this.attacker = defs.attacker ? getHermitCardPos(defs.game, defs.attacker.cardInstance) : null
-		this.target = defs.target ? getHermitCardPos(defs.game, defs.target.cardInstance) : null
+		this.attacker = defs.attacker ? getHermitCardPos(defs.game, defs.attacker.instance) : null
+		this.target = defs.target ? getHermitCardPos(defs.game, defs.target.instance) : null
 		this.shouldIgnoreCards = defs.shouldIgnoreCards || []
 		this.createWeakness = defs.createWeakness || 'never'
 		this.log = defs.log ? defs.log : null
 
-		if (defs.creator) this.addHistory(defs.creator.cardId, 'creator', defs.creator)
+		if (defs.creator) this.addHistory(defs.creator.id, 'creator', defs.creator)
 
 		return this
 	}
@@ -102,7 +103,7 @@ export class AttackModel {
 	}
 	/** Returns the instance of creator of this attack */
 	public getCreator() {
-		return (this.getHistory('creator')[0].value as CardT).cardInstance
+		return (this.getHistory('creator')[0].value as Creator).instance
 	}
 	/** Returns the current attacker for this attack */
 	public getAttacker() {

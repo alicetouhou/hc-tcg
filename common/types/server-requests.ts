@@ -1,5 +1,6 @@
+import Card from '../cards/base/card'
 import {SlotTypeT} from './cards'
-import {ActionResult, CardT, ModalData} from './game-state'
+import {ActionResult, ModalData} from './game-state'
 
 export type PickedSlotType = SlotTypeT | 'hand'
 
@@ -11,7 +12,7 @@ export type SlotInfo = {
 export type PickInfo = {
 	playerId: string
 	rowIndex?: number // This will be undefined for the hand
-	card: CardT | null
+	card: Card | null
 	slot: SlotInfo
 }
 

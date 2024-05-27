@@ -1,12 +1,12 @@
 import EffectCard from '../../base/effect-card'
-import {isTargetingPos} from '../../../utils/attacks'
 import {GameModel} from '../../../models/game-model'
 import {discardCard} from '../../../utils/movement'
-import {CardPosModel, getBasicCardPos} from '../../../models/card-pos-model'
+import {CardPosModel} from '../../../models/card-pos-model'
 import {TurnActions} from '../../../types/game-state'
 import {getActiveRow} from '../../../utils/board'
 import {CanAttachResult} from '../../base/card'
 import {hasActive} from '../../../utils/game'
+import {CARDS} from '../..'
 
 class BerryBushEffectCard extends EffectCard {
 	constructor() {
@@ -34,7 +34,7 @@ class BerryBushEffectCard extends EffectCard {
 		})
 
 		player.hooks.canAttach.add(instance, (result, pos) => {
-			if (pos.row?.hermitCard?.cardInstance !== instance) return
+			if (pos.row?.hermitCard?.instance !== instance) return
 			if (['item', 'effect'].includes(pos.slot.type)) result.push('UNMET_CONDITION_SILENT')
 		})
 
@@ -43,10 +43,7 @@ class BerryBushEffectCard extends EffectCard {
 				// Discard to prevent losing a life
 				discardCard(game, row.hermitCard)
 				for (let i = 0; i < 2; i++) {
-					const cardInfo = {
-						cardId: 'instant_health_ii',
-						cardInstance: Math.random().toString(),
-					}
+					const cardInfo = CARDS['instant_health_ii']
 					opponentPlayer.hand.push(cardInfo)
 				}
 			}

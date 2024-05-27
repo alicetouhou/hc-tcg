@@ -41,7 +41,7 @@ class PotatoBoyRareHermitCard extends HermitCard {
 
 			targetRows.forEach((row, index) => {
 				if (!row.hermitCard) return
-				const hermitInfo = HERMIT_CARDS[row.hermitCard.cardId]
+				const hermitInfo = HERMIT_CARDS[row.hermitCard.id]
 				if (hermitInfo) {
 					const maxHealth = Math.max(row.health, hermitInfo.health)
 					row.health = Math.min(row.health + 40, maxHealth)

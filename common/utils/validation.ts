@@ -6,26 +6,26 @@ export function validateDeck(deckCards: Array<string>) {
 	if (DEBUG_CONFIG.disableDeckValidation) return
 
 	const limits = CONFIG.limits
-	deckCards = deckCards.filter((cardId) => CARDS[cardId])
+	deckCards = deckCards.filter((id) => CARDS[id])
 
 	// order validation by simplest problem first, so that a player can easily identify why their deck isn't valid
 
 	// Contains disabled cards
-	const hasDisabledCards = deckCards.some((cardId) =>
-		EXPANSIONS.disabled.includes(CARDS[cardId].getExpansion())
+	const hasDisabledCards = deckCards.some((id) =>
+		EXPANSIONS.disabled.includes(CARDS[id].getExpansion())
 	)
 	if (hasDisabledCards) return 'Deck must not include removed cards.'
 
 	// less than one hermit
-	const hasHermit = deckCards.some((cardId) => CARDS[cardId].type === 'hermit')
+	const hasHermit = deckCards.some((id) => CARDS[id].type === 'hermit')
 	if (!hasHermit) return 'Deck must have at least one Hermit.'
 
 	// more than max duplicates
 	const tooManyDuplicates =
 		limits.maxDuplicates &&
-		deckCards.some((cardId) => {
-			if (CARDS[cardId].type === 'item') return false
-			const duplicates = deckCards.filter((filterCardId) => filterCardId === cardId)
+		deckCards.some((id) => {
+			if (CARDS[id].type === 'item') return false
+			const duplicates = deckCards.filter((filterid) => filterid === id)
 			return duplicates.length > limits.maxDuplicates
 		})
 

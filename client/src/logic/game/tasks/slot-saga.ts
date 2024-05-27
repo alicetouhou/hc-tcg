@@ -1,7 +1,6 @@
 import {select} from 'typed-redux-saga'
 import {put, takeLeading, call, take, putResolve} from 'redux-saga/effects'
 import {SagaIterator} from 'redux-saga'
-import {CardT} from 'common/types/game-state'
 import {
 	ChangeActiveHermitActionData,
 	PickCardActionData,
@@ -18,6 +17,7 @@ import {
 } from 'logic/game/game-selectors'
 import {setSelectedCard, setOpenedModal, removeEffect, slotPicked} from 'logic/game/game-actions'
 import {getSettings} from 'logic/local-settings/local-settings-selectors'
+import Card from 'common/cards/base/card'
 
 type SlotPickedAction = ReturnType<typeof slotPicked>
 
@@ -37,8 +37,8 @@ function* pickForPickRequestSaga(action: SlotPickedAction): SagaIterator {
 	yield put(actionData)
 }
 
-function* pickWithSelectedSaga(action: SlotPickedAction, selectedCard: CardT): SagaIterator {
-	const selectedCardInfo = CARDS[selectedCard.cardId]
+function* pickWithSelectedSaga(action: SlotPickedAction, selectedCard: Card): SagaIterator {
+	const selectedCardInfo = CARDS[selectedCard.id]
 	const pickInfo = action.payload.pickInfo
 
 	yield putResolve(setSelectedCard(null))

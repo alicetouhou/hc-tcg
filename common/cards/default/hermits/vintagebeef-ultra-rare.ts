@@ -32,12 +32,10 @@ class VintageBeefUltraRareHermitCard extends HermitCard {
 			if (attack.getCreator() !== instance || attack.type !== 'secondary') return
 
 			const hasBdubs = player.board.rows.some((row) =>
-				row.hermitCard?.cardId?.startsWith('bdoubleo100')
+				row.hermitCard?.id?.startsWith('bdoubleo100')
 			)
-			const hasDoc = player.board.rows.some((row) => row.hermitCard?.cardId?.startsWith('docm77'))
-			const hasEtho = player.board.rows.some((row) =>
-				row.hermitCard?.cardId?.startsWith('ethoslab')
-			)
+			const hasDoc = player.board.rows.some((row) => row.hermitCard?.id?.startsWith('docm77'))
+			const hasEtho = player.board.rows.some((row) => row.hermitCard?.id?.startsWith('ethoslab'))
 
 			if (hasBdubs && hasDoc && hasEtho) attack.addDamage(this.id, attack.getDamage())
 		})

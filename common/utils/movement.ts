@@ -1,11 +1,11 @@
 import {GameModel} from '../models/game-model'
-import {CardT, GameState, PlayerState} from '../types/game-state'
+import {PlayerState} from '../types/game-state'
 import {CARDS} from '../cards'
 import {BasicCardPos, CardPosModel, getCardPos} from '../models/card-pos-model'
 import {equalCard} from './cards'
 import {SlotPos} from '../types/cards'
 import {getSlotPos} from './board'
-import {CanAttachResult} from '../cards/base/card'
+import Card, {CanAttachResult} from '../cards/base/card'
 
 function discardAtPos(pos: CardPosModel) {
 	const {player, row, slot} = pos
@@ -31,12 +31,12 @@ function discardAtPos(pos: CardPosModel) {
 
 export function discardCard(
 	game: GameModel,
-	card: CardT | null,
+	card: Card | null,
 	playerDiscard?: PlayerState | null
 ) {
 	if (!card) return
 
-	const pos = getCardPos(game, card.cardInstance)
+	const pos = getCardPos(game, card.instance)
 	if (!pos) {
 		const err = new Error()
 		console.log('Cannot find card on board: ', card, err.stack)
@@ -51,9 +51,9 @@ export function discardCard(
 	}
 
 	// Call `onDetach`
-	const cardInfo = CARDS[card.cardId]
-	cardInfo.onDetach(game, card.cardInstance, pos)
-	pos.player.hooks.onDetach.call(card.cardInstance)
+	const cardInfo = CARDS[card.id]
+	cardInfo.onDetach(game, card.instance, pos)
+	pos.player.hooks.onDetach.call(card.instance)
 
 	// Remove the card
 	discardAtPos(pos)
@@ -61,14 +61,11 @@ export function discardCard(
 	if (playerDiscard !== null) {
 		const discardPlayer = playerDiscard ? playerDiscard : pos.player
 
-		discardPlayer.discarded.push({
-			cardId: card.cardId,
-			cardInstance: card.cardInstance,
-		})
+		discardPlayer.discarded.push(card)
 	}
 }
 
-export function retrieveCard(game: GameModel, card: CardT | null) {
+export function retrieveCard(game: GameModel, card: Card | null) {
 	if (!card) return
 	for (let playerId in game.state.players) {
 		const player = game.state.players[playerId]
@@ -86,15 +83,15 @@ export function discardSingleUse(game: GameModel, playerState: PlayerState) {
 	const suCard = playerState.board.singleUseCard
 	const suUsed = playerState.board.singleUseCardUsed
 	if (!suCard) return
-	const pos = getCardPos(game, suCard.cardInstance)
+	const pos = getCardPos(game, suCard.instance)
 	if (!pos) return
 
 	// Water and Milk Buckets can be on this slot so we use CARDS to get the card info
-	const cardInfo = CARDS[suCard.cardId]
-	cardInfo.onDetach(game, suCard.cardInstance, pos)
+	const cardInfo = CARDS[suCard.id]
+	cardInfo.onDetach(game, suCard.instance, pos)
 
 	// Call onDetach hook
-	playerState.hooks.onDetach.call(suCard.cardInstance)
+	playerState.hooks.onDetach.call(suCard.instance)
 
 	playerState.board.singleUseCardUsed = false
 	playerState.board.singleUseCard = null
@@ -106,15 +103,12 @@ export function discardSingleUse(game: GameModel, playerState: PlayerState) {
 	}
 }
 
-export function discardFromHand(player: PlayerState, card: CardT | null) {
+export function discardFromHand(player: PlayerState, card: Card | null) {
 	if (!card) return
 
 	player.hand = player.hand.filter((c) => !equalCard(c, card))
 
-	player.discarded.push({
-		cardId: card.cardId,
-		cardInstance: card.cardInstance,
-	})
+	player.discarded.push(card)
 }
 
 export function drawCards(playerState: PlayerState, amount: number) {
@@ -124,14 +118,14 @@ export function drawCards(playerState: PlayerState, amount: number) {
 	}
 }
 
-export function moveCardToHand(game: GameModel, card: CardT, playerDiscard?: PlayerState | null) {
-	const cardPos = getCardPos(game, card.cardInstance)
+export function moveCardToHand(game: GameModel, card: Card, playerDiscard?: PlayerState | null) {
+	const cardPos = getCardPos(game, card.instance)
 	if (!cardPos) return
 
-	const cardInfo = CARDS[card.cardId]
-	cardInfo.onDetach(game, card.cardInstance, cardPos)
+	const cardInfo = CARDS[card.id]
+	cardInfo.onDetach(game, card.instance, cardPos)
 
-	cardPos.player.hooks.onDetach.call(card.cardInstance)
+	cardPos.player.hooks.onDetach.call(card.instance)
 
 	if (cardPos.row && cardPos.slot.type === 'hermit') {
 		cardPos.row.hermitCard = null
@@ -165,7 +159,7 @@ export function isSlotEmpty(slotPos: SlotPos): boolean {
 }
 
 /**Returns a `CardT` of the card in the slot, or `null` if it's empty. */
-export function getSlotCard(slotPos: SlotPos): CardT | null {
+export function getSlotCard(slotPos: SlotPos): Card | null {
 	const {row, slot} = slotPos
 	const {index, type} = slot
 
@@ -188,7 +182,7 @@ function exceptInvalidPlayer(
 export function canAttachToSlot(
 	game: GameModel,
 	slotPos: SlotPos,
-	card: CardT,
+	card: Card,
 	excludeInvalidPlayer = false
 ): CanAttachResult {
 	const {player, rowIndex, row, slot} = slotPos
@@ -204,9 +198,9 @@ export function canAttachToSlot(
 	}
 
 	// Create a fake card pos model
-	const pos = new CardPosModel(game, basicPos, card.cardInstance, true)
+	const pos = new CardPosModel(game, basicPos, card.instance, true)
 
-	const cardInfo = CARDS[card.cardId]
+	const cardInfo = CARDS[card.id]
 	const canAttach = cardInfo.canAttach(game, pos)
 	player.hooks.canAttach.call(canAttach, pos)
 
@@ -254,18 +248,18 @@ export function swapSlots(
 		const card = getSlotCard(slot)
 		if (!card) continue
 
-		const cardPos = getCardPos(game, card.cardInstance)
+		const cardPos = getCardPos(game, card.instance)
 		if (!cardPos) continue
 
 		const results = cardPos.player.hooks.onSlotChange.call(slot)
 		if (results.includes(false)) return false
 
-		const cardInfo = CARDS[card.cardId]
+		const cardInfo = CARDS[card.id]
 
 		if (!withoutDetach) {
-			cardInfo.onDetach(game, card.cardInstance, cardPos)
+			cardInfo.onDetach(game, card.instance, cardPos)
 
-			cardPos.player.hooks.onDetach.call(card.cardInstance)
+			cardPos.player.hooks.onDetach.call(card.instance)
 		}
 
 		cardsInfo.push({cardInfo, card})
@@ -290,12 +284,12 @@ export function swapSlots(
 		// onAttach
 		for (let {cardInfo, card} of cardsInfo) {
 			// New card position after swap
-			const cardPos = getCardPos(game, card.cardInstance)
+			const cardPos = getCardPos(game, card.instance)
 			if (!cardPos) continue
 
-			cardInfo.onAttach(game, card.cardInstance, cardPos)
+			cardInfo.onAttach(game, card.instance, cardPos)
 
-			cardPos.player.hooks.onAttach.call(card.cardInstance)
+			cardPos.player.hooks.onAttach.call(card.instance)
 		}
 	}
 

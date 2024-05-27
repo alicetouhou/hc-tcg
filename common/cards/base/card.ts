@@ -27,6 +27,7 @@ abstract class Card {
 	public numericId: number
 	public name: string
 	public rarity: CardRarityT
+	public instance: string
 
 	/** The battle log attached to this attack */
 	public log: ((values: CardLogFactory) => string) | null
@@ -37,6 +38,7 @@ abstract class Card {
 		this.numericId = defs.numericId
 		this.name = defs.name
 		this.rarity = defs.rarity
+		this.instance = Math.random().toString()
 		this.log = null
 	}
 
@@ -123,6 +125,13 @@ abstract class Card {
 	 */
 	public sidebarDescriptions(): Array<Record<string, string>> {
 		return []
+	}
+
+	//**Make new card (TEMPORARY) */
+	public new(): Card {
+		const newCard: Card = JSON.parse(JSON.stringify(this))
+		newCard.instance = Math.random().toString()
+		return newCard
 	}
 }
 

@@ -248,12 +248,12 @@ export class GameModel {
 		if (newRow) {
 			const newHermit = player.board.rows[newRow].hermitCard
 			if (!newHermit) return false
-			const newHermitInfo = CARDS[newHermit.cardId]
+			const newHermitInfo = CARDS[newHermit.id]
 
 			if (currentActiveRow) {
 				const oldHermit = player.board.rows[currentActiveRow].hermitCard
 				if (!oldHermit) return false
-				const oldHermitInfo = CARDS[oldHermit.cardId]
+				const oldHermitInfo = CARDS[oldHermit.id]
 				this.battleLog.addCustomEntry(
 					`$p{You|${player.playerName}}$ swapped $p${oldHermitInfo.name}$ for $p${
 						newHermitInfo.name

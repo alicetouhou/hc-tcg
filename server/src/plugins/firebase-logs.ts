@@ -1,10 +1,11 @@
 import {createRequire} from 'module'
 const require = createRequire(import.meta.url)
-import {CardT, GameLog, PlayerState} from 'common/types/game-state'
+import {GameLog, PlayerState} from 'common/types/game-state'
 import {Database} from 'firebase-admin/lib/database/database'
 import {CONFIG} from 'common/config'
 import {ServiceAccount} from 'firebase-admin/app'
 import {RootModel} from 'common/models/root-model'
+import Card from 'common/cards/base/card'
 
 export class FirebaseLogs {
 	public id: string = 'firebase_logs'
@@ -47,7 +48,7 @@ export class FirebaseLogs {
 			const playerStates: Array<PlayerState> = Object.values(game.state.players)
 
 			function getHand(pState: PlayerState) {
-				return pState.hand.map((card: CardT) => card.cardId)
+				return pState.hand.map((card: Card) => card.id)
 			}
 
 			this.gameLogs[game.id] = {

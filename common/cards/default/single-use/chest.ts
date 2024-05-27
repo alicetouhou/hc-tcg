@@ -19,7 +19,7 @@ class ChestSingleUseCard extends SingleUseCard {
 		const result = super.canAttach(game, pos)
 		const {player} = pos
 
-		if (player.discarded.filter((card) => card.cardId !== 'clock').length <= 0)
+		if (player.discarded.filter((card) => card.id !== 'clock').length <= 0)
 			result.push('UNMET_CONDITION')
 
 		return result
@@ -52,7 +52,7 @@ class ChestSingleUseCard extends SingleUseCard {
 				}
 				if (!modalResult.cards) return 'FAILURE_INVALID_DATA'
 				if (modalResult.cards.length !== 1) return 'FAILURE_CANNOT_COMPLETE'
-				if (modalResult.cards[0].cardId === 'clock') return 'FAILURE_CANNOT_COMPLETE'
+				if (modalResult.cards[0].id === 'clock') return 'FAILURE_CANNOT_COMPLETE'
 
 				applySingleUse(game)
 				retrieveCard(game, modalResult.cards[0])

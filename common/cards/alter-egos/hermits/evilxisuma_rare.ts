@@ -43,7 +43,7 @@ class EvilXisumaRareHermitCard extends HermitCard {
 			if (!opponentActiveRow) return
 			if (opponentActiveRow.health <= 0) return
 
-			if (!HERMIT_CARDS[opponentActiveRow.hermitCard.cardId]) return
+			if (!HERMIT_CARDS[opponentActiveRow.hermitCard.id]) return
 
 			const coinFlip = flipCoin(player, attacker.row.hermitCard)
 
@@ -56,7 +56,7 @@ class EvilXisumaRareHermitCard extends HermitCard {
 					payload: {
 						modalName: 'Evil X: Disable an attack for 1 turn',
 						modalDescription: "Which of the opponent's attacks do you want to disable?",
-						cardPos: getBasicCardPos(game, opponentActiveRow.hermitCard.cardInstance),
+						cardPos: getBasicCardPos(game, opponentActiveRow.hermitCard.instance),
 					},
 				},
 				onResult(modalResult) {

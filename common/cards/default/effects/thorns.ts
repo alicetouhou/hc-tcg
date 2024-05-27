@@ -47,7 +47,7 @@ class ThornsEffectCard extends EffectCard {
 
 					if (
 						['gold_armor', 'iron_armor', 'diamond_armor', 'netherite_armor'].includes(
-							pos.row.effectCard.cardId
+							pos.row.effectCard.id
 						)
 					) {
 						// It's an armor card, ignore it

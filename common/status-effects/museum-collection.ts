@@ -46,7 +46,7 @@ class MuseumCollectionStatusEffect extends StatusEffect {
 			const activeRow = player.board.activeRow
 			if (activeRow === null) return
 			const targetHermit = player.board.rows[activeRow].hermitCard
-			if (!targetHermit?.cardId) return
+			if (!targetHermit?.id) return
 			if (attack.getCreator() !== statusEffectInfo.targetInstance || attack.type !== 'secondary') {
 				return
 			}
@@ -60,10 +60,7 @@ class MuseumCollectionStatusEffect extends StatusEffect {
 
 				const additionalAttack = new AttackModel({
 					game: game,
-					creator: {
-						cardId: statusEffectInfo.statusEffectId,
-						cardInstance: statusEffectInfo.statusEffectInstance,
-					},
+					creator: {id: this.id, instance: statusEffectInfo.statusEffectInstance},
 					attacker: attack.getAttacker()?.card,
 					target: attack.getTarget()?.card,
 					type: 'secondary',
@@ -86,7 +83,7 @@ class MuseumCollectionStatusEffect extends StatusEffect {
 		player.hooks.afterDefence.add(statusEffectInfo.statusEffectInstance, (attack) => {
 			const attackTarget = attack.getTarget()
 			if (!attackTarget) return
-			if (attackTarget.row.hermitCard.cardInstance !== statusEffectInfo.targetInstance) return
+			if (attackTarget.row.hermitCard.instance !== statusEffectInfo.targetInstance) return
 			if (attackTarget.row.health > 0) return
 			removeStatusEffect(game, pos, statusEffectInfo.statusEffectInstance)
 		})

@@ -69,7 +69,7 @@ const getDeck: () => PlayerDeckT | null = function () {
 	if (
 		validateDeck(
 			deckCards.map((card) => {
-				return card.cardId
+				return card.id
 			})
 		)
 	)
@@ -146,8 +146,7 @@ export function* loginSaga(): SagaIterator {
 
 		const activeDeckName = getActiveDeckName()
 		const activeDeck = activeDeckName ? getSavedDeck(activeDeckName) : null
-		const activeDeckValid =
-			!!activeDeck && !validateDeck(activeDeck.cards.map((card) => card.cardId))
+		const activeDeckValid = !!activeDeck && !validateDeck(activeDeck.cards.map((card) => card.id))
 
 		// if active deck is not valid, generate and save a starter deck
 		if (urlDeck) {

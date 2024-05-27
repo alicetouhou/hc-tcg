@@ -40,7 +40,7 @@ class PythonGBRareHermitCard extends HermitCard {
 					row.hermitCard &&
 					(index === activeRow - 1 || index === activeRow + 1) &&
 					['xisumavoid_common', 'xisumavoid_rare', 'rendog_common', 'rendog_rare'].includes(
-						row.hermitCard.cardId
+						row.hermitCard.id
 					)
 			).length
 

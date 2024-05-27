@@ -26,11 +26,11 @@ function AttackModal({closeModal}: Props) {
 	if (!opponentRow || !opponentRow.hermitCard) return null
 	if (availableActions.includes('WAIT_FOR_TURN')) return null
 
-	const playerHermitInfo = HERMIT_CARDS[activeRow.hermitCard.cardId]
+	const playerHermitInfo = HERMIT_CARDS[activeRow.hermitCard.id]
 	if (!playerHermitInfo) return null // Armor Stand
 
 	const hermitFullName = playerHermitInfo.id.split('_')[0]
-	const singleUseInfo = singleUseCard ? SINGLE_USE_CARDS[singleUseCard.cardId] : null
+	const singleUseInfo = singleUseCard ? SINGLE_USE_CARDS[singleUseCard.id] : null
 
 	const handleAttack = (type: 'single-use' | 'primary' | 'secondary') => {
 		dispatch(startAttack(type))

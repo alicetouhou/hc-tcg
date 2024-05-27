@@ -45,7 +45,7 @@ class ShieldEffectCard extends EffectCard {
 			if (player.custom[instanceKey] !== undefined && player.custom[instanceKey] > 0 && row) {
 				discardCard(game, row.effectCard)
 				if (!row.hermitCard) return
-				const hermitName = HERMIT_CARDS[row.hermitCard?.cardId].name
+				const hermitName = HERMIT_CARDS[row.hermitCard?.id].name
 				game.battleLog.addCustomEntry(`$p${hermitName}'s$ $eShield$ was broken`, player.id)
 			}
 		})

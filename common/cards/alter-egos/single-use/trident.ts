@@ -43,10 +43,7 @@ class TridentSingleUseCard extends SingleUseCard {
 		player.hooks.onAttack.add(instance, (attack) => {
 			if (attack.getCreator() !== instance) return
 
-			player.custom[this.getInstanceKey(instance)] = flipCoin(player, {
-				cardId: this.id,
-				cardInstance: instance,
-			})[0]
+			player.custom[this.getInstanceKey(instance)] = flipCoin(player, this)[0]
 
 			applySingleUse(game)
 		})

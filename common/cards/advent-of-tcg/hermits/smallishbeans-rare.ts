@@ -39,8 +39,8 @@ class SmallishbeansRareHermitCard extends HermitCard {
 			let partialSum = 0
 
 			activeRow.itemCards.forEach((item) => {
-				if (!item || !item.cardId.includes('item')) return
-				if (item.cardId.includes('rare')) partialSum += 1
+				if (!item || !item.id.includes('item')) return
+				if (item.id.includes('rare')) partialSum += 1
 				partialSum += 1
 			})
 

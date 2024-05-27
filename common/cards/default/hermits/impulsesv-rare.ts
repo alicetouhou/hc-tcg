@@ -37,7 +37,7 @@ class ImpulseSVRareHermitCard extends HermitCard {
 					row.hermitCard &&
 					index !== player.board.activeRow &&
 					['bdoubleo100_common', 'bdoubleo100_rare', 'tangotek_common', 'tangotek_rare'].includes(
-						row.hermitCard.cardId
+						row.hermitCard.id
 					)
 			).length
 

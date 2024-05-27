@@ -11,7 +11,7 @@ import connectionStatusSaga from './background/connection-status'
 import {CONFIG, DEBUG_CONFIG} from 'common/config'
 import pickRequestSaga from './turn-actions/pick-request'
 import modalRequestSaga from './turn-actions/modal-request'
-import {TurnActions, CardT, PlayerState, ActionResult, TurnAction} from 'common/types/game-state'
+import {TurnActions, PlayerState, ActionResult, TurnAction} from 'common/types/game-state'
 import {GameModel} from 'common/models/game-model'
 import {EnergyT} from 'common/types/cards'
 import {hasEnoughEnergy} from 'common/utils/attacks'
@@ -20,6 +20,7 @@ import {getCardPos} from 'common/models/card-pos-model'
 import {printHooksState} from '../utils'
 import {buffers} from 'redux-saga'
 import {AttackActionData, PickCardActionData, attackToAttackAction} from 'common/types/action-data'
+import Card from 'common/cards/base/card'
 
 ////////////////////////////////////////
 // @TODO sort this whole thing out properly
@@ -40,12 +41,12 @@ function getAvailableEnergy(game: GameModel) {
 		for (let i = 0; i < activeRow.itemCards.length; i++) {
 			const card = activeRow.itemCards[i]
 			if (!card) continue
-			const pos = getCardPos(game, card.cardInstance)
+			const pos = getCardPos(game, card.instance)
 			if (!pos) continue
-			const itemInfo = ITEM_CARDS[card.cardId]
+			const itemInfo = ITEM_CARDS[card.id]
 			if (!itemInfo) continue
 
-			availableEnergy.push(...itemInfo.getEnergy(game, card.cardInstance, pos))
+			availableEnergy.push(...itemInfo.getEnergy(game, card.instance, pos))
 		}
 
 		// Modify available energy
@@ -116,7 +117,7 @@ function getAvailableActions(game: GameModel, availableEnergy: Array<EnergyT>): 
 
 		// Attack actions
 		if (activeRow !== null && turnState.turnNumber > 1) {
-			const hermitId = rows[activeRow]?.hermitCard?.cardId
+			const hermitId = rows[activeRow]?.hermitCard?.id
 			const hermitInfo = hermitId ? HERMIT_CARDS[hermitId] : null
 
 			// only add attack options if not sleeping
@@ -128,7 +129,7 @@ function getAvailableActions(game: GameModel, availableEnergy: Array<EnergyT>): 
 					actions.push('SECONDARY_ATTACK')
 				}
 				if (su && !suUsed) {
-					const suInfo = SINGLE_USE_CARDS[su.cardId]
+					const suInfo = SINGLE_USE_CARDS[su.id]
 					if (suInfo && suInfo.canAttack()) {
 						actions.push('SINGLE_USE_ATTACK')
 					}
@@ -142,7 +143,7 @@ function getAvailableActions(game: GameModel, availableEnergy: Array<EnergyT>): 
 
 	// Play card actions require an active row unless it's the players first turn
 	if (activeRow !== null || turnState.turnNumber <= 2) {
-		const handCards = currentPlayer.hand.map((card) => CARDS[card.cardId])
+		const handCards = currentPlayer.hand.map((card) => CARDS[card.id])
 		const allDesiredActions: TurnActions = []
 		for (let x = 0; x < handCards.length; x++) {
 			const card = handCards[x]
@@ -515,7 +516,7 @@ function* turnSaga(game: GameModel) {
 	if (result === 'GAME_END') return 'GAME_END'
 
 	// Create card draw array
-	const drawCards: Array<CardT | null> = []
+	const drawCards: Array<Card | null> = []
 
 	// Call turn end hooks
 	currentPlayer.hooks.onTurnEnd.call(drawCards)

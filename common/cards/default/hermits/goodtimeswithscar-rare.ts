@@ -38,7 +38,7 @@ class GoodTimesWithScarRareHermitCard extends HermitCard {
 		player.hooks.onAttack.add(instance, (attack) => {
 			if (attack.getCreator() !== instance || attack.type !== 'secondary') return
 
-			const attackerInstance = attack.getAttacker()?.card.cardInstance
+			const attackerInstance = attack.getAttacker()?.card.instance
 			if (!attackerInstance) return
 			// If this instance is not blocked from reviving, make possible next turn
 			if (canRevives[attackerInstance] === undefined) canRevives[attackerInstance] = true
@@ -46,14 +46,14 @@ class GoodTimesWithScarRareHermitCard extends HermitCard {
 
 		// Add before so health can be checked reliably
 		opponentPlayer.hooks.afterAttack.addBefore(instance, (attack) => {
-			const targetInstance = attack.getTarget()?.card.cardInstance
+			const targetInstance = attack.getTarget()?.card.instance
 			if (!targetInstance || !canRevives[targetInstance]) return
 			const row = attack.getTarget()?.row
 			if (!row || row.health === null || row.health > 0) return
 
 			row.health = 50
 
-			const revivedHermit = HERMIT_CARDS[row.hermitCard.cardId].name
+			const revivedHermit = HERMIT_CARDS[row.hermitCard.id].name
 
 			game.state.statusEffects.forEach((ail) => {
 				if (ail.targetInstance === targetInstance) {
@@ -71,14 +71,14 @@ class GoodTimesWithScarRareHermitCard extends HermitCard {
 		})
 
 		player.hooks.onTurnStart.add(instance, () => {
-			Object.entries(canRevives).forEach(([cardInstance, wasNotRevived]) => {
-				if (wasNotRevived) delete canRevives[cardInstance]
+			Object.entries(canRevives).forEach(([instance, wasNotRevived]) => {
+				if (wasNotRevived) delete canRevives[instance]
 			})
 		})
 
 		player.hooks.afterDefence.add(instance, (attack) => {
 			const targetRow = attack.getTarget()?.row
-			const targetInstance = targetRow?.hermitCard.cardInstance
+			const targetInstance = targetRow?.hermitCard.instance
 			if (!targetInstance || canRevives[targetInstance] !== false) return
 			if (!targetRow || targetRow.health === null || targetRow.health > 0) return
 			// Remove revived hermits after they died, if a hermit is replayed after being discarded it should be able to revive again
@@ -100,8 +100,8 @@ class GoodTimesWithScarRareHermitCard extends HermitCard {
 		} else {
 			// Reassign hooks to detach when canRevives is empty
 			player.hooks.onTurnStart.add(instance, () => {
-				Object.entries(canRevives).forEach(([cardInstance, wasNotRevived]) => {
-					if (wasNotRevived) delete canRevives[cardInstance]
+				Object.entries(canRevives).forEach(([instance, wasNotRevived]) => {
+					if (wasNotRevived) delete canRevives[instance]
 				})
 
 				opponentPlayer.hooks.afterAttack.remove(instance)
@@ -110,7 +110,7 @@ class GoodTimesWithScarRareHermitCard extends HermitCard {
 			})
 			player.hooks.afterDefence.add(instance, (attack) => {
 				const targetRow = attack.getTarget()?.row
-				const targetInstance = targetRow?.hermitCard.cardInstance
+				const targetInstance = targetRow?.hermitCard.instance
 				if (!targetInstance || canRevives[targetInstance] !== false) return
 				if (!targetRow || targetRow.health === null || targetRow.health > 0) return
 				delete canRevives[targetInstance]

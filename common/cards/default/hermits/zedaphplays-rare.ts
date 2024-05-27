@@ -54,7 +54,7 @@ class ZedaphPlaysRareHermitCard extends HermitCard {
 
 				if (player.custom[coinFlipResult] === 'heads') {
 					// Change attack target - this just works
-					attack.setTarget(this.id, attacker.row.hermitCard.cardInstance)
+					attack.setTarget(this.id, attacker.row.hermitCard.instance)
 				}
 			})
 

@@ -49,7 +49,7 @@ class EthosLabRareHermitCard extends HermitCard {
 			const opponentActiveRow = getActiveRow(opponentPlayer)
 			if (!opponentActiveRow || !opponentActiveRow.hermitCard) return
 
-			applyStatusEffect(game, 'fire', opponentActiveRow?.hermitCard.cardInstance)
+			applyStatusEffect(game, 'fire', opponentActiveRow?.hermitCard.instance)
 		})
 	}
 

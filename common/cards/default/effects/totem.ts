@@ -32,13 +32,13 @@ class TotemEffectCard extends EffectCard {
 			row.health = 10
 
 			const statusEffectsToRemove = game.state.statusEffects.filter((ail) => {
-				return ail.targetInstance === pos.card?.cardInstance
+				return ail.targetInstance === pos.card?.instance
 			})
 			statusEffectsToRemove.forEach((ail) => {
 				removeStatusEffect(game, pos, ail.statusEffectInstance)
 			})
 
-			const revivedHermit = HERMIT_CARDS[row.hermitCard.cardId].name
+			const revivedHermit = HERMIT_CARDS[row.hermitCard.id].name
 
 			game.battleLog.addCustomEntry(
 				`Using $eTotem$, $p${revivedHermit}$ revived with $g10hp.$`,
@@ -59,7 +59,7 @@ class TotemEffectCard extends EffectCard {
 
 			row.health = 10
 
-			const thisHermitId = pos.row?.hermitCard?.cardInstance
+			const thisHermitId = pos.row?.hermitCard?.instance
 
 			const statusEffectsToRemove = game.state.statusEffects.filter((ail) => {
 				return ail.targetInstance === thisHermitId

@@ -22,7 +22,7 @@ class InstantHealthSingleUseCard extends SingleUseCard {
 
 		// Can't attach it there are no real hermits
 		const playerHasHermit = getNonEmptyRows(player).some(
-			(rowPos) => HERMIT_CARDS[rowPos.row.hermitCard.cardId] !== undefined
+			(rowPos) => HERMIT_CARDS[rowPos.row.hermitCard.id] !== undefined
 		)
 		if (!playerHasHermit) result.push('UNMET_CONDITION')
 
@@ -47,7 +47,7 @@ class InstantHealthSingleUseCard extends SingleUseCard {
 				if (pickResult.slot.type !== 'hermit') return 'FAILURE_INVALID_SLOT'
 				if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
 
-				const hermitInfo = HERMIT_CARDS[pickResult.card.cardId]
+				const hermitInfo = HERMIT_CARDS[pickResult.card.id]
 				if (!hermitInfo) return 'FAILURE_CANNOT_COMPLETE'
 
 				// Apply

@@ -1,9 +1,10 @@
-import { getStarterPack } from '../../server/src/utils/state-gen'
-import { CardT } from '../../common/types/game-state'
-import { PlayerDeckT } from '../../common/types/deck'
-import { Socket } from 'socket.io'
-import { validateDeck } from '../utils/validation'
-import { censorString } from '../utils/formatting'
+import {getStarterPack} from '../../server/src/utils/state-gen'
+import {PlayerDeckT} from '../../common/types/deck'
+import {Socket} from 'socket.io'
+import {validateDeck} from '../utils/validation'
+import {censorString} from '../utils/formatting'
+import Card from '../cards/base/card'
+import {CARDS} from '../cards'
 
 export class PlayerModel {
 	private internalId: string
@@ -11,7 +12,7 @@ export class PlayerModel {
 	private internalDeck: {
 		name: string
 		icon: string
-		cards: Array<CardT>
+		cards: Array<Card>
 	}
 
 	public name: string
@@ -28,7 +29,7 @@ export class PlayerModel {
 			name: 'Starter Deck',
 			icon: 'any',
 			cards: getStarterPack().map((id) => {
-				return { cardId: id, cardInstance: Math.random().toString() }
+				return CARDS[id]
 			}),
 		}
 
@@ -61,7 +62,7 @@ export class PlayerModel {
 
 	setPlayerDeck(newDeck: PlayerDeckT) {
 		if (!newDeck || !newDeck.cards) return
-		const validationMessage = validateDeck(newDeck.cards.map((card) => card.cardId))
+		const validationMessage = validateDeck(newDeck.cards.map((card) => card.id))
 		if (validationMessage) return
 		this.internalDeck = newDeck
 	}

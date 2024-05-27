@@ -22,7 +22,7 @@ class MelodyStatusEffect extends StatusEffect {
 		const {player} = pos
 
 		const hasMelody = game.state.statusEffects.some(
-			(a) => a.targetInstance === pos.card?.cardInstance && a.statusEffectId === 'melody'
+			(a) => a.targetInstance === pos.card?.instance && a.statusEffectId === 'melody'
 		)
 
 		if (hasMelody) return
@@ -34,7 +34,7 @@ class MelodyStatusEffect extends StatusEffect {
 			if (!targetPos || !targetPos.row || !targetPos.row.hermitCard) return
 			if (targetPos.rowIndex === null) return
 
-			const hermitInfo = HERMIT_CARDS[targetPos.row.hermitCard.cardId]
+			const hermitInfo = HERMIT_CARDS[targetPos.row.hermitCard.id]
 			if (hermitInfo) {
 				const maxHealth = Math.max(targetPos.row.health, hermitInfo.health)
 				targetPos.row.health = Math.min(targetPos.row.health + 10, maxHealth)
@@ -44,7 +44,7 @@ class MelodyStatusEffect extends StatusEffect {
 		player.hooks.afterDefence.add(statusEffectInfo.statusEffectInstance, (attack) => {
 			const attackTarget = attack.getTarget()
 			if (!attackTarget) return
-			if (attackTarget.row.hermitCard.cardInstance !== statusEffectInfo.targetInstance) return
+			if (attackTarget.row.hermitCard.instance !== statusEffectInfo.targetInstance) return
 			if (attackTarget.row.health > 0) return
 			removeStatusEffect(game, pos, statusEffectInfo.statusEffectInstance)
 		})

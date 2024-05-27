@@ -47,8 +47,8 @@ class PharaohRareHermitCard extends HermitCard {
 			const nonEmptyRows = getNonEmptyRows(player, true, true)
 			if (
 				nonEmptyRows.length === 0 ||
-				nonEmptyRows.every((c) => c.row.hermitCard.cardId === 'pharaoh_rare') ||
-				!nonEmptyRows.some((rowPos) => HERMIT_CARDS[rowPos.row.hermitCard.cardId] !== undefined)
+				nonEmptyRows.every((c) => c.row.hermitCard.id === 'pharaoh_rare') ||
+				!nonEmptyRows.some((rowPos) => HERMIT_CARDS[rowPos.row.hermitCard.id] !== undefined)
 			) {
 				return
 			}
@@ -74,7 +74,7 @@ class PharaohRareHermitCard extends HermitCard {
 					if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
 
 					// Make sure it's an actual hermit card
-					const hermitCard = HERMIT_CARDS[pickResult.card.cardId]
+					const hermitCard = HERMIT_CARDS[pickResult.card.id]
 					if (!hermitCard) return 'FAILURE_INVALID_SLOT'
 
 					//Cannot heal other pharaohs
@@ -100,7 +100,7 @@ class PharaohRareHermitCard extends HermitCard {
 			const pickedRow = pickedPlayer.board.rows[pickedRowIndex]
 			if (!pickedRow || !pickedRow.hermitCard) return
 
-			const hermitInfo = HERMIT_CARDS[pickedRow.hermitCard.cardId]
+			const hermitInfo = HERMIT_CARDS[pickedRow.hermitCard.id]
 			if (hermitInfo) {
 				// Heal
 				pickedRow.health = Math.min(

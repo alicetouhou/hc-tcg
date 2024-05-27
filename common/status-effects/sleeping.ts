@@ -28,10 +28,10 @@ class SleepingStatusEffect extends StatusEffect {
 		game.addBlockedActions(this.id, 'PRIMARY_ATTACK', 'SECONDARY_ATTACK', 'CHANGE_ACTIVE_HERMIT')
 		if (!statusEffectInfo.duration) statusEffectInfo.duration = this.duration
 
-		row.health = HERMIT_CARDS[card.cardId].health
+		row.health = HERMIT_CARDS[card.id].health
 
 		game.battleLog.addCustomEntry(
-			`$p${HERMIT_CARDS[card.cardId].name}$ went to sleep and restored $gfull health$`,
+			`$p${HERMIT_CARDS[card.id].name}$ went to sleep and restored $gfull health$`,
 			player.id
 		)
 
@@ -57,7 +57,7 @@ class SleepingStatusEffect extends StatusEffect {
 		player.hooks.afterDefence.add(statusEffectInfo.statusEffectInstance, (attack) => {
 			const attackTarget = attack.getTarget()
 			if (!attackTarget) return
-			if (attackTarget.row.hermitCard.cardInstance !== statusEffectInfo.targetInstance) return
+			if (attackTarget.row.hermitCard.instance !== statusEffectInfo.targetInstance) return
 			if (attackTarget.row.health > 0) return
 			removeStatusEffect(game, pos, statusEffectInfo.statusEffectInstance)
 		})

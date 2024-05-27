@@ -54,7 +54,7 @@ class Smajor1995RareHermitCard extends HermitCard {
 					if (pickResult.slot.type !== 'hermit') return 'FAILURE_INVALID_SLOT'
 					if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
 
-					applyStatusEffect(game, 'dyed', pickResult.card.cardInstance)
+					applyStatusEffect(game, 'dyed', pickResult.card.instance)
 
 					return 'SUCCESS'
 				},

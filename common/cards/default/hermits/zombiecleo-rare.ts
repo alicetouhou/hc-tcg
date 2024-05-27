@@ -2,9 +2,7 @@ import {HERMIT_CARDS} from '../..'
 import {CardPosModel, getBasicCardPos} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import {HermitAttackType} from '../../../types/attack'
-import {CardT} from '../../../types/game-state'
 import {getNonEmptyRows} from '../../../utils/board'
-import {formatText} from '../../../utils/formatting'
 import HermitCard from '../../base/hermit-card'
 
 class ZombieCleoRareHermitCard extends HermitCard {
@@ -43,7 +41,7 @@ class ZombieCleoRareHermitCard extends HermitCard {
 
 		if (!attack || attack.type !== 'secondary') return attack
 
-		const pickedCard: CardT = player.custom[pickedCardKey]?.card
+		const pickedCard = player.custom[pickedCardKey]?.card
 		const attackType = player.custom[pickedCardKey]?.attack
 
 		// Delete the stored data straight away
@@ -52,13 +50,13 @@ class ZombieCleoRareHermitCard extends HermitCard {
 		if (!pickedCard || !attackType) return
 
 		// No loops please
-		if (pickedCard.cardId === this.id) return
+		if (pickedCard.id === this.id) return
 
-		const hermitInfo = HERMIT_CARDS[pickedCard.cardId]
+		const hermitInfo = HERMIT_CARDS[pickedCard.id]
 		if (!hermitInfo) return
 
 		// Return that cards secondary attack
-		const newAttack = hermitInfo.getAttacks(game, pickedCard.cardInstance, pos, attackType)
+		const newAttack = hermitInfo.getAttacks(game, pickedCard.instance, pos, attackType)
 		if (!newAttack) return
 		const attackName =
 			newAttack.type === 'primary' ? hermitInfo.primary.name : hermitInfo.secondary.name
@@ -99,7 +97,7 @@ class ZombieCleoRareHermitCard extends HermitCard {
 					if (!pickedCard) return 'FAILURE_INVALID_SLOT'
 
 					// No picking the same card as us
-					if (pickedCard.cardId === this.id) return 'FAILURE_WRONG_PICK'
+					if (pickedCard.id === this.id) return 'FAILURE_WRONG_PICK'
 
 					game.addModalRequest({
 						playerId: player.id,
@@ -108,7 +106,7 @@ class ZombieCleoRareHermitCard extends HermitCard {
 							payload: {
 								modalName: 'Cleo: Choose an attack to copy',
 								modalDescription: "Which of the Hermit's attacks do you want to copy?",
-								cardPos: getBasicCardPos(game, pickedCard.cardInstance),
+								cardPos: getBasicCardPos(game, pickedCard.instance),
 							},
 						},
 						onResult(modalResult) {
@@ -128,7 +126,7 @@ class ZombieCleoRareHermitCard extends HermitCard {
 							}
 
 							// Add the attack requests of the chosen card as they would not be called otherwise
-							player.hooks.getAttackRequests.call(pickedCard.cardInstance, modalResult.pick)
+							player.hooks.getAttackRequests.call(pickedCard.instance, modalResult.pick)
 
 							return 'SUCCESS'
 						},
@@ -152,7 +150,7 @@ class ZombieCleoRareHermitCard extends HermitCard {
 		player.hooks.blockedActions.add(instance, (blockedActions) => {
 			// Block "Puppetry" if there are not AFK Hermit cards other than rare Cleo(s)
 			const afkHermits = getNonEmptyRows(player, true).filter((rowPos) => {
-				const hermitId = rowPos.row.hermitCard.cardId
+				const hermitId = rowPos.row.hermitCard.id
 				return HERMIT_CARDS[hermitId] && hermitId !== this.id
 			}).length
 			if (

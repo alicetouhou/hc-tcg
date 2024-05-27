@@ -28,7 +28,7 @@ function BorrowModal({closeModal}: Props) {
 		const custom = Object.values(playerState.custom)
 		if (!custom.length) return null
 
-		const borrowedId = custom[0].cardId
+		const borrowedId = custom[0].id
 		const borrowedName = CARDS[borrowedId].name
 
 		return borrowedName

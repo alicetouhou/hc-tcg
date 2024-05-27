@@ -19,7 +19,7 @@ class CatEffectCard extends EffectCard {
 		const {player} = pos
 		player.hooks.afterAttack.add(instance, (attack) => {
 			if (!pos.row || !pos.row.hermitCard) return
-			if (attack.getCreator() !== pos.row.hermitCard.cardInstance) return
+			if (attack.getCreator() !== pos.row.hermitCard.instance) return
 
 			if (player.pile.length === 0) return
 

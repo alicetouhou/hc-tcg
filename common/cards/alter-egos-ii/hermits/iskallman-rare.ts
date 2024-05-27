@@ -51,7 +51,7 @@ class IskallmanRareHermitCard extends HermitCard {
 				...getNonEmptyRows(player, true),
 				...getNonEmptyRows(opponentPlayer, true),
 			].some((rowPos) => {
-				const hermitCard = HERMIT_CARDS[rowPos.row.hermitCard.cardId]
+				const hermitCard = HERMIT_CARDS[rowPos.row.hermitCard.id]
 				if (hermitCard === undefined) return false
 				if (rowPos.row.health === hermitCard.health) return false
 				return true
@@ -94,7 +94,7 @@ class IskallmanRareHermitCard extends HermitCard {
 							if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
 
 							// Make sure it's an actual hermit card
-							const hermitCard = HERMIT_CARDS[pickResult.card.cardId]
+							const hermitCard = HERMIT_CARDS[pickResult.card.id]
 							if (!hermitCard) return 'FAILURE_INVALID_SLOT'
 
 							// Store the info to use later
@@ -147,8 +147,8 @@ class IskallmanRareHermitCard extends HermitCard {
 			})
 			attack.addNewAttack(backlashAttack)
 
-			const attackerInfo = HERMIT_CARDS[attacker.row.hermitCard.cardId]
-			const hermitInfo = HERMIT_CARDS[pickedRow.hermitCard.cardId]
+			const attackerInfo = HERMIT_CARDS[attacker.row.hermitCard.id]
+			const hermitInfo = HERMIT_CARDS[pickedRow.hermitCard.id]
 			if (hermitInfo) {
 				const maxHealth = Math.max(pickedRow.health, hermitInfo.health)
 				pickedRow.health = Math.min(pickedRow.health + 50, maxHealth)

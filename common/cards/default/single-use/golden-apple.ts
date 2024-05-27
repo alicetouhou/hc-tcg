@@ -27,7 +27,7 @@ class GoldenAppleSingleUseCard extends SingleUseCard {
 
 		// Can't attach it there are not any inactive hermits
 		const playerHasAfk = getNonEmptyRows(player, true).some(
-			(rowPos) => HERMIT_CARDS[rowPos.row.hermitCard.cardId] !== undefined
+			(rowPos) => HERMIT_CARDS[rowPos.row.hermitCard.id] !== undefined
 		)
 		if (!playerHasAfk) result.push('UNMET_CONDITION')
 
@@ -53,7 +53,7 @@ class GoldenAppleSingleUseCard extends SingleUseCard {
 				if (pickResult.slot.type !== 'hermit') return 'FAILURE_INVALID_SLOT'
 				if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
 
-				const hermitInfo = HERMIT_CARDS[pickResult.card.cardId]
+				const hermitInfo = HERMIT_CARDS[pickResult.card.id]
 				if (!hermitInfo) return 'FAILURE_CANNOT_COMPLETE'
 
 				// Apply
