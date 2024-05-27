@@ -77,12 +77,11 @@ class GrianchRareHermitCard extends HermitCard {
 					const hermitHealth = pickedPlayer.board.rows[rowIndex].health
 
 					if (!hermitHealth || !hermitId) return 'FAILURE_INVALID_SLOT'
-					const hermitInfo = HERMIT_CARDS[hermitId]
-					if (hermitInfo) {
+					if (hermitCard instanceof HermitCard) {
 						// Heal
 						pickedPlayer.board.rows[rowIndex].health = Math.min(
 							hermitHealth + 40,
-							hermitInfo.health // Max health
+							hermitCard.health // Max health
 						)
 					} else {
 						// Armor Stand

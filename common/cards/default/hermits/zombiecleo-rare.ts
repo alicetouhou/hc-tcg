@@ -29,6 +29,7 @@ class ZombieCleoRareHermitCard extends HermitCard {
 		})
 	}
 
+	//@TODO Work out cleo
 	override getAttacks(
 		game: GameModel,
 		instance: string,

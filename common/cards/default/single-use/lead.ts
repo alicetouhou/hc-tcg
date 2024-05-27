@@ -129,7 +129,6 @@ class LeadSingleUseCard extends SingleUseCard {
 				// Move the item
 				swapSlots(game, itemPos, targetPos)
 
-				const cardInfo = CARDS[itemCard!.id]
 				applySingleUse(game, pickResult)
 
 				delete player.custom[itemIndexKey]

@@ -1,5 +1,5 @@
 import {all, take, fork, cancel, race, delay, call, actionChannel} from 'typed-redux-saga'
-import {CARDS, HERMIT_CARDS, ITEM_CARDS, SINGLE_USE_CARDS} from 'common/cards'
+import {CARDS, ITEM_CARDS, SINGLE_USE_CARDS} from 'common/cards'
 import {getEmptyRow, getLocalGameState} from '../utils/state-gen'
 import attackSaga from './turn-actions/attack'
 import playCardSaga from './turn-actions/play-card'
@@ -117,15 +117,14 @@ function getAvailableActions(game: GameModel, availableEnergy: Array<EnergyT>): 
 
 		// Attack actions
 		if (activeRow !== null && turnState.turnNumber > 1) {
-			const hermitId = rows[activeRow]?.hermitCard?.id
-			const hermitInfo = hermitId ? HERMIT_CARDS[hermitId] : null
+			const hermitCard = rows[activeRow]?.hermitCard
 
 			// only add attack options if not sleeping
-			if (hermitInfo) {
-				if (hasEnoughEnergy(availableEnergy, hermitInfo.primary.cost)) {
+			if (hermitCard) {
+				if (hasEnoughEnergy(availableEnergy, hermitCard.primary.cost)) {
 					actions.push('PRIMARY_ATTACK')
 				}
-				if (hasEnoughEnergy(availableEnergy, hermitInfo.secondary.cost)) {
+				if (hasEnoughEnergy(availableEnergy, hermitCard.secondary.cost)) {
 					actions.push('SECONDARY_ATTACK')
 				}
 				if (su && !suUsed) {

@@ -4,6 +4,7 @@ import {CardPosModel} from '../../../models/card-pos-model'
 import {flipCoin} from '../../../utils/coinFlips'
 import {discardCard} from '../../../utils/movement'
 import {HERMIT_CARDS} from '../..'
+import HermitCard from '../../base/hermit-card'
 
 class BrewingStandEffectCard extends EffectCard {
 	constructor() {
@@ -43,9 +44,8 @@ class BrewingStandEffectCard extends EffectCard {
 					const playerRow = player.board.rows[pickResult.rowIndex]
 					const hermitCard = playerRow.hermitCard
 					if (!hermitCard || !playerRow.health) return 'SUCCESS'
-					const hermitInfo = HERMIT_CARDS[hermitCard.id]
-					if (hermitInfo) {
-						const maxHealth = Math.max(playerRow.health, hermitInfo.health)
+					if (hermitCard instanceof HermitCard) {
+						const maxHealth = Math.max(playerRow.health, hermitCard.health)
 						playerRow.health = Math.min(playerRow.health + 50, maxHealth)
 					} else {
 						// Armor Stand

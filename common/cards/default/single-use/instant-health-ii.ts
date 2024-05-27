@@ -3,6 +3,7 @@ import {HERMIT_CARDS} from '../..'
 import {GameModel} from '../../../models/game-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {applySingleUse, getNonEmptyRows} from '../../../utils/board'
+import HermitCard from '../../base/hermit-card'
 
 class InstantHealthIISingleUseCard extends SingleUseCard {
 	constructor() {
@@ -47,14 +48,13 @@ class InstantHealthIISingleUseCard extends SingleUseCard {
 				if (pickResult.slot.type !== 'hermit') return 'FAILURE_INVALID_SLOT'
 				if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
 
-				const hermitInfo = HERMIT_CARDS[pickResult.card.id]
-				if (!hermitInfo) return 'FAILURE_CANNOT_COMPLETE'
-
 				// Apply
 				applySingleUse(game, pickResult)
 
-				const maxHealth = Math.max(row.health, hermitInfo.health)
-				row.health = Math.min(row.health + 60, maxHealth)
+				if (pickResult.card instanceof HermitCard) {
+					const maxHealth = Math.max(row.health, pickResult.card.health)
+					row.health = Math.min(row.health + 100, maxHealth)
+				}
 
 				return 'SUCCESS'
 			},

@@ -1,6 +1,7 @@
-import {CARDS, EFFECT_CARDS} from '../cards'
-import {CardTypeT, RankT} from '../types/cards'
+import {CARDS} from '../cards'
+import {CardTypeT} from '../types/cards'
 import Card from '../cards/base/card'
+import EffectCard from '../cards/base/effect-card'
 
 /**
  * Returns true if the two cards are equal
@@ -14,16 +15,13 @@ export function equalCard(card1: Card | null, card2: Card | null) {
 /**
  * Check if card is the type of card
  */
+//@TODO Remove these functions
 export function isCardType(card: Card | null, type: CardTypeT): boolean {
-	if (!card) return false
-	const cardInfo = CARDS[card.id]
-	return cardInfo.type === type
+	return card?.type === type
 }
 
-export const isRemovable = (card: Card) => {
-	const cardInfo = EFFECT_CARDS[card.id]
-	if (!cardInfo) return false
-	return cardInfo.getIsRemovable()
+export const isRemovable = (card: EffectCard) => {
+	return card?.getIsRemovable()
 }
 
 export function getCardExpansion(id: string) {

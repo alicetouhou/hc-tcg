@@ -53,9 +53,8 @@ export function rowHasItem(row: RowState): boolean {
 	let total = 0
 	for (const itemCard of itemCards) {
 		if (!itemCard) continue
-		const cardInfo = ITEM_CARDS[itemCard.id]
 		// String
-		if (!cardInfo) continue
+		if (!itemCard.id) continue
 		total += 1
 	}
 

@@ -24,11 +24,8 @@ export type SlotProps = {
 	statusEffects: Array<StatusEffectT>
 }
 const Slot = ({type, onClick, card, rowState, active, cssId, statusEffects}: SlotProps) => {
-	let cardInfo = card?.id
-		? (CARDS[card.id] as HermitCard | EffectCard | SingleUseCard | ItemCard | HealthCard)
-		: null
 	if (type === 'health' && rowState?.health) {
-		cardInfo = new HealthCard({
+		card = new HealthCard({
 			id: 'health',
 			name: 'Health Card',
 			rarity: 'common',
@@ -86,15 +83,13 @@ const Slot = ({type, onClick, card, rowState, active, cssId, statusEffects}: Slo
 			className={classnames(css.slot, {
 				[css.available]: !!onClick,
 				[css[type]]: true,
-				[css.empty]: !cardInfo,
-				// [css.afk]: cardInfo && !active,
-				// [css.afk]: cardInfo?.type === 'hermit' && !active,
+				[css.empty]: !card,
 				[css.afk]: !active && type !== 'single_use',
 			})}
 		>
-			{cardInfo ? (
+			{card ? (
 				<div className={css.cardWrapper}>
-					<CardComponent card={cardInfo} />
+					<CardComponent card={card} />
 					{type === 'health'
 						? renderStatusEffects(hermitStatusEffects)
 						: type === 'effect'

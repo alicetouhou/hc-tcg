@@ -4,6 +4,7 @@ import {GameModel} from '../../../models/game-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {hasActive} from '../../../utils/game'
 import {applySingleUse, getNonEmptyRows} from '../../../utils/board'
+import HermitCard from '../../base/hermit-card'
 
 class GoldenAppleSingleUseCard extends SingleUseCard {
 	constructor() {
@@ -53,14 +54,13 @@ class GoldenAppleSingleUseCard extends SingleUseCard {
 				if (pickResult.slot.type !== 'hermit') return 'FAILURE_INVALID_SLOT'
 				if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
 
-				const hermitInfo = HERMIT_CARDS[pickResult.card.id]
-				if (!hermitInfo) return 'FAILURE_CANNOT_COMPLETE'
-
 				// Apply
 				applySingleUse(game, pickResult)
 
-				const maxHealth = Math.max(row.health, hermitInfo.health)
-				row.health = Math.min(row.health + 100, maxHealth)
+				if (pickResult.card instanceof HermitCard) {
+					const maxHealth = Math.max(row.health, pickResult.card.health)
+					row.health = Math.min(row.health + 100, maxHealth)
+				}
 
 				return 'SUCCESS'
 			},

@@ -6,6 +6,9 @@ import {BasicCardPos, CardPosModel} from 'common/models/card-pos-model'
 import {ActionResult} from 'common/types/game-state'
 import {call} from 'typed-redux-saga'
 import {DEBUG_CONFIG} from 'common/config'
+import HermitCard from 'common/cards/base/hermit-card'
+import ItemCard from 'common/cards/base/item-card'
+import EffectCard from 'common/cards/base/effect-card'
 
 function* playCardSaga(
 	game: GameModel,
@@ -22,7 +25,6 @@ function* playCardSaga(
 
 	const {playerId, rowIndex: pickedIndex, slot: pickedSlot} = pickInfo
 
-	const cardInfo = CARDS[card.id]
 	// opponentPlayerId is relative to where the card is being placed
 	const opponentPlayerId = playerId === currentPlayer.id ? game.opponentPlayerId : currentPlayer.id
 
@@ -57,7 +59,7 @@ function* playCardSaga(
 	const {row, rowIndex, slot} = pos
 
 	// Do we meet requirements to place the card
-	const canAttach = cardInfo.canAttach(game, pos)
+	const canAttach = card.canAttach(game, pos)
 	player.hooks.canAttach.call(canAttach, pos)
 
 	// It's the wrong kind of slot
@@ -79,14 +81,14 @@ function* playCardSaga(
 		// All other positions requires us to have selected a valid row
 		if (!row || rowIndex === null) return 'FAILURE_CANNOT_COMPLETE'
 
+		//@Todo Make sure this actually works
 		switch (slot.type) {
 			case 'hermit': {
-				row.hermitCard = card
+				row.hermitCard = card as HermitCard
 
 				// If the card is not a hermit card it will have to set the row health itself
-				const hermitCardInfo = HERMIT_CARDS[cardInfo.id]
-				if (hermitCardInfo) {
-					row.health = HERMIT_CARDS[cardInfo.id].health
+				if (card instanceof HermitCard) {
+					row.health = card.health
 				}
 
 				if (player.board.activeRow === null) {
@@ -96,7 +98,7 @@ function* playCardSaga(
 				break
 			}
 			case 'item': {
-				row.itemCards[slot.index] = card
+				row.itemCards[slot.index] = card as ItemCard
 
 				// This can only be done once per turn
 				game.addCompletedActions('PLAY_ITEM_CARD')
@@ -104,7 +106,7 @@ function* playCardSaga(
 				break
 			}
 			case 'effect': {
-				row.effectCard = card
+				row.effectCard = card as EffectCard
 				break
 			}
 			default:
@@ -121,10 +123,10 @@ function* playCardSaga(
 
 	// Add entry to battle log, unless it is played in a single use slot
 	if (pos.slot.type !== 'single_use') {
-		game.battleLog.addPlayCardEntry(cardInfo, pos, currentPlayer.coinFlips, undefined)
+		game.battleLog.addPlayCardEntry(card, pos, currentPlayer.coinFlips, undefined)
 	}
 
-	cardInfo.onAttach(game, card.instance, pos)
+	card.onAttach(game, card.instance, pos)
 
 	// Call onAttach hook
 	currentPlayer.hooks.onAttach.call(card.instance)

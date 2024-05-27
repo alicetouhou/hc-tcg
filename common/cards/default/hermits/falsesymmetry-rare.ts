@@ -40,11 +40,10 @@ class FalseSymmetryRareHermitCard extends HermitCard {
 			if (coinFlip[0] === 'tails') return
 
 			// Heal 40hp
-			const hermitInfo = HERMIT_CARDS[attacker.row.hermitCard.id]
-			const maxHealth = Math.max(attacker.row.health, hermitInfo.health)
+			const maxHealth = Math.max(attacker.row.health, attacker.row.hermitCard.health)
 			attacker.row.health = Math.min(attacker.row.health + 40, maxHealth)
 
-			game.battleLog.addCustomEntry(`$p${hermitInfo.name}$ healed $g40hp$`, player.id)
+			game.battleLog.addCustomEntry(`$p${attacker.row.hermitCard.name}$ healed $g40hp$`, player.id)
 		})
 	}
 

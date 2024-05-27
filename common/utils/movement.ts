@@ -51,8 +51,7 @@ export function discardCard(
 	}
 
 	// Call `onDetach`
-	const cardInfo = CARDS[card.id]
-	cardInfo.onDetach(game, card.instance, pos)
+	card.onDetach(game, card.instance, pos)
 	pos.player.hooks.onDetach.call(card.instance)
 
 	// Remove the card
@@ -87,8 +86,7 @@ export function discardSingleUse(game: GameModel, playerState: PlayerState) {
 	if (!pos) return
 
 	// Water and Milk Buckets can be on this slot so we use CARDS to get the card info
-	const cardInfo = CARDS[suCard.id]
-	cardInfo.onDetach(game, suCard.instance, pos)
+	suCard.onDetach(game, suCard.instance, pos)
 
 	// Call onDetach hook
 	playerState.hooks.onDetach.call(suCard.instance)
@@ -122,8 +120,7 @@ export function moveCardToHand(game: GameModel, card: Card, playerDiscard?: Play
 	const cardPos = getCardPos(game, card.instance)
 	if (!cardPos) return
 
-	const cardInfo = CARDS[card.id]
-	cardInfo.onDetach(game, card.instance, cardPos)
+	card.onDetach(game, card.instance, cardPos)
 
 	cardPos.player.hooks.onDetach.call(card.instance)
 
@@ -200,8 +197,7 @@ export function canAttachToSlot(
 	// Create a fake card pos model
 	const pos = new CardPosModel(game, basicPos, card.instance, true)
 
-	const cardInfo = CARDS[card.id]
-	const canAttach = cardInfo.canAttach(game, pos)
+	const canAttach = card.canAttach(game, pos)
 	player.hooks.canAttach.call(canAttach, pos)
 
 	if (excludeInvalidPlayer) {
@@ -254,15 +250,13 @@ export function swapSlots(
 		const results = cardPos.player.hooks.onSlotChange.call(slot)
 		if (results.includes(false)) return false
 
-		const cardInfo = CARDS[card.id]
-
 		if (!withoutDetach) {
-			cardInfo.onDetach(game, card.instance, cardPos)
+			card.onDetach(game, card.instance, cardPos)
 
 			cardPos.player.hooks.onDetach.call(card.instance)
 		}
 
-		cardsInfo.push({cardInfo, card})
+		cardsInfo.push(card)
 	}
 
 	// Swap
@@ -282,12 +276,12 @@ export function swapSlots(
 
 	if (!withoutDetach) {
 		// onAttach
-		for (let {cardInfo, card} of cardsInfo) {
+		for (let card of cardsInfo) {
 			// New card position after swap
 			const cardPos = getCardPos(game, card.instance)
 			if (!cardPos) continue
 
-			cardInfo.onAttach(game, card.instance, cardPos)
+			card.onAttach(game, card.instance, cardPos)
 
 			cardPos.player.hooks.onAttach.call(card.instance)
 		}

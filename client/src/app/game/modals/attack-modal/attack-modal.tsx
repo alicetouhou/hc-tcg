@@ -26,10 +26,9 @@ function AttackModal({closeModal}: Props) {
 	if (!opponentRow || !opponentRow.hermitCard) return null
 	if (availableActions.includes('WAIT_FOR_TURN')) return null
 
-	const playerHermitInfo = HERMIT_CARDS[activeRow.hermitCard.id]
-	if (!playerHermitInfo) return null // Armor Stand
+	if (!activeRow.hermitCard) return null // Armor Stand
 
-	const hermitFullName = playerHermitInfo.id.split('_')[0]
+	const hermitFullName = activeRow.hermitCard.id.split('_')[0]
 	const singleUseInfo = singleUseCard ? SINGLE_USE_CARDS[singleUseCard.id] : null
 
 	const handleAttack = (type: 'single-use' | 'primary' | 'secondary') => {
@@ -39,7 +38,7 @@ function AttackModal({closeModal}: Props) {
 
 	const handleExtraAttack = (hermitExtra: any) => {
 		const extra = {
-			[playerHermitInfo.id]: hermitExtra,
+			[activeRow.hermitCard.id]: hermitExtra,
 		}
 		dispatch(startAttack('secondary', extra))
 		closeModal()
@@ -66,9 +65,9 @@ function AttackModal({closeModal}: Props) {
 		attacks.push(
 			<Attack
 				key="primary"
-				name={playerHermitInfo.primary.name}
+				name={activeRow.hermitCard.primary.name}
 				icon={`/images/hermits-nobg/${hermitFullName}.png`}
-				attackInfo={playerHermitInfo.primary}
+				attackInfo={activeRow.hermitCard.primary}
 				onClick={primaryAttack}
 			/>
 		)
@@ -80,9 +79,9 @@ function AttackModal({closeModal}: Props) {
 		attacks.push(
 			<Attack
 				key="secondary"
-				name={playerHermitInfo.secondary.name}
+				name={activeRow.hermitCard.secondary.name}
 				icon={`/images/hermits-nobg/${hermitFullName}.png`}
-				attackInfo={playerHermitInfo.secondary}
+				attackInfo={activeRow.hermitCard.secondary}
 				onClick={secondaryAttack}
 			/>
 		)

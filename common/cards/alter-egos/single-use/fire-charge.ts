@@ -5,6 +5,7 @@ import {CardPosModel, getCardPos} from '../../../models/card-pos-model'
 import {isRemovable} from '../../../utils/cards'
 import {discardCard, discardSingleUse} from '../../../utils/movement'
 import {applySingleUse} from '../../../utils/board'
+import EffectCard from '../../base/effect-card'
 
 class FireChargeSingleUseCard extends SingleUseCard {
 	constructor() {
@@ -56,7 +57,7 @@ class FireChargeSingleUseCard extends SingleUseCard {
 				if (pickResult.slot.type !== 'item' && pickResult.slot.type !== 'effect')
 					return 'FAILURE_INVALID_SLOT'
 				if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
-				if (pickResult.slot.type === 'effect' && !isRemovable(pickResult.card))
+				if (pickResult.card instanceof EffectCard && !pickResult.card.getIsRemovable())
 					return 'FAILURE_CANNOT_COMPLETE'
 
 				const row = player.board.rows[pickResult.rowIndex]

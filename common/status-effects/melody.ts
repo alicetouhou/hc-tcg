@@ -4,6 +4,7 @@ import {CardPosModel, getBasicCardPos} from '../models/card-pos-model'
 import {removeStatusEffect} from '../utils/board'
 import {StatusEffectT} from '../types/game-state'
 import {HERMIT_CARDS} from '../cards'
+import HermitCard from '../cards/base/hermit-card'
 
 class MelodyStatusEffect extends StatusEffect {
 	constructor() {
@@ -34,9 +35,8 @@ class MelodyStatusEffect extends StatusEffect {
 			if (!targetPos || !targetPos.row || !targetPos.row.hermitCard) return
 			if (targetPos.rowIndex === null) return
 
-			const hermitInfo = HERMIT_CARDS[targetPos.row.hermitCard.id]
-			if (hermitInfo) {
-				const maxHealth = Math.max(targetPos.row.health, hermitInfo.health)
+			if (targetPos.row.hermitCard instanceof HermitCard) {
+				const maxHealth = Math.max(targetPos.row.health, targetPos.row.hermitCard.health)
 				targetPos.row.health = Math.min(targetPos.row.health + 10, maxHealth)
 			}
 		})

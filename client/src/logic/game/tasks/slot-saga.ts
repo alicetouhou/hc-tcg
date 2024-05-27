@@ -38,14 +38,13 @@ function* pickForPickRequestSaga(action: SlotPickedAction): SagaIterator {
 }
 
 function* pickWithSelectedSaga(action: SlotPickedAction, selectedCard: Card): SagaIterator {
-	const selectedCardInfo = CARDS[selectedCard.id]
 	const pickInfo = action.payload.pickInfo
 
 	yield putResolve(setSelectedCard(null))
 
 	// If the hand is clicked don't send data
 	if (pickInfo.slot.type !== 'hand') {
-		if (!selectedCardInfo) {
+		if (!selectedCard) {
 			// Validations
 			console.log('Unknown card id: ', selectedCard)
 			return

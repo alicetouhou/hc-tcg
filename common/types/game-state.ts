@@ -1,19 +1,22 @@
 import Card, {CanAttachResult} from '../cards/base/card'
+import EffectCard from '../cards/base/effect-card'
+import HermitCard from '../cards/base/hermit-card'
+import ItemCard from '../cards/base/item-card'
 import {AttackModel} from '../models/attack-model'
 import {BattleLogModel} from '../models/battle-log-model'
 import {CardPosModel} from '../models/card-pos-model'
 import {FormattedTextNode} from '../utils/formatting'
 import {HermitAttackType} from './attack'
-import {EnergyT, Slot, SlotPos} from './cards'
+import {EnergyT, SlotPos} from './cards'
 import {GameHook, WaterfallHook} from './hooks'
 import {ModalRequest, PickRequest, PickInfo} from './server-requests'
 
 export type PlayerId = string
 
 export type RowStateWithHermit = {
-	hermitCard: Card
-	effectCard: Card | null
-	itemCards: Array<Card | null>
+	hermitCard: HermitCard
+	effectCard: EffectCard | null
+	itemCards: Array<ItemCard | null>
 	health: number
 }
 

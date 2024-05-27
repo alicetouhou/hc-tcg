@@ -134,7 +134,6 @@ class PistonSingleUseCard extends SingleUseCard {
 					player.hooks.afterApply.remove(instance)
 				})
 
-				const cardInfo = CARDS[itemCard!.id]
 				applySingleUse(game, pickResult)
 
 				delete player.custom[rowIndexKey]

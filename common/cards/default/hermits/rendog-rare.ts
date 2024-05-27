@@ -30,6 +30,7 @@ class RendogRareHermitCard extends HermitCard {
 		})
 	}
 
+	//@TODO Work out ren
 	override getAttacks(
 		game: GameModel,
 		instance: string,

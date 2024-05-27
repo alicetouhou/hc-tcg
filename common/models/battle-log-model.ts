@@ -23,9 +23,8 @@ export class BattleLogModel {
 	private generateEffectEntryHeader(card: Card | null): string {
 		const currentPlayer = this.game.currentPlayer.playerName
 		if (!card) return ''
-		const cardInfo = CARDS[card.id]
 
-		return `$p{You|${currentPlayer}}$ used $e${cardInfo.name}$ `
+		return `$p{You|${currentPlayer}}$ used $e${card.name}$ `
 	}
 
 	private generateCoinFlipDescription(coinFlip: CurrentCoinFlipT): string {
@@ -96,16 +95,16 @@ export class BattleLogModel {
 			id: string,
 			rowIndex: number | null | undefined
 		) => {
-			const cardInfo = CARDS[id]
-			if (cardInfo.type === 'item') {
-				return `${cardInfo.name} ${cardInfo.rarity === 'rare' ? ' item x2' : 'item'}`
+			const card = CARDS[id]
+			if (card.type === 'item') {
+				return `${card.name} ${card.rarity === 'rare' ? ' item x2' : 'item'}`
 			}
 
-			if (cardInfo.type === 'hermit' && player) {
-				return cardInfo.name + (player.board.activeRow === rowIndex ? '' : ` (${rowIndex})`)
+			if (card.type === 'hermit' && player) {
+				return card.name + (player.board.activeRow === rowIndex ? '' : ` (${rowIndex})`)
 			}
 
-			return `${cardInfo.name}`
+			return `${card.name}`
 		}
 
 		const thisFlip = coinFlips.find((flip) => flip.id === card.id)
@@ -174,9 +173,6 @@ export class BattleLogModel {
 
 			if (subAttack.getDamage() === 0) return reducer
 
-			const attackingHermitInfo = HERMIT_CARDS[attacker.row.hermitCard.id]
-			const targetHermitInfo = CARDS[target.row.hermitCard.id]
-
 			const targetFormatting = target.player.id === playerId ? 'p' : 'o'
 
 			const rowNumberString =
@@ -184,14 +180,14 @@ export class BattleLogModel {
 
 			const attackName =
 				subAttack.type === 'primary'
-					? attackingHermitInfo.primary.name
-					: attackingHermitInfo.secondary.name
+					? attacker.row.hermitCard.primary.name
+					: attacker.row.hermitCard.secondary.name
 
 			const logMessage = subAttack.log({
-				attacker: `$p${attackingHermitInfo.name}$`,
+				attacker: `$p${attacker.row.hermitCard.name}$`,
 				player: attacker.player.playerName,
 				opponent: target.player.playerName,
-				target: `$${targetFormatting}${targetHermitInfo.name} ${rowNumberString}$`,
+				target: `$${targetFormatting}${target.row.hermitCard.name} ${rowNumberString}$`,
 				attackName: `$v${attackName}$`,
 				damage: `$b${subAttack.calculateDamage()}hp$`,
 				header: this.generateEffectEntryHeader(singleUse),

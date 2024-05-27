@@ -1,5 +1,6 @@
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
+import HermitCard from '../../base/hermit-card'
 import SingleUseCard from '../../base/single-use-card'
 import {HERMIT_CARDS} from '../../index'
 
@@ -24,9 +25,8 @@ class SplashPotionOfHealingSingleUseCard extends SingleUseCard {
 		player.hooks.onApply.add(instance, () => {
 			for (let row of player.board.rows) {
 				if (!row.hermitCard) continue
-				const hermitInfo = HERMIT_CARDS[row.hermitCard.id]
-				if (hermitInfo) {
-					const maxHealth = Math.max(row.health, hermitInfo.health)
+				if (row.hermitCard instanceof HermitCard) {
+					const maxHealth = Math.max(row.health, row.hermitCard.health)
 					row.health = Math.min(row.health + 20, maxHealth)
 				}
 			}
