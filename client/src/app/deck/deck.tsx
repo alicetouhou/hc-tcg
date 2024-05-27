@@ -42,47 +42,45 @@ const TYPE_ORDER = {
 }
 
 export const sortCards = (cards: Array<Card>): Array<Card> => {
-	return cards.slice().sort((a: Card, b: Card) => {
-		const cardInfoA = CARDS[a.id]
-		const cardInfoB = CARDS[b.id]
-		const cardCostA = getCardCost(cardInfoA)
-		const cardCostB = getCardCost(cardInfoB)
+	return cards.slice().sort((cardA: Card, cardB: Card) => {
+		const cardCostA = getCardCost(cardA)
+		const cardCostB = getCardCost(cardB)
 
-		if (cardInfoA.type !== cardInfoB.type) {
+		if (cardA.type !== cardB.type) {
 			// seperate by types first
-			return TYPE_ORDER[cardInfoA.type] - TYPE_ORDER[cardInfoB.type]
+			return TYPE_ORDER[cardA.type] - TYPE_ORDER[cardB.type]
 		} else if (
 			// then by hermit types
-			cardInfoA instanceof HermitCard &&
-			cardInfoB instanceof HermitCard &&
-			cardInfoA.hermitType !== cardInfoB.hermitType
+			cardA instanceof HermitCard &&
+			cardB instanceof HermitCard &&
+			cardA.hermitType !== cardB.hermitType
 		) {
-			return cardInfoA.hermitType.localeCompare(cardInfoB.hermitType)
+			return cardA.hermitType.localeCompare(cardB.hermitType)
 		} else if (
 			// then by item types
-			cardInfoA instanceof ItemCard &&
-			cardInfoB instanceof ItemCard &&
-			cardInfoA.hermitType !== cardInfoB.hermitType
+			cardA instanceof ItemCard &&
+			cardB instanceof ItemCard &&
+			cardA.hermitType !== cardB.hermitType
 		) {
-			return cardInfoA.hermitType.localeCompare(cardInfoB.hermitType)
+			return cardA.hermitType.localeCompare(cardB.hermitType)
 		} else if (
-			cardInfoA instanceof HermitCard &&
-			cardInfoB instanceof HermitCard &&
-			cardInfoA.getExpansion() !== cardInfoB.getExpansion()
+			cardA instanceof HermitCard &&
+			cardB instanceof HermitCard &&
+			cardA.getExpansion() !== cardB.getExpansion()
 		) {
 			// then by expansion if they are both hermits
-			return cardInfoA.getExpansion().localeCompare(cardInfoA.getExpansion())
+			return cardA.getExpansion().localeCompare(cardA.getExpansion())
 		} else if (cardCostA !== cardCostB) {
 			// order by ranks
 			return cardCostA - cardCostB
-		} else if (cardInfoA.name !== cardInfoB.name) {
-			return cardInfoA.name.localeCompare(cardInfoB.name)
+		} else if (cardA.name !== cardB.name) {
+			return cardA.name.localeCompare(cardB.name)
 		}
 
 		// rarity is our last hope
 		const rarities = ['common', 'rare', 'ultra_rare']
-		const rarityValueA = rarities.findIndex((s) => s === cardInfoA.rarity) + 1
-		const rarityValueB = rarities.findIndex((s) => s === cardInfoB.rarity) + 1
+		const rarityValueA = rarities.findIndex((s) => s === cardA.rarity) + 1
+		const rarityValueB = rarities.findIndex((s) => s === cardB.rarity) + 1
 		return rarityValueA - rarityValueB
 	})
 }
