@@ -9,7 +9,7 @@ import Accordion from 'components/accordion'
 import DeckLayout from './layout'
 import {getPlayerDeck} from 'logic/session/session-selectors'
 import {getSettings} from 'logic/local-settings/local-settings-selectors'
-import {PlayerDeckT} from 'common/types/deck'
+import {DeckCardT, PlayerDeckT} from 'common/types/deck'
 import EditDeck from './deck-edit'
 import Button from 'components/button'
 import AlertModal from 'components/alert-modal'
@@ -180,6 +180,8 @@ const Deck = ({setMenuSection}: Props) => {
 		if (!deckName) return console.log(`[LoadDeck]: Could not load the ${deckName} deck.`)
 		const deck = getSavedDeck(deckName)
 		if (!deck) return console.log(`[LoadDeck]: Could not load the ${deckName} deck.`)
+
+		console.log(deck.cards)
 
 		const deckIds = deck.cards?.filter((card: Card) => CARDS[card.id])
 

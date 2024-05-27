@@ -1,4 +1,5 @@
-import {PlayerDeckT} from 'common/types/deck'
+import {CARDS} from 'common/cards'
+import {PlayerDeckT, StoredDeckT} from 'common/types/deck'
 import {validateDeck} from 'common/utils/validation'
 
 export const getActiveDeckName = () => {
@@ -21,9 +22,14 @@ export const isActiveDeckValid = () => {
 export const getSavedDeck = (name: string) => {
 	const hash = localStorage.getItem('Deck_' + name)
 
-	let deck: PlayerDeckT | null = null
-	if (hash != null) {
-		deck = JSON.parse(hash)
+	if (hash === null) return
+
+	const loadedDeck: StoredDeckT = JSON.parse(hash)
+
+	const deck = {
+		name: loadedDeck.name,
+		icon: loadedDeck.icon,
+		cards: loadedDeck.cards.map((card) => CARDS[card.cardId]),
 	}
 
 	return deck
@@ -31,7 +37,12 @@ export const getSavedDeck = (name: string) => {
 
 export const saveDeck = (deck: PlayerDeckT) => {
 	const hash = 'Deck_' + deck.name
-	localStorage.setItem(hash, JSON.stringify(deck))
+	const storedDeck: StoredDeckT = {
+		name: deck.name,
+		icon: deck.icon,
+		cards: deck.cards.map((card) => ({cardId: card.id, instance: card.instance})),
+	}
+	localStorage.setItem(hash, JSON.stringify(storedDeck))
 }
 
 export const deleteDeck = (name: string) => {
