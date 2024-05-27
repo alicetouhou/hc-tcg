@@ -2,6 +2,7 @@ import {SINGLE_USE_CARDS} from '../..'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import {HermitAttackType} from '../../../types/attack'
+import {CardT} from '../../../types/game-state'
 import HermitCard from '../../base/hermit-card'
 
 class HotguyRareHermitCard extends HermitCard {
@@ -46,18 +47,8 @@ class HotguyRareHermitCard extends HermitCard {
 	override onAttach(game: GameModel, instance: string, pos: CardPosModel) {
 		const {player} = pos
 
-		// How do I avoid using the cardId here? | Impossible so long as this is about a specific card - sense
-		// @TODO Check still works
 		player.hooks.beforeAttack.add(instance, (attack) => {
-			const singleUseCard = player.board.singleUseCard
-			if (
-				!singleUseCard ||
-				singleUseCard.cardId !== 'bow' ||
-				!player.custom[this.getInstanceKey(instance)]
-			)
-				return
-
-			if (attack.getCreator() === singleUseCard.cardInstance) {
+			if ((attack.getHistory('creator')[0].value as CardT).cardId === 'bow') {
 				attack.addDamage(this.id, attack.getDamage())
 			}
 		})
