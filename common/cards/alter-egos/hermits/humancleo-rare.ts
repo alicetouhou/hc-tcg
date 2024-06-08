@@ -3,9 +3,8 @@ import {GameModel} from '../../../models/game-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {flipCoin} from '../../../utils/coinFlips'
 import {getActiveRow, getNonEmptyRows} from '../../../utils/board'
-import {createWeaknessAttack, hasEnoughEnergy} from '../../../utils/attacks'
+import {hasEnoughEnergy} from '../../../utils/attacks'
 import {HERMIT_CARDS, ITEM_CARDS} from '../..'
-import {CardTypeT} from '../../../types/cards'
 
 class HumanCleoRareHermitCard extends HermitCard {
 	constructor() {
@@ -27,7 +26,7 @@ class HumanCleoRareHermitCard extends HermitCard {
 				cost: ['pvp', 'pvp'],
 				damage: 70,
 				power:
-					'Flip a coin, twice. If both are heads, your opponent must attack one of their own AFK Hermits on their next turn. Opponent must have necessary item cards attached to execute an attack.',
+					'Flip a coin twice.\nIf both are heads, your opponent must attack one of their own AFK Hermits on their next turn. Your opponent must have the necessary item cards attached to execute an attack.',
 			},
 		})
 	}
@@ -38,9 +37,10 @@ class HumanCleoRareHermitCard extends HermitCard {
 		const opponentTargetKey = this.getInstanceKey(instance, 'opponentTarget')
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.id !== instanceKey || attack.type !== 'secondary') return
+			const attacker = attack.getAttacker()
+			if (attack.id !== instanceKey || attack.type !== 'secondary' || !attacker) return
 
-			const coinFlip = flipCoin(player, this.id, 2)
+			const coinFlip = flipCoin(player, attacker.row.hermitCard, 2)
 
 			const headsAmount = coinFlip.filter((flip) => flip === 'heads').length
 			if (headsAmount < 2) return
@@ -66,17 +66,13 @@ class HumanCleoRareHermitCard extends HermitCard {
 				// Return if no energy
 				if (
 					!hasEnoughEnergy(energy, opponentActiveHermit.primary.cost) &&
-					!hasEnoughEnergy(energy, opponentActiveHermit.primary.cost)
+					!hasEnoughEnergy(energy, opponentActiveHermit.secondary.cost)
 				) {
 					return
 				}
 
-				// Return if opponent can't attack anyways for some reason
-				const availableActions = game.state.turn.availableActions
-				if (
-					!availableActions.includes('PRIMARY_ATTACK') &&
-					!availableActions.includes('SECONDARY_ATTACK')
-				) {
+				// Don't prevent change hermit if opponent is blocked from attacking for other reason
+				if (game.isActionBlocked('PRIMARY_ATTACK') && game.isActionBlocked('SECONDARY_ATTACK')) {
 					return
 				}
 
@@ -99,7 +95,7 @@ class HumanCleoRareHermitCard extends HermitCard {
 					id: this.id,
 					message: 'Pick one of your AFK Hermits',
 					onResult(pickResult) {
-						if (pickResult.playerId !== opponentPlayer.id) return 'FAILURE_WRONG_PLAYER'
+						if (pickResult.playerId !== opponentPlayer.id) return 'FAILURE_INVALID_PLAYER'
 
 						const rowIndex = pickResult.rowIndex
 						if (rowIndex === undefined) return 'FAILURE_INVALID_SLOT'
@@ -108,12 +104,16 @@ class HumanCleoRareHermitCard extends HermitCard {
 						if (pickResult.slot.type !== 'hermit') return 'FAILURE_INVALID_SLOT'
 						if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
 
+						// Remove the hook straight away
+						opponentPlayer.hooks.getAttackRequests.remove(instance)
 						// Save the target index for opponent to attack
 						player.custom[opponentTargetKey] = rowIndex
 
 						return 'SUCCESS'
 					},
 					onTimeout() {
+						// Remove the hook straight away
+						opponentPlayer.hooks.getAttackRequests.remove(instance)
 						// Pick the first afk hermit to attack
 						const firstAfk = getNonEmptyRows(opponentPlayer, true)[0]
 						if (!firstAfk) return
@@ -122,9 +122,6 @@ class HumanCleoRareHermitCard extends HermitCard {
 						player.custom[opponentTargetKey] = firstAfk.rowIndex
 					},
 				})
-
-				// Remove the hook straight away
-				opponentPlayer.hooks.getAttackRequests.remove(instance)
 			})
 
 			opponentPlayer.hooks.beforeAttack.add(instance, (attack) => {
@@ -139,19 +136,16 @@ class HumanCleoRareHermitCard extends HermitCard {
 
 					const targetRow = opponentPlayer.board.rows[opponentTarget]
 					if (targetRow && targetRow.hermitCard) {
-						attack.target = {
+						attack.setTarget(this.id, {
 							player: opponentPlayer,
 							rowIndex: opponentTarget,
 							row: targetRow,
-						}
-
-						const weaknessAttack = createWeaknessAttack(attack)
-						if (weaknessAttack) attack.addNewAttack(weaknessAttack)
+						})
 					}
 				}
 
-				// They attacked now, they can end turn
-				game.removeBlockedActions(this.id, 'END_TURN')
+				// They attacked now, they can end turn or change hermits with Chorus Fruit
+				game.removeBlockedActions(this.id, 'CHANGE_ACTIVE_HERMIT', 'END_TURN')
 			})
 
 			opponentPlayer.hooks.onTurnEnd.add(instance, () => {

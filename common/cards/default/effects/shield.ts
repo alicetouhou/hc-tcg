@@ -1,3 +1,4 @@
+import {HERMIT_CARDS} from '../..'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import {isTargetingPos} from '../../../utils/attacks'
@@ -11,7 +12,8 @@ class ShieldEffectCard extends EffectCard {
 			numericId: 88,
 			name: 'Shield',
 			rarity: 'common',
-			description: 'Prevent up to 60hp damage.\n\nDiscard following any damage taken.',
+			description:
+				'When the Hermit this card is attached to takes damage, that damage is reduced by up to 60hp, and then this card is discarded.',
 		})
 	}
 
@@ -22,7 +24,7 @@ class ShieldEffectCard extends EffectCard {
 		// Note that we are using onDefence because we want to activate on any attack to us, not just from the opponent
 
 		player.hooks.onDefence.add(instance, (attack) => {
-			if (!isTargetingPos(attack, pos) || attack.isType('ailment')) return
+			if (!isTargetingPos(attack, pos) || attack.isType('status-effect')) return
 
 			if (player.custom[instanceKey] === undefined) {
 				player.custom[instanceKey] = 0
@@ -37,11 +39,14 @@ class ShieldEffectCard extends EffectCard {
 			}
 		})
 
-		player.hooks.afterDefence.add(instance, (attack) => {
+		player.hooks.afterDefence.add(instance, () => {
 			const {player, row} = pos
 
 			if (player.custom[instanceKey] !== undefined && player.custom[instanceKey] > 0 && row) {
 				discardCard(game, row.effectCard)
+				if (!row.hermitCard) return
+				const hermitName = HERMIT_CARDS[row.hermitCard?.cardId].name
+				game.battleLog.addEntry(player.id, `$p${hermitName}'s$ $eShield$ was broken`)
 			}
 		})
 	}

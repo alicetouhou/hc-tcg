@@ -2,7 +2,7 @@ import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import {flipCoin} from '../../../utils/coinFlips'
 import HermitCard from '../../base/hermit-card'
-import {applyAilment, getActiveRow} from '../../../utils/board'
+import {applyStatusEffect, getActiveRow} from '../../../utils/board'
 
 class XisumavoidRareHermitCard extends HermitCard {
 	constructor() {
@@ -23,8 +23,7 @@ class XisumavoidRareHermitCard extends HermitCard {
 				name: 'Cup of Tea',
 				cost: ['redstone', 'redstone'],
 				damage: 80,
-				power:
-					'Flip a coin. If heads, the opposing active Hermit is now poisoned.\n\nPoison does an additional 20hp damage every turn until poisoned Hermit is down to 10hp.\n\nIgnores armour. Continues to poison if health is recovered.\n\nDoes not knock out Hermit.',
+				power: "Flip a coin.\nIf heads, poison your opponent's active Hermit.",
 			},
 		})
 	}
@@ -34,16 +33,18 @@ class XisumavoidRareHermitCard extends HermitCard {
 
 		player.hooks.onAttack.add(instance, (attack) => {
 			const attackId = this.getInstanceKey(instance)
-			if (attack.id !== attackId || attack.type !== 'secondary' || !attack.target) return
+			const attacker = attack.getAttacker()
+			if (attack.id !== attackId || attack.type !== 'secondary' || !attack.getTarget() || !attacker)
+				return
 
-			const coinFlip = flipCoin(player, this.id)
+			const coinFlip = flipCoin(player, attacker.row.hermitCard)
 
 			if (coinFlip[0] !== 'heads') return
 
 			const opponentActiveRow = getActiveRow(opponentPlayer)
 			if (!opponentActiveRow || !opponentActiveRow.hermitCard) return
 
-			applyAilment(game, 'poison', opponentActiveRow?.hermitCard.cardInstance)
+			applyStatusEffect(game, 'poison', opponentActiveRow?.hermitCard.cardInstance)
 		})
 	}
 
@@ -51,6 +52,15 @@ class XisumavoidRareHermitCard extends HermitCard {
 		const {player} = pos
 		// Remove hooks
 		player.hooks.onAttack.remove(instance)
+	}
+
+	override sidebarDescriptions() {
+		return [
+			{
+				type: 'statusEffect',
+				name: 'poison',
+			},
+		]
 	}
 }
 

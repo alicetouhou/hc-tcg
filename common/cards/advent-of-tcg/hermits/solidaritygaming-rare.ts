@@ -5,7 +5,7 @@ import {RowPos} from '../../../types/cards'
 import {RowStateWithHermit} from '../../../types/game-state'
 import {getNonEmptyRows} from '../../../utils/board'
 import HermitCard from '../../base/hermit-card'
-import {applyAilment, removeAilment} from '../../../utils/board'
+import {applyStatusEffect, removeStatusEffect} from '../../../utils/board'
 
 class SolidaritygamingRareHermitCard extends HermitCard {
 	constructor() {
@@ -44,12 +44,14 @@ class SolidaritygamingRareHermitCard extends HermitCard {
 			player.board.rows.forEach((row) => {
 				if (!row.hermitCard) return
 
-				const ailmentsToRemove = game.state.ailments.filter((ail) => {
-					return ail.targetInstance === row.hermitCard.cardInstance && ail.ailmentId === 'protected'
+				const statusEffectsToRemove = game.state.statusEffects.filter((ail) => {
+					return (
+						ail.targetInstance === row.hermitCard.cardInstance && ail.statusEffectId === 'protected'
+					)
 				})
 
-				ailmentsToRemove.forEach((ail) => {
-					removeAilment(game, pos, ail.ailmentInstance)
+				statusEffectsToRemove.forEach((ail) => {
+					removeStatusEffect(game, pos, ail.statusEffectInstance)
 				})
 			})
 
@@ -58,7 +60,7 @@ class SolidaritygamingRareHermitCard extends HermitCard {
 				id: instance,
 				message: 'Choose an AFK Hermit to protect',
 				onResult(pickResult) {
-					if (pickResult.playerId !== player.id) return 'FAILURE_WRONG_PLAYER'
+					if (pickResult.playerId !== player.id) return 'FAILURE_INVALID_PLAYER'
 
 					const rowIndex = pickResult.rowIndex
 					if (rowIndex === undefined || rowIndex === player.board.activeRow)
@@ -66,7 +68,7 @@ class SolidaritygamingRareHermitCard extends HermitCard {
 					if (pickResult.slot.type !== 'hermit') return 'FAILURE_INVALID_SLOT'
 					if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
 
-					applyAilment(game, 'protected', pickResult.card.cardInstance)
+					applyStatusEffect(game, 'protected', pickResult.card.cardInstance)
 
 					return 'SUCCESS'
 				},

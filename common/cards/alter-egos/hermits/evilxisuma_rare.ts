@@ -1,3 +1,4 @@
+import {HERMIT_CARDS} from '../..'
 import {CardPosModel, getBasicCardPos} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import {getActiveRowPos} from '../../../utils/board'
@@ -24,7 +25,7 @@ class EvilXisumaRareHermitCard extends HermitCard {
 				cost: ['balanced', 'balanced'],
 				damage: 80,
 				power:
-					"Flip a coin.\n\nIf heads, choose one of the opposing active Hermit's attacks to disable on their next turn.",
+					"Flip a coin.\nIf heads, choose one attack of your opponent's current active Hermit to disable on their next turn.",
 			},
 		})
 	}
@@ -35,13 +36,16 @@ class EvilXisumaRareHermitCard extends HermitCard {
 
 		player.hooks.afterAttack.add(instance, (attack) => {
 			if (attack.id !== this.getInstanceKey(instance)) return
-			if (attack.type !== 'secondary') return
+			const attacker = attack.getAttacker()
+			if (attack.type !== 'secondary' || !attacker) return
 
 			const opponentActiveRow = getActiveRowPos(opponentPlayer)
 			if (!opponentActiveRow) return
 			if (opponentActiveRow.row.health <= 0) return
 
-			const coinFlip = flipCoin(player, this.id)
+			if (!HERMIT_CARDS[opponentActiveRow.row.hermitCard.cardId]) return
+
+			const coinFlip = flipCoin(player, attacker.row.hermitCard)
 
 			if (coinFlip[0] !== 'heads') return
 

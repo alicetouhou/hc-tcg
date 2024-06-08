@@ -5,7 +5,7 @@ import {RowPos} from '../../../types/cards'
 import {RowStateWithHermit} from '../../../types/game-state'
 import {getNonEmptyRows} from '../../../utils/board'
 import HermitCard from '../../base/hermit-card'
-import {applyAilment, removeAilment} from '../../../utils/board'
+import {applyStatusEffect, removeStatusEffect} from '../../../utils/board'
 
 class Smajor1995RareHermitCard extends HermitCard {
 	constructor() {
@@ -46,7 +46,7 @@ class Smajor1995RareHermitCard extends HermitCard {
 				id: instance,
 				message: 'Choose an AFK Hermit to dye.',
 				onResult(pickResult) {
-					if (pickResult.playerId !== player.id) return 'FAILURE_WRONG_PLAYER'
+					if (pickResult.playerId !== player.id) return 'FAILURE_INVALID_PLAYER'
 
 					const rowIndex = pickResult.rowIndex
 					if (rowIndex === undefined || rowIndex === player.board.activeRow)
@@ -54,7 +54,7 @@ class Smajor1995RareHermitCard extends HermitCard {
 					if (pickResult.slot.type !== 'hermit') return 'FAILURE_INVALID_SLOT'
 					if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
 
-					applyAilment(game, 'dyed', pickResult.card.cardInstance)
+					applyStatusEffect(game, 'dyed', pickResult.card.cardInstance)
 
 					return 'SUCCESS'
 				},

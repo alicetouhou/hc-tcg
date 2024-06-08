@@ -8,9 +8,10 @@ class DiamondArmorEffectCard extends EffectCard {
 		super({
 			id: 'diamond_armor',
 			numericId: 13,
-			name: 'Diamond Armor',
+			name: 'Diamond Armour',
 			rarity: 'rare',
-			description: 'Prevent up to 30hp damage each turn.',
+			description:
+				'When the Hermit this card is attached to takes damage, that damage is reduced by up to 30hp each turn.',
 		})
 	}
 
@@ -19,7 +20,7 @@ class DiamondArmorEffectCard extends EffectCard {
 		const instanceKey = this.getInstanceKey(instance)
 
 		player.hooks.onDefence.add(instance, (attack) => {
-			if (!isTargetingPos(attack, pos) || attack.isType('ailment')) return
+			if (!isTargetingPos(attack, pos) || attack.isType('status-effect')) return
 
 			if (player.custom[instanceKey] === undefined) {
 				player.custom[instanceKey] = 0
@@ -28,7 +29,7 @@ class DiamondArmorEffectCard extends EffectCard {
 			const totalReduction = player.custom[instanceKey]
 
 			if (totalReduction < 30) {
-				const damageReduction = Math.min(attack.getDamage(), 30 - totalReduction)
+				const damageReduction = Math.min(attack.calculateDamage(), 30 - totalReduction)
 				player.custom[instanceKey] += damageReduction
 				attack.reduceDamage(this.id, damageReduction)
 			}

@@ -1,9 +1,9 @@
 import {takeEvery} from 'typed-redux-saga'
 import {broadcast} from '../../utils/comm'
-import profanityFilter from '../../../../common/utils/profanity'
 import {PlayerModel} from 'common/models/player-model'
 import {GameModel} from 'common/models/game-model'
 import {AnyAction} from 'redux'
+import {concatFormattedTextNodes, formatText} from 'common/utils/formatting'
 
 const gameAction =
 	(type: string, game: {players: Record<string, PlayerModel>}) => (action: any) => {
@@ -15,11 +15,18 @@ function* chatMessageSaga(game: GameModel, action: AnyAction) {
 	if (typeof message !== 'string') return
 	if (message.length < 1) return
 	if (message.length > 140) return
+
 	game.chat.push({
+		message: concatFormattedTextNodes(
+			formatText(`$p${game.players[playerId].name}$ `, {censor: true}),
+			formatText(message, {
+				censor: true,
+				'enable-$': false,
+			})
+		),
 		createdAt: Date.now(),
-		message,
-		censoredMessage: profanityFilter(message),
-		playerId,
+		systemMessage: false,
+		sender: playerId,
 	})
 	broadcast(game.getPlayers(), 'CHAT_UPDATE', game.chat)
 }

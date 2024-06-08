@@ -1,3 +1,4 @@
+import {CARDS} from '../..'
 import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
@@ -11,32 +12,35 @@ class IronSwordSingleUseCard extends SingleUseCard {
 			numericId: 46,
 			name: 'Iron Sword',
 			rarity: 'common',
-			description: 'Do an additional 20hp damage.',
+			description: "Do 20hp damage to your opponent's active Hermit.",
+			log: null,
 		})
 	}
 
 	override onAttach(game: GameModel, instance: string, pos: CardPosModel) {
 		const {player, opponentPlayer} = pos
 
-		player.hooks.getAttacks.add(instance, () => {
+		player.hooks.getAttack.add(instance, () => {
 			const activePos = getActiveRowPos(player)
-			if (!activePos) return []
+			if (!activePos) return null
 			const opponentActivePos = getActiveRowPos(opponentPlayer)
-			if (!opponentActivePos) return []
+			if (!opponentActivePos) return null
 
 			const swordAttack = new AttackModel({
 				id: this.getInstanceKey(instance, 'attack'),
 				attacker: activePos,
 				target: opponentActivePos,
 				type: 'effect',
+				log: (values) =>
+					`${values.defaultLog} to attack ${values.target} for ${values.damage} damage`,
 			}).addDamage(this.id, 20)
 
-			return [swordAttack]
+			return swordAttack
 		})
 
 		player.hooks.onAttack.add(instance, (attack) => {
 			const attackId = this.getInstanceKey(instance, 'attack')
-			if (attack.id !== attackId) return
+			if (attack.id !== attackId) return null
 
 			// We've executed our attack, apply effect
 			applySingleUse(game)
@@ -45,7 +49,7 @@ class IronSwordSingleUseCard extends SingleUseCard {
 
 	override onDetach(game: GameModel, instance: string, pos: CardPosModel) {
 		const {player} = pos
-		player.hooks.getAttacks.remove(instance)
+		player.hooks.getAttack.remove(instance)
 		player.hooks.onAttack.remove(instance)
 	}
 

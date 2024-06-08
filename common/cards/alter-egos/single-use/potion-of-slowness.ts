@@ -2,7 +2,7 @@ import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import {getActiveRow} from '../../../utils/board'
 import SingleUseCard from '../../base/single-use-card'
-import {applyAilment} from '../../../utils/board'
+import {applyStatusEffect} from '../../../utils/board'
 
 class PotionOfSlownessSingleUseCard extends SingleUseCard {
 	constructor() {
@@ -11,7 +11,8 @@ class PotionOfSlownessSingleUseCard extends SingleUseCard {
 			numericId: 145,
 			name: 'Potion of Slowness',
 			rarity: 'common',
-			description: "Opponent's active Hermit can only use their primary attack on their next turn.",
+			description:
+				"Your opponent's active Hermit can only use their primary attack on their next turn.",
 		})
 	}
 
@@ -25,7 +26,7 @@ class PotionOfSlownessSingleUseCard extends SingleUseCard {
 		player.hooks.onApply.add(instance, () => {
 			const opponentActiveRow = getActiveRow(opponentPlayer)
 			if (!opponentActiveRow) return
-			applyAilment(game, 'slowness', opponentActiveRow.hermitCard?.cardInstance)
+			applyStatusEffect(game, 'slowness', opponentActiveRow.hermitCard?.cardInstance)
 		})
 	}
 

@@ -10,7 +10,8 @@ class SplashPotionOfHealingIISingleUseCard extends SingleUseCard {
 			numericId: 147,
 			name: 'Splash Potion of Healing II',
 			rarity: 'rare',
-			description: 'Heal each of your active and AFK Hermits 30hp.',
+			description: 'Heal all of your Hermits 30hp.',
+			log: (values) => `${values.defaultLog} and healed all {your|their} Hermits $g30hp$`,
 		})
 	}
 
@@ -26,7 +27,8 @@ class SplashPotionOfHealingIISingleUseCard extends SingleUseCard {
 				if (!row.hermitCard) continue
 				const hermitInfo = HERMIT_CARDS[row.hermitCard.cardId]
 				if (hermitInfo) {
-					row.health = Math.min(row.health + 30, hermitInfo.health)
+					const maxHealth = Math.max(row.health, hermitInfo.health)
+					row.health = Math.min(row.health + 30, maxHealth)
 				}
 			}
 		})

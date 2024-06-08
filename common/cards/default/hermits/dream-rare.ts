@@ -19,9 +19,13 @@ class DreamRareHermitCard extends HermitCard {
 				name: 'Transition',
 				cost: ['speedrunner', 'speedrunner', 'any'],
 				damage: 90,
-				power: 'Flip a Coin.\n\nIf heads, HP is set randomly between 10-290.',
+				power: 'Flip a Coin.\nIf heads, HP is set randomly between 10-290.',
 			},
 		})
+	}
+
+	public override getExpansion(): string {
+		return 'dream'
 	}
 }
 

@@ -29,17 +29,17 @@ window.audioCtx = audioCtx
 function* backgroundMusic(action: SectionChangeT): SagaIterator {
 	const section = action.payload
 
-	const settings = yield* select(getSettings)
-	if (settings.musicVolume === '0') return
-
-	const musicFile = trackList.game[Math.floor(Math.random() * trackList.game.length)]
-
 	if (section !== 'game') {
 		bgMusic.pause()
 		bgMusic.currentTime = 0
 		bgMusic.src = ''
+		if (interacted) {
+			audioCtx.resume()
+		}
 		return
 	}
+
+	const musicFile = trackList.game[Math.floor(Math.random() * trackList.game.length)]
 
 	const newPath = `/music/${musicFile.file}`
 	if (newPath !== bgMusic.getAttribute('src')) {
@@ -87,6 +87,8 @@ function* soundSaga(): SagaIterator {
 		() => {
 			if (bgMusic.getAttribute('src')) {
 				audioCtx.resume().then(() => bgMusic.play())
+			} else {
+				audioCtx.resume()
 			}
 			interacted = true
 		},

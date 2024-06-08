@@ -27,7 +27,7 @@ class MumboJumboRareHermitCard extends HermitCard {
 				cost: ['prankster', 'prankster'],
 				damage: 40,
 				power:
-					'Flip a coin twice. Add 20hp damage for every heads. Total damage doubles if you have at least one other AFK Prankster.',
+					'Flip a coin twice. Do an additional 20hp damage for every heads. Total attack damage doubles if you have at least one other AFK Prankster.',
 			},
 		})
 	}
@@ -36,9 +36,11 @@ class MumboJumboRareHermitCard extends HermitCard {
 		const {player} = pos
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary') return
+			const attacker = attack.getAttacker()
+			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary' || !attacker)
+				return
 
-			const coinFlip = flipCoin(player, this.id, 2)
+			const coinFlip = flipCoin(player, attacker.row.hermitCard, 2)
 			const headsAmount = coinFlip.filter((flip) => flip === 'heads').length
 			const pranksterAmount = player.board.rows.filter(
 				(row, index) =>

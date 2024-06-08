@@ -3,7 +3,7 @@ import {GameModel} from '../../../models/game-model'
 import {HERMIT_CARDS} from '../..'
 import {discardCard} from '../../../utils/movement'
 import {CardPosModel} from '../../../models/card-pos-model'
-import {applyAilment} from '../../../utils/board'
+import {applyStatusEffect} from '../../../utils/board'
 
 class BedEffectCard extends EffectCard {
 	constructor() {
@@ -13,19 +13,17 @@ class BedEffectCard extends EffectCard {
 			name: 'Bed',
 			rarity: 'ultra_rare',
 			description:
-				"Player sleeps for the rest of this and next 2 turns. Can't attack. Restores full health when bed is attached.\n\nCan still draw and attach cards while sleeping.\n\nMust be placed on active Hermit.\n\nDiscard after player wakes up.\n\n\n\nCan not go AFK while sleeping.\n\nIf made AFK by opponent player, Hermit goes AFK but also wakes up.",
+				'Attach to your active Hermit. This Hermit restores all HP, then sleeps for the rest of this turn, and the following two turns, before waking up. Discard after your Hermit wakes up.',
 		})
 	}
 	override canAttach(game: GameModel, pos: CardPosModel) {
-		const {currentPlayer} = game
-
-		const canAttach = super.canAttach(game, pos)
-		if (canAttach !== 'YES') return canAttach
+		const result = super.canAttach(game, pos)
+		const {player} = pos
 
 		// bed addition - hermit must also be active to attach
-		if (!(currentPlayer.board.activeRow === pos.rowIndex)) return 'NO'
+		if (!(player.board.activeRow === pos.rowIndex)) result.push('UNMET_CONDITION')
 
-		return 'YES'
+		return result
 	}
 
 	override onAttach(game: GameModel, instance: string, pos: CardPosModel) {
@@ -34,13 +32,13 @@ class BedEffectCard extends EffectCard {
 		const hermitSlot = this.getInstanceKey(instance, 'hermitSlot')
 
 		if (row && row.hermitCard) {
-			applyAilment(game, 'sleeping', row.hermitCard.cardInstance)
+			applyStatusEffect(game, 'sleeping', row.hermitCard.cardInstance)
 		}
 
 		// Knockback/Tango/Jevin/etc
 		player.hooks.onTurnStart.add(instance, () => {
-			const isSleeping = game.state.ailments.some(
-				(a) => a.targetInstance == row?.hermitCard?.cardInstance && a.ailmentId == 'sleeping'
+			const isSleeping = game.state.statusEffects.some(
+				(a) => a.targetInstance == row?.hermitCard?.cardInstance && a.statusEffectId == 'sleeping'
 			)
 			if (!isSleeping) {
 				discardCard(game, row?.effectCard || null)
@@ -57,15 +55,15 @@ class BedEffectCard extends EffectCard {
 			if (player.custom[hermitSlot] != row?.hermitCard?.cardInstance && row && row.hermitCard) {
 				row.health = HERMIT_CARDS[row.hermitCard.cardId].health
 
-				// Add new sleeping ailment
-				applyAilment(game, 'sleeping', row.hermitCard.cardInstance)
+				// Add new sleeping statusEffect
+				applyStatusEffect(game, 'sleeping', row.hermitCard.cardInstance)
 			}
 			delete player.custom[hermitSlot]
 		})
 
 		player.hooks.onTurnEnd.add(instance, () => {
-			const isSleeping = game.state.ailments.some(
-				(a) => a.targetInstance == row?.hermitCard?.cardInstance && a.ailmentId == 'sleeping'
+			const isSleeping = game.state.statusEffects.some(
+				(a) => a.targetInstance == row?.hermitCard?.cardInstance && a.statusEffectId == 'sleeping'
 			)
 
 			// if sleeping has worn off, discard the bed
@@ -83,6 +81,15 @@ class BedEffectCard extends EffectCard {
 		player.hooks.beforeApply.remove(instance)
 		player.hooks.afterApply.remove(instance)
 		delete player.custom[this.getInstanceKey(instance, 'hermitSlot')]
+	}
+
+	override sidebarDescriptions() {
+		return [
+			{
+				type: 'statusEffect',
+				name: 'sleeping',
+			},
+		]
 	}
 }
 

@@ -12,7 +12,7 @@ class TrapdoorEffectCard extends EffectCard {
 			name: 'Trapdoor',
 			rarity: 'rare',
 			description:
-				"Attach to any active or AFK Hermit.\n\nWhen an adjacent Hermit takes damage from an opponent's attack, up to 40hp damage is taken by this Hermit instead.",
+				"When an adjacent Hermit takes damage from an opponent's attack, up to 40hp damage is taken by this Hermit instead.",
 		})
 	}
 
@@ -21,14 +21,12 @@ class TrapdoorEffectCard extends EffectCard {
 		const instanceKey = this.getInstanceKey(instance)
 
 		player.hooks.onDefence.add(instance, (attack) => {
-			if (
-				attack.target?.player.id !== player.id ||
-				attack.attacker?.player.id !== opponentPlayer.id
-			)
+			const target = attack.getTarget()
+			if (target?.player.id !== player.id || attack.getAttacker()?.player.id !== opponentPlayer.id)
 				return
-			if (attack.isType('ailment') || attack.isBacklash) return
+			if (attack.isType('status-effect') || attack.isBacklash) return
 			if (pos.rowIndex === null) return
-			if (Math.abs(attack.target.rowIndex - pos.rowIndex) !== 1) return
+			if (Math.abs(target.rowIndex - pos.rowIndex) !== 1) return
 
 			if (player.custom[instanceKey] === undefined) {
 				player.custom[instanceKey] = 0
@@ -43,13 +41,14 @@ class TrapdoorEffectCard extends EffectCard {
 
 				const newAttack: AttackModel = new AttackModel({
 					id: instanceKey,
-					attacker: attack.attacker,
+					attacker: attack.getAttacker(),
 					target: {
 						player: player,
 						rowIndex: pos.rowIndex,
 						row: pos.row as RowStateWithHermit,
 					},
 					type: attack.type,
+					createWeakness: ['primary', 'secondary'].includes(attack.type) ? 'ifWeak' : 'never',
 				}).addDamage(this.id, damageReduction)
 				attack.addNewAttack(newAttack)
 			}

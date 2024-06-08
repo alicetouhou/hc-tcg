@@ -17,7 +17,7 @@ class ZedaphPlaysRareHermitCard extends HermitCard {
 				cost: ['explorer'],
 				damage: 50,
 				power:
-					'Flip a Coin.\n\nIf heads, opponent flips a coin their next turn.\n\nIf heads, opponent damages themselves.',
+					"Flip a coin.\nIf heads, on your opponent's next turn, flip a coin.\nIf heads, your opponent's active Hermit attacks themselves.",
 			},
 			secondary: {
 				name: 'Get Dangled',
@@ -34,24 +34,26 @@ class ZedaphPlaysRareHermitCard extends HermitCard {
 		const coinFlipResult = this.getInstanceKey(instance, 'coinFlipResult')
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.id !== instanceKey || attack.type !== 'primary') return
+			const attacker = attack.getAttacker()
+			if (attack.id !== instanceKey || attack.type !== 'primary' || !attacker) return
 
-			const coinFlip = flipCoin(player, this.id)
+			const attackerHermit = attacker.row.hermitCard
+			const coinFlip = flipCoin(player, attackerHermit)
 			if (coinFlip[0] !== 'heads') return
 
 			opponentPlayer.hooks.beforeAttack.add(instance, (attack) => {
-				if (attack.isType('ailment') || attack.isBacklash) return
-				if (!attack.attacker) return
+				if (!attack.isType('primary', 'secondary') || attack.isBacklash) return
+				if (!attack.getAttacker()) return
 
 				// No need to flip a coin for multiple attacks
 				if (!player.custom[coinFlipResult]) {
-					const coinFlip = flipCoin(player, this.id, 1, opponentPlayer)
+					const coinFlip = flipCoin(player, attackerHermit, 1, opponentPlayer)
 					player.custom[coinFlipResult] = coinFlip[0]
 				}
 
 				if (player.custom[coinFlipResult] === 'heads') {
 					// Change attack target - this just works
-					attack.target = attack.attacker
+					attack.setTarget(this.id, attack.getAttacker())
 				}
 			})
 

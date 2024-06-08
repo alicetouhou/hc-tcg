@@ -20,7 +20,6 @@ import {getCardPos} from 'common/models/card-pos-model'
 import {printHooksState} from '../utils'
 import {buffers} from 'redux-saga'
 import {AttackActionData, PickCardActionData, attackToAttackAction} from 'common/types/action-data'
-import {AttackModel} from 'common/models/attack-model'
 
 ////////////////////////////////////////
 // @TODO sort this whole thing out properly
@@ -188,11 +187,8 @@ function* checkHermitHealth(game: GameModel) {
 		for (let rowIndex in playerRows) {
 			const row = playerRows[rowIndex]
 			if (row.hermitCard && row.health <= 0) {
-				// Call hermit death hooks
-				const hermitPos = getCardPos(game, row.hermitCard.cardInstance)
-				if (hermitPos) {
-					playerState.hooks.onHermitDeath.call(hermitPos)
-				}
+				// Add battle log entry
+				game.battleLog.addDeathEntry(playerState, row)
 
 				if (row.hermitCard) discardCard(game, row.hermitCard)
 				if (row.effectCard) discardCard(game, row.effectCard)
@@ -217,11 +213,7 @@ function* checkHermitHealth(game: GameModel) {
 			playerState.lives >= 3 &&
 			game.state.turn.turnNumber <= game.getPlayerIds().findIndex((id) => id === playerState.id) + 1
 
-		const noHermitsLeft =
-			!firstPlayerTurn &&
-			playerState.board.rows.every(
-				(row) => !row.hermitCard || CARDS[row.hermitCard.cardId].type !== 'hermit'
-			)
+		const noHermitsLeft = !firstPlayerTurn && playerState.board.rows.every((row) => !row.hermitCard)
 		if (isDead || noHermitsLeft) {
 			deadPlayerIds.push(playerState.id)
 		}
@@ -257,11 +249,6 @@ function* turnActionSaga(game: GameModel, turnAction: any) {
 		return
 	}
 
-	let modalResult = null
-	if (turnAction.payload && turnAction.payload.modalResult) {
-		modalResult = turnAction.payload.modalResult
-	}
-
 	let endTurn = false
 
 	let result: ActionResult = 'FAILURE_UNKNOWN_ERROR'
@@ -272,7 +259,6 @@ function* turnActionSaga(game: GameModel, turnAction: any) {
 		case 'PLAY_SINGLE_USE_CARD':
 			result = yield* call(playCardSaga, game, turnAction)
 			break
-
 		case 'SINGLE_USE_ATTACK':
 		case 'PRIMARY_ATTACK':
 		case 'SECONDARY_ATTACK':
@@ -282,7 +268,7 @@ function* turnActionSaga(game: GameModel, turnAction: any) {
 			result = yield* call(changeActiveHermitSaga, game, turnAction)
 			break
 		case 'APPLY_EFFECT':
-			result = yield* call(applyEffectSaga, game)
+			result = yield* call(applyEffectSaga, game, turnAction)
 			break
 		case 'REMOVE_EFFECT':
 			result = yield* call(removeEffectSaga, game)
@@ -299,6 +285,7 @@ function* turnActionSaga(game: GameModel, turnAction: any) {
 			break
 		case 'END_TURN':
 			endTurn = true
+			result = 'SUCCESS'
 			break
 		default:
 			// Unknown action type, ignore it completely
@@ -312,7 +299,9 @@ function* turnActionSaga(game: GameModel, turnAction: any) {
 	const deadPlayerIds = yield* call(checkHermitHealth, game)
 	if (deadPlayerIds.length) endTurn = true
 
-	return endTurn ? 'END_TURN' : undefined
+	if (endTurn) {
+		return 'END_TURN'
+	}
 }
 
 function* turnActionsSaga(game: GameModel) {
@@ -406,6 +395,7 @@ function* turnActionsSaga(game: GameModel) {
 			game.state.timer.turnRemaining = Math.floor((remainingTime + graceTime) / 1000)
 
 			yield* call(sendGameState, game)
+			game.battleLog.sendLogs()
 
 			const raceResult = yield* race({
 				turnAction: take(turnActionChannel),
@@ -575,6 +565,8 @@ function* turnSaga(game: GameModel) {
 			return 'GAME_END'
 		}
 	}
+
+	game.battleLog.addTurnEndEntry()
 
 	return 'DONE'
 }

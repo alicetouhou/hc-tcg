@@ -1,16 +1,25 @@
 import {PlayerModel} from './player-model'
-import {TurnAction, GameState, ActionResult, TurnActions, PlayerState} from '../types/game-state'
-import {MessageInfoT} from '../types/chat'
+import {
+	TurnAction,
+	GameState,
+	ActionResult,
+	TurnActions,
+	PlayerState,
+	Message,
+} from '../types/game-state'
 import {getGameState} from '../utils/state-gen'
 import {ModalRequest, PickRequest} from '../types/server-requests'
-import {SlotPos} from '../types/cards'
+import {BattleLogModel} from './battle-log-model'
+import {getSlotPos} from '../utils/board'
+import {CARDS} from '../cards'
 
 export class GameModel {
 	private internalCreatedTime: number
 	private internalId: string
 	private internalCode: string | null
 
-	public chat: Array<MessageInfoT>
+	public chat: Array<Message>
+	public battleLog: BattleLogModel
 	public players: Record<string, PlayerModel>
 	public task: any
 	public state: GameState
@@ -27,6 +36,7 @@ export class GameModel {
 		this.internalId = 'game_' + Math.random().toString()
 		this.internalCode = code
 		this.chat = []
+		this.battleLog = new BattleLogModel(this)
 
 		this.task = null
 
@@ -38,8 +48,8 @@ export class GameModel {
 		}
 
 		this.players = {
-			[player1.playerId]: player1,
-			[player2.playerId]: player2,
+			[player1.id]: player1,
+			[player2.id]: player2,
 		}
 
 		this.state = getGameState(this)
@@ -112,8 +122,8 @@ export class GameModel {
 	}
 
 	/** Set actions as blocked so they cannot be done this turn */
-	public addBlockedActions(sourceId: string | null, ...actions: TurnActions) {
-		const key = sourceId || ''
+	public addBlockedActions(sourceId: string, ...actions: TurnActions) {
+		const key = sourceId
 		const turnState = this.state.turn
 		if (!turnState.blockedActions[key]) {
 			turnState.blockedActions[key] = []
@@ -127,8 +137,8 @@ export class GameModel {
 		}
 	}
 	/** Remove action from the completed list so they can be done again this turn */
-	public removeBlockedActions(sourceId: string | null, ...actions: TurnActions) {
-		const key = sourceId || ''
+	public removeBlockedActions(sourceId: string, ...actions: TurnActions) {
+		const key = sourceId
 		const turnState = this.state.turn
 		if (!turnState.blockedActions[key]) return
 
@@ -143,7 +153,8 @@ export class GameModel {
 		}
 	}
 
-	public isActionBlocked(action: TurnAction, excludeIds?: Array<string | null>) {
+	/** Returns true if the current blocked actions list includes the given action */
+	public isActionBlocked(action: TurnAction, excludeIds?: Array<string>) {
 		const turnState = this.state.turn
 		const allBlockedActions: TurnActions = []
 		Object.keys(turnState.blockedActions).forEach((sourceId) => {
@@ -156,7 +167,7 @@ export class GameModel {
 	}
 
 	/** Get all actions blocked with the source id. */
-	public getBlockedActions(sourceId: string | null) {
+	public getBlockedActions(sourceId: string) {
 		const key = sourceId || ''
 		const turnState = this.state.turn
 		const blockedActions = turnState.blockedActions[key]
@@ -192,6 +203,15 @@ export class GameModel {
 			}
 		}
 	}
+	public cancelPickRequests() {
+		if (this.state.pickRequests[0]?.playerId === this.currentPlayerId) {
+			// Cancel and clear pick requests
+			for (let i = 0; i < this.state.pickRequests.length; i++) {
+				this.state.pickRequests[i].onCancel?.()
+			}
+			this.state.pickRequests = []
+		}
+	}
 
 	public addModalRequest(newRequest: ModalRequest, before = false) {
 		if (before) {
@@ -224,6 +244,14 @@ export class GameModel {
 		const results = player.hooks.beforeActiveRowChange.call(currentActiveRow, newRow)
 		if (results.includes(false)) return false
 
+		// Create battle log entry
+		if (newRow !== null) {
+			const newHermit = player.board.rows[newRow].hermitCard
+			const oldHermit =
+				currentActiveRow !== null ? player.board.rows[currentActiveRow].hermitCard : null
+			this.battleLog.addChangeRowEntry(player, newRow, oldHermit, newHermit)
+		}
+
 		// Change the active row
 		player.board.activeRow = newRow
 
@@ -235,16 +263,7 @@ export class GameModel {
 
 	/**Helper method to swap the positions of two rows on the board. Returns whether or not the change was successful. */
 	public swapRows(player: PlayerState, oldRow: number, newRow: number): boolean {
-		const oldRowState = player.board.rows[oldRow]
-
-		const oldSlotPos: SlotPos = {
-			rowIndex: oldRow,
-			row: oldRowState,
-			slot: {
-				index: 0,
-				type: 'hermit',
-			},
-		}
+		const oldSlotPos = getSlotPos(player, oldRow, 'hermit')
 
 		const results = player.hooks.onSlotChange.call(oldSlotPos)
 		if (results.includes(false)) return false
@@ -252,6 +271,7 @@ export class GameModel {
 		const activeRowChanged = this.changeActiveRow(player, newRow)
 		if (!activeRowChanged) return false
 
+		const oldRowState = player.board.rows[oldRow]
 		player.board.rows[oldRow] = player.board.rows[newRow]
 		player.board.rows[newRow] = oldRowState
 

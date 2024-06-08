@@ -8,9 +8,10 @@ class IronArmorEffectCard extends EffectCard {
 		super({
 			id: 'iron_armor',
 			numericId: 45,
-			name: 'Iron Armor',
+			name: 'Iron Armour',
 			rarity: 'common',
-			description: 'Prevent up to 20hp damage each turn.',
+			description:
+				'When the Hermit this card is attached to takes damage, that damage is reduced by up to 20hp each turn.',
 		})
 	}
 
@@ -19,7 +20,7 @@ class IronArmorEffectCard extends EffectCard {
 		const instanceKey = this.getInstanceKey(instance)
 
 		player.hooks.onDefence.add(instance, (attack) => {
-			if (!isTargetingPos(attack, pos) || attack.isType('ailment')) return
+			if (!isTargetingPos(attack, pos) || attack.isType('status-effect')) return
 
 			if (player.custom[instanceKey] === undefined) {
 				player.custom[instanceKey] = 0
@@ -28,7 +29,7 @@ class IronArmorEffectCard extends EffectCard {
 			const totalReduction = player.custom[instanceKey]
 
 			if (totalReduction < 20) {
-				const damageReduction = Math.min(attack.getDamage(), 20 - totalReduction)
+				const damageReduction = Math.min(attack.calculateDamage(), 20 - totalReduction)
 				player.custom[instanceKey] += damageReduction
 				attack.reduceDamage(this.id, damageReduction)
 			}

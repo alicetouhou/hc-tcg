@@ -1,33 +1,62 @@
 import {CARDS, ITEM_CARDS} from '../cards'
-import {AILMENT_CLASSES} from '../ailments'
+import {STATUS_EFFECT_CLASSES} from '../status-effects'
 import {CardPosModel, getCardPos} from '../models/card-pos-model'
 import {GameModel} from '../models/game-model'
-import {RowPos} from '../types/cards'
+import {BoardSlotTypeT, RowPos, SlotPos} from '../types/cards'
 import {
 	CardT,
-	AilmentT,
+	StatusEffectT,
 	GenericActionResult,
 	PlayerState,
 	RowState,
 	RowStateWithHermit,
 } from '../types/game-state'
+import {PickInfo} from '../types/server-requests'
 
-export function getActiveRow(playerState: PlayerState) {
-	if (playerState.board.activeRow === null) return null
-	const row = playerState.board.rows[playerState.board.activeRow]
+export function getActiveRow(player: PlayerState) {
+	if (player.board.activeRow === null) return null
+	const row = player.board.rows[player.board.activeRow]
 	if (!row.hermitCard) return null
 	return row
 }
 
-export function getActiveRowPos(playerState: PlayerState): RowPos | null {
-	const rowIndex = playerState.board.activeRow
+export function getActiveRowPos(player: PlayerState): RowPos | null {
+	const rowIndex = player.board.activeRow
 	if (rowIndex === null) return null
-	const row = playerState.board.rows[rowIndex]
+	const row = player.board.rows[rowIndex]
 	if (!row.hermitCard) return null
 	return {
-		player: playerState,
+		player: player,
 		rowIndex,
 		row,
+	}
+}
+export function getRowPos(cardPos: CardPosModel): RowPos | null {
+	const rowIndex = cardPos.rowIndex
+	if (rowIndex === null) return null
+	const row = cardPos.row
+	if (!row?.hermitCard) return null
+	return {
+		player: cardPos.player,
+		rowIndex,
+		row,
+	}
+}
+
+export function getSlotPos(
+	player: PlayerState,
+	rowIndex: number,
+	type: BoardSlotTypeT,
+	index = 0
+): SlotPos {
+	return {
+		player,
+		rowIndex,
+		row: player.board.rows[rowIndex],
+		slot: {
+			type,
+			index,
+		},
 	}
 }
 
@@ -107,7 +136,7 @@ export function hasSingleUse(playerState: PlayerState, id: string, isUsed: boole
 	return suCard?.cardId === id && suUsed === isUsed
 }
 
-export function applySingleUse(game: GameModel): GenericActionResult {
+export function applySingleUse(game: GameModel, pickResult?: PickInfo): GenericActionResult {
 	const {currentPlayer} = game
 
 	const suCard = currentPlayer.board.singleUseCard
@@ -127,17 +156,21 @@ export function applySingleUse(game: GameModel): GenericActionResult {
 	// This can only be done once per turn
 	game.addCompletedActions('PLAY_SINGLE_USE_CARD')
 
+	// Create the logs
+	game.battleLog.addPlayCardEntry(CARDS[suCard.cardId], pos, currentPlayer.coinFlips, pickResult)
+
 	currentPlayer.hooks.afterApply.call()
 
 	return 'SUCCESS'
 }
 
 /**
- * Apply an ailment to a card instance. ailmentId and targetInstance must be card instances.
+ * Apply an statusEffect to a card instance. statusEffectId must be a status effect id, and targetInstance must be card
+ * instance.
  */
-export function applyAilment(
+export function applyStatusEffect(
 	game: GameModel,
-	ailmentId: string,
+	statusEffectId: string,
 	targetInstance: string | undefined
 ): GenericActionResult {
 	if (!targetInstance) return 'FAILURE_INVALID_DATA'
@@ -146,53 +179,41 @@ export function applyAilment(
 
 	if (!pos) return 'FAILURE_INVALID_DATA'
 
-	const ailment = AILMENT_CLASSES[ailmentId]
-	const ailmentInstance = Math.random().toString()
+	const statusEffect = STATUS_EFFECT_CLASSES[statusEffectId]
+	const statusEffectInstance = Math.random().toString()
 
-	const ailmentInfo: AilmentT = {
-		ailmentId: ailmentId,
-		ailmentInstance: ailmentInstance,
+	const statusEffectInfo: StatusEffectT = {
+		statusEffectId: statusEffectId,
+		statusEffectInstance: statusEffectInstance,
 		targetInstance: targetInstance,
-		damageEffect: ailment.damageEffect,
+		damageEffect: statusEffect.damageEffect,
 	}
 
-	ailment.onApply(game, ailmentInfo, pos)
+	statusEffect.onApply(game, statusEffectInfo, pos)
 
-	if (ailment.duration > 0 || ailment.counter) ailmentInfo.duration = ailment.duration
+	if (statusEffect.duration > 0 || statusEffect.counter)
+		statusEffectInfo.duration = statusEffect.duration
 
 	return 'SUCCESS'
 }
 
 /**
- * Remove an ailment from the game.
+ * Remove an statusEffect from the game.
  */
-export function removeAilment(
+export function removeStatusEffect(
 	game: GameModel,
 	pos: CardPosModel,
-	ailmentInstance: string
+	statusEffectInstance: string
 ): GenericActionResult {
-	const ailments = game.state.ailments.filter((a) => a.ailmentInstance === ailmentInstance)
-	if (ailments.length === 0) return 'FAILURE_NOT_APPLICABLE'
+	const statusEffects = game.state.statusEffects.filter(
+		(a) => a.statusEffectInstance === statusEffectInstance
+	)
+	if (statusEffects.length === 0) return 'FAILURE_NOT_APPLICABLE'
 
-	const ailmentObject = AILMENT_CLASSES[ailments[0].ailmentId]
-	ailmentObject.onRemoval(game, ailments[0], pos)
-	game.state.ailments = game.state.ailments.filter((a) => !ailments.includes(a))
+	const statusEffectObject = STATUS_EFFECT_CLASSES[statusEffects[0].statusEffectId]
+	statusEffectObject.onRemoval(game, statusEffects[0], pos)
+	game.battleLog.addRemoveStatusEffectEntry(statusEffectObject)
+	game.state.statusEffects = game.state.statusEffects.filter((a) => !statusEffects.includes(a))
 
 	return 'SUCCESS'
-}
-
-export function canAttachToCard(
-	game: GameModel,
-	card: CardT | null,
-	cardAttaching: CardT | null
-): boolean {
-	if (!card || !cardAttaching) return false
-
-	const cardAttachingPos = getCardPos(game, cardAttaching.cardInstance)
-	const cardInfo = CARDS[card.cardId]
-	if (!cardAttachingPos || !cardInfo) return false
-
-	if (!cardInfo.canAttachToCard(game, cardAttachingPos)) return false
-
-	return true
 }

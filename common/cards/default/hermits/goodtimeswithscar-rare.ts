@@ -1,7 +1,8 @@
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import HermitCard from '../../base/hermit-card'
-import {removeAilment} from '../../../utils/board'
+import {removeStatusEffect} from '../../../utils/board'
+import {HERMIT_CARDS} from '../..'
 
 class GoodTimesWithScarRareHermitCard extends HermitCard {
 	constructor() {
@@ -23,52 +24,109 @@ class GoodTimesWithScarRareHermitCard extends HermitCard {
 				cost: ['builder', 'any'],
 				damage: 70,
 				power:
-					'If this Hermit is knocked out next turn, they are revived with 50hp.\n\nCan only be revived once.',
+					'If this Hermit is knocked out before the start of your next turn, they are revived with 50hp.\nDoes not count as a knockout. This Hermit can only be revived once using this ability.',
 			},
 		})
 	}
 
 	override onAttach(game: GameModel, instance: string, pos: CardPosModel) {
-		const {player, opponentPlayer, row} = pos
-		const reviveNextTurn = this.getInstanceKey(instance, 'reviveNextTurn')
+		const {player, opponentPlayer} = pos
+
+		const canRevives: {[key: string]: boolean} = (player.custom[this.getKey('reviveNextTurn')] ||=
+			{}) // Singleton pattern so a player has one persistent Deathloop record
 
 		player.hooks.onAttack.add(instance, (attack) => {
 			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary') return
 
-			player.custom[reviveNextTurn] = true
+			const attackerInstance = attack.getAttacker()?.row.hermitCard.cardInstance
+			if (!attackerInstance) return
+			// If this instance is not blocked from reviving, make possible next turn
+			if (canRevives[attackerInstance] === undefined) canRevives[attackerInstance] = true
 		})
 
 		// Add before so health can be checked reliably
-		opponentPlayer.hooks.afterAttack.addBefore(instance, () => {
-			if (player.custom[reviveNextTurn]) {
-				if (!row || row.health === null || row.health > 0) return
+		opponentPlayer.hooks.afterAttack.addBefore(instance, (attack) => {
+			const targetInstance = attack.getTarget()?.row.hermitCard.cardInstance
+			if (!targetInstance || !canRevives[targetInstance]) return
+			const row = attack.getTarget()?.row
+			if (!row || row.health === null || row.health > 0) return
 
-				row.health = 50
+			row.health = 50
 
-				const ailmentsToRemove = game.state.ailments.filter((ail) => {
-					return ail.targetInstance === pos.card?.cardInstance
-				})
-				ailmentsToRemove.forEach((ail) => {
-					removeAilment(game, pos, ail.ailmentInstance)
-				})
+			const revivedHermit = HERMIT_CARDS[row.hermitCard.cardId].name
 
-				opponentPlayer.hooks.afterAttack.remove(instance)
-			}
+			game.state.statusEffects.forEach((ail) => {
+				if (ail.targetInstance === targetInstance) {
+					removeStatusEffect(game, pos, ail.statusEffectInstance)
+				}
+			})
+
+			game.battleLog.addEntry(
+				player.id,
+				`Using $vDeathloop$, $p${revivedHermit}$ revived with $g50hp$`
+			)
+
+			// Prevents hermits from being revived more than once by Deathloop
+			canRevives[targetInstance] = false
 		})
 
 		player.hooks.onTurnStart.add(instance, () => {
-			delete player.custom[reviveNextTurn]
+			Object.entries(canRevives).forEach(([cardInstance, wasNotRevived]) => {
+				if (wasNotRevived) delete canRevives[cardInstance]
+			})
+		})
+
+		player.hooks.afterDefence.add(instance, (attack) => {
+			const targetRow = attack.getTarget()?.row
+			const targetInstance = targetRow?.hermitCard.cardInstance
+			if (!targetInstance || canRevives[targetInstance] !== false) return
+			if (!targetRow || targetRow.health === null || targetRow.health > 0) return
+			// Remove revived hermits after they died, if a hermit is replayed after being discarded it should be able to revive again
+			delete canRevives[targetInstance]
 		})
 	}
 
 	override onDetach(game: GameModel, instance: string, pos: CardPosModel) {
 		const {player, opponentPlayer} = pos
-		const reviveNextTurn = this.getInstanceKey(instance, 'reviveNextTurn')
+		const canRevives = player.custom[this.getKey('reviveNextTurn')]
+		const canCleanUp = () => !Object.keys(canRevives).length
 		// Remove hooks
 		player.hooks.onAttack.remove(instance)
-		player.hooks.onTurnStart.remove(instance)
-		opponentPlayer.hooks.afterAttack.remove(instance)
-		delete player.custom[reviveNextTurn]
+
+		if (canCleanUp()) {
+			opponentPlayer.hooks.afterAttack.remove(instance)
+			player.hooks.onTurnStart.remove(instance)
+			player.hooks.afterDefence.remove(instance)
+		} else {
+			// Reassign hooks to detach when canRevives is empty
+			player.hooks.onTurnStart.add(instance, () => {
+				Object.entries(canRevives).forEach(([cardInstance, wasNotRevived]) => {
+					if (wasNotRevived) delete canRevives[cardInstance]
+				})
+
+				opponentPlayer.hooks.afterAttack.remove(instance)
+				player.hooks.onTurnStart.remove(instance)
+				if (canCleanUp()) player.hooks.afterDefence.remove(instance)
+			})
+			player.hooks.afterDefence.add(instance, (attack) => {
+				const targetRow = attack.getTarget()?.row
+				const targetInstance = targetRow?.hermitCard.cardInstance
+				if (!targetInstance || canRevives[targetInstance] !== false) return
+				if (!targetRow || targetRow.health === null || targetRow.health > 0) return
+				delete canRevives[targetInstance]
+
+				if (canCleanUp()) player.hooks.afterDefence.remove(instance)
+			})
+		}
+	}
+
+	override sidebarDescriptions() {
+		return [
+			{
+				type: 'glossary',
+				name: 'knockout',
+			},
+		]
 	}
 }
 

@@ -8,9 +8,10 @@ class GoldArmorEffectCard extends EffectCard {
 		super({
 			id: 'gold_armor',
 			numericId: 29,
-			name: 'Gold Armor',
+			name: 'Gold Armour',
 			rarity: 'common',
-			description: 'Prevent up to 10hp damage each turn.',
+			description:
+				'When the Hermit this card is attached to takes damage, that damage is reduced by up to 10hp each turn.',
 		})
 	}
 
@@ -19,7 +20,7 @@ class GoldArmorEffectCard extends EffectCard {
 		const instanceKey = this.getInstanceKey(instance)
 
 		player.hooks.onDefence.add(instance, (attack) => {
-			if (!isTargetingPos(attack, pos) || attack.isType('ailment')) return
+			if (!isTargetingPos(attack, pos) || attack.isType('status-effect')) return
 
 			if (player.custom[instanceKey] === undefined) {
 				player.custom[instanceKey] = 0
@@ -28,7 +29,7 @@ class GoldArmorEffectCard extends EffectCard {
 			const totalReduction = player.custom[instanceKey]
 
 			if (totalReduction < 10) {
-				const damageReduction = Math.min(attack.getDamage(), 10 - totalReduction)
+				const damageReduction = Math.min(attack.calculateDamage(), 10 - totalReduction)
 				player.custom[instanceKey] += damageReduction
 				attack.reduceDamage(this.id, damageReduction)
 			}

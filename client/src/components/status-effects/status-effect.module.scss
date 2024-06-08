@@ -1,0 +1,20 @@
+.statusEffect {
+	pointer-events: all;
+}
+
+.statusEffectImage {
+	width: 22px;
+	height: 22px;
+}
+
+.damageStatusEffectImage {
+	width: 50px;
+	height: 75px;
+}
+
+.durationIndicator {
+	color: white;
+	font-family: MinecraftBold;
+	transform: translate(10px, -18px);
+	filter: drop-shadow(1px 1px 0 rgb(0, 0, 0));
+}
