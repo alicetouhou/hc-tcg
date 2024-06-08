@@ -1,7 +1,6 @@
 .chat {
 	position: fixed;
 	inset: 0;
-	margin: 2vh;
 	padding: 2vh;
 	gap: 2vh;
 	background: var(--gray-600);
@@ -38,8 +37,14 @@
 	font-size: 1.2rem;
 	touch-action: none;
 	cursor: grab;
+	align-items: center;
+	gap: inherit;
 
-	img {
+	p {
+		flex-grow: 1;
+	}
+
+	.close {
 		filter: brightness(0.1);
 		cursor: pointer;
 
@@ -100,26 +105,24 @@
 	overflow-y: auto;
 	flex: 1 0 auto;
 	z-index: 1;
+	display: flex;
+	flex-direction: column-reverse;
+	scrollbar-width: thin;
 }
 
 .message {
 	word-break: break-word;
 	margin-bottom: 0.25rem;
 	font-size: 1rem;
-}
-
-.player {
-	color: #6fabd0;
-}
-
-.opponent {
-	color: #5ea758;
+	display: flex;
+	align-items: baseline;
 }
 
 .time {
 	color: var(--gray-400);
 	font-size: 0.75rem;
 	padding-right: 0.25rem;
+	width: 4rem;
 }
 
 .playerName {
@@ -129,4 +132,25 @@
 
 .text {
 	color: var(--text-light);
+}
+
+.systemMessage {
+	color: var(--gray-300);
+}
+
+.turnTag {
+	color: var(--gray-300);
+	font-size: 0.75rem;
+	padding-right: 0.25rem;
+}
+
+.line {
+	flex-grow: 1;
+	height: 100%;
+	display: inline-block;
+	height: 1px;
+	border: 0;
+	border-top: 2px solid var(--gray-300);
+	padding: 0;
+	align-self: center;
 }

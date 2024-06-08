@@ -8,9 +8,10 @@ class NetheriteArmorEffectCard extends EffectCard {
 		super({
 			id: 'netherite_armor',
 			numericId: 82,
-			name: 'Netherite Armor',
+			name: 'Netherite Armour',
 			rarity: 'ultra_rare',
-			description: 'Prevent up to 40hp damage each turn.',
+			description:
+				'When the Hermit this card is attached to takes damage, that damage is reduced by up to 40hp each turn.',
 		})
 	}
 
@@ -19,7 +20,7 @@ class NetheriteArmorEffectCard extends EffectCard {
 		const instanceKey = this.getInstanceKey(instance)
 
 		player.hooks.onDefence.add(instance, (attack) => {
-			if (!isTargetingPos(attack, pos) || attack.isType('ailment')) return
+			if (!isTargetingPos(attack, pos) || attack.isType('status-effect')) return
 
 			if (player.custom[instanceKey] === undefined) {
 				player.custom[instanceKey] = 0
@@ -28,7 +29,7 @@ class NetheriteArmorEffectCard extends EffectCard {
 			const totalReduction = player.custom[instanceKey]
 
 			if (totalReduction < 40) {
-				const damageReduction = Math.min(attack.getDamage(), 40 - totalReduction)
+				const damageReduction = Math.min(attack.calculateDamage(), 40 - totalReduction)
 				player.custom[instanceKey] += damageReduction
 				attack.reduceDamage(this.id, damageReduction)
 			}

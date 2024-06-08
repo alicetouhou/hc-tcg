@@ -23,7 +23,7 @@ class FalseSymmetryRareHermitCard extends HermitCard {
 				name: 'Supremacy',
 				cost: ['builder', 'any'],
 				damage: 70,
-				power: 'Flip a coin.\n\nIf heads, heal 40hp to this Hermit.',
+				power: 'Flip a coin.\nIf heads, heal this Hermit 40hp.',
 			},
 		})
 	}
@@ -33,17 +33,19 @@ class FalseSymmetryRareHermitCard extends HermitCard {
 
 		player.hooks.onAttack.add(instance, (attack) => {
 			const attackId = this.getInstanceKey(instance)
-			if (attack.id !== attackId || attack.type !== 'secondary') return
+			const attacker = attack.getAttacker()
+			if (attack.id !== attackId || attack.type !== 'secondary' || !attacker) return
 
-			const coinFlip = flipCoin(player, this.id)
+			const coinFlip = flipCoin(player, attacker.row.hermitCard)
 
 			if (coinFlip[0] === 'tails') return
-			const attacker = attack.attacker
-			if (!attacker) return
 
 			// Heal 40hp
 			const hermitInfo = HERMIT_CARDS[attacker.row.hermitCard.cardId]
-			attacker.row.health = Math.min(attacker.row.health + 40, hermitInfo.health)
+			const maxHealth = Math.max(attacker.row.health, hermitInfo.health)
+			attacker.row.health = Math.min(attacker.row.health + 40, maxHealth)
+
+			game.battleLog.addEntry(player.id, `$p${hermitInfo.name}$ healed $g40hp$`)
 		})
 	}
 

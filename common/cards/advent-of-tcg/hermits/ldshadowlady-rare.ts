@@ -35,7 +35,7 @@ class LDShadowLadyRareHermitCard extends HermitCard {
 			if (
 				attack.id !== this.getInstanceKey(instance) ||
 				attack.type !== 'secondary' ||
-				!attack.target
+				!attack.getTarget()
 			)
 				return
 
@@ -54,7 +54,7 @@ class LDShadowLadyRareHermitCard extends HermitCard {
 				message: "Move your opponent's active Hermit to a new slot.",
 				onResult(pickResult) {
 					// Validation
-					if (pickResult.playerId !== opponentPlayer.id) return 'FAILURE_WRONG_PLAYER'
+					if (pickResult.playerId !== opponentPlayer.id) return 'FAILURE_INVALID_PLAYER'
 					if (pickResult.rowIndex === undefined) return 'FAILURE_INVALID_SLOT'
 					if (pickResult.slot.type !== 'hermit') return 'FAILURE_INVALID_SLOT'
 					if (pickResult.card !== null) return 'FAILURE_INVALID_SLOT'

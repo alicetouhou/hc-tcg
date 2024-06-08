@@ -22,7 +22,8 @@ class StressMonster101RareHermitCard extends HermitCard {
 				name: 'Yolo',
 				cost: ['prankster', 'prankster', 'prankster'],
 				damage: 0,
-				power: 'You and your opponent take damage equal to your health.',
+				power:
+					"You and your opponent's active Hermit take damage equal to your active Hermit's health.\nAny damage this Hermit takes due to this ability can not be redirected.",
 			},
 		})
 	}
@@ -32,16 +33,18 @@ class StressMonster101RareHermitCard extends HermitCard {
 
 		player.hooks.onAttack.add(instance, (attack) => {
 			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary') return
-			if (!attack.attacker) return
+			const attacker = attack.getAttacker()
+			if (!attacker) return
 
 			const backlashAttack = new AttackModel({
 				id: this.getInstanceKey(instance, 'selfAttack'),
-				attacker: attack.target,
-				target: attack.attacker,
-				type: 'effect',
+				attacker,
+				target: attacker,
+				type: 'secondary',
 				isBacklash: true,
+				log: (values) => ` and took ${values.damage} backlash damage`,
 			})
-			const attackDamage = attack.attacker.row.health
+			const attackDamage = attacker.row.health
 			attack.addDamage(this.id, attackDamage)
 			backlashAttack.addDamage(this.id, attackDamage)
 

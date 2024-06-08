@@ -1,3 +1,4 @@
+import {CARDS} from '../..'
 import {AttackModel} from '../../../models/attack-model'
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
@@ -14,34 +15,40 @@ class TridentSingleUseCard extends SingleUseCard {
 			name: 'Trident',
 			rarity: 'rare',
 			description:
-				'Add 30hp damage at the end of your attack.\n\nFlip a coin.\n\nIf heads, this card is returned to your hand.',
+				"Do 30hp damage to your opponent's active Hermit.\nFlip a coin.\nIf heads, this card is returned to your hand.",
+			log: null,
 		})
 	}
 
 	override onAttach(game: GameModel, instance: string, pos: CardPosModel) {
 		const {player, opponentPlayer} = pos
 
-		player.hooks.getAttacks.add(instance, () => {
+		player.hooks.getAttack.add(instance, () => {
 			const activePos = getActiveRowPos(player)
-			if (!activePos) return []
+			if (!activePos) return null
 			const opponentActivePos = getActiveRowPos(opponentPlayer)
-			if (!opponentActivePos) return []
+			if (!opponentActivePos) return null
 
 			const tridentAttack = new AttackModel({
 				id: this.getInstanceKey(instance),
 				attacker: activePos,
 				target: opponentActivePos,
 				type: 'effect',
+				log: (values) =>
+					`${values.defaultLog} to attack ${values.target} for ${values.damage} damage, then ${values.coinFlip}`,
 			}).addDamage(this.id, 30)
 
-			return [tridentAttack]
+			return tridentAttack
 		})
 
 		player.hooks.onAttack.add(instance, (attack) => {
 			const attackId = this.getInstanceKey(instance)
 			if (attack.id !== attackId) return
 
-			player.custom[this.getInstanceKey(instance)] = flipCoin(player, this.id)[0]
+			player.custom[this.getInstanceKey(instance)] = flipCoin(player, {
+				cardId: this.id,
+				cardInstance: instance,
+			})[0]
 
 			applySingleUse(game)
 		})
@@ -59,7 +66,7 @@ class TridentSingleUseCard extends SingleUseCard {
 	override onDetach(game: GameModel, instance: string, pos: CardPosModel) {
 		const {player} = pos
 
-		player.hooks.getAttacks.remove(instance)
+		player.hooks.getAttack.remove(instance)
 		player.hooks.onApply.remove(instance)
 		player.hooks.onAttack.remove(instance)
 		delete player.custom[this.getInstanceKey(instance)]

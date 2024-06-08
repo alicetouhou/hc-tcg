@@ -25,7 +25,7 @@ class GrianchRareHermitCard extends HermitCard {
 				cost: ['builder', 'builder'],
 				damage: 80,
 				power:
-					'Flip a Coin.\n\nIf heads, attack damage doubles.\n\nIf tails, your opponent may attack twice next round.',
+					'Flip a Coin.\nIf heads, attack damage doubles.\nIf tails, your opponent may attack twice next round.',
 			},
 		})
 	}
@@ -35,9 +35,10 @@ class GrianchRareHermitCard extends HermitCard {
 		const instanceKey = this.getInstanceKey(instance)
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.id !== instanceKey || attack.type !== 'secondary') return
+			const attacker = attack.getAttacker()
+			if (attack.id !== instanceKey || attack.type !== 'secondary' || !attacker) return
 
-			const coinFlip = flipCoin(player, this.id)
+			const coinFlip = flipCoin(player, attacker.row.hermitCard)
 
 			if (coinFlip[0] === 'tails') {
 				opponentPlayer.hooks.afterAttack.add(instance, (attack) => {

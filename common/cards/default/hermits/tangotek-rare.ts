@@ -23,7 +23,7 @@ class TangoTekRareHermitCard extends HermitCard {
 				cost: ['farm', 'farm', 'farm'],
 				damage: 100,
 				power:
-					'At the end of your turn, both players must replace active Hermits with AFK Hermits.\n\nOpponent replaces their Hermit first.\n\nIf there are no AFK Hermits, active Hermit remains in battle.',
+					'After your attack, both players must choose an AFK Hermit to set as their active Hermit, unless they have no AFK Hermits.\nYour opponent chooses their active Hermit first.',
 			},
 		})
 	}
@@ -35,15 +35,15 @@ class TangoTekRareHermitCard extends HermitCard {
 			if (
 				attack.id !== this.getInstanceKey(instance) ||
 				attack.type !== 'secondary' ||
-				!attack.target
+				!attack.getTarget()
 			)
 				return
 
 			const opponentInactiveRows = getNonEmptyRows(opponentPlayer, true, true)
 			const playerInactiveRows = getNonEmptyRows(player, true, true)
 
-			// Curse of Binding
-			const canChange = game.isActionBlocked('CHANGE_ACTIVE_HERMIT', [null])
+			// Check if we are blocked from changing by anything other than the game
+			const canChange = !game.isActionBlocked('CHANGE_ACTIVE_HERMIT', ['game'])
 
 			// If opponent has hermit they can switch to, add a pick request for them to switch
 			if (opponentInactiveRows.length > 0) {
@@ -54,7 +54,7 @@ class TangoTekRareHermitCard extends HermitCard {
 					message: 'Pick a new active Hermit from your afk hermits',
 					onResult(pickResult) {
 						// Validation
-						if (pickResult.playerId !== opponentPlayer.id) return 'FAILURE_WRONG_PLAYER'
+						if (pickResult.playerId !== opponentPlayer.id) return 'FAILURE_INVALID_PLAYER'
 						if (pickResult.rowIndex === undefined) return 'FAILURE_INVALID_SLOT'
 						if (pickResult.slot.type !== 'hermit') return 'FAILURE_INVALID_SLOT'
 						if (pickResult.card === null) return 'FAILURE_INVALID_SLOT'
@@ -81,19 +81,15 @@ class TangoTekRareHermitCard extends HermitCard {
 			}
 
 			// If we have an afk hermit, didn't just die, and are not bound in place, add a pick for us to switch
-			if (
-				playerInactiveRows.length !== 0 &&
-				attack.attacker &&
-				attack.attacker.row.health > 0 &&
-				canChange
-			) {
+			const attacker = attack.getAttacker()
+			if (playerInactiveRows.length !== 0 && attacker && attacker.row.health > 0 && canChange) {
 				game.addPickRequest({
 					playerId: player.id,
 					id: this.id,
 					message: 'Pick a new active Hermit from your afk hermits',
 					onResult(pickResult) {
 						// Validation
-						if (pickResult.playerId !== player.id) return 'FAILURE_WRONG_PLAYER'
+						if (pickResult.playerId !== player.id) return 'FAILURE_INVALID_PLAYER'
 						if (pickResult.rowIndex === undefined) return 'FAILURE_INVALID_SLOT'
 						if (pickResult.slot.type !== 'hermit') return 'FAILURE_INVALID_SLOT'
 						if (pickResult.card === null) return 'FAILURE_INVALID_SLOT'

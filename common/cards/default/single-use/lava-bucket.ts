@@ -1,7 +1,6 @@
 import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
-import {applyAilment} from '../../../utils/board'
-import Fire from '../../../ailments/fire'
+import {applyStatusEffect} from '../../../utils/board'
 import SingleUseCard from '../../base/single-use-card'
 
 class LavaBucketSingleUseCard extends SingleUseCard {
@@ -11,8 +10,7 @@ class LavaBucketSingleUseCard extends SingleUseCard {
 			numericId: 74,
 			name: 'Lava Bucket',
 			rarity: 'rare',
-			description:
-				'Burn opposing active Hermit. Add 20hp damage every turn at the end of your turn.',
+			description: "Burn your opponent's active Hermit.",
 		})
 	}
 
@@ -26,7 +24,7 @@ class LavaBucketSingleUseCard extends SingleUseCard {
 		player.hooks.onApply.add(instance, () => {
 			const opponentActiveRow = opponentPlayer.board.activeRow
 			if (opponentActiveRow === null) return
-			applyAilment(
+			applyStatusEffect(
 				game,
 				'fire',
 				opponentPlayer.board.rows[opponentActiveRow].hermitCard?.cardInstance
@@ -35,16 +33,25 @@ class LavaBucketSingleUseCard extends SingleUseCard {
 	}
 
 	override canAttach(game: GameModel, pos: CardPosModel) {
-		if (pos.slot.type !== 'single_use') return 'INVALID'
+		const result = super.canAttach(game, pos)
 
-		if (pos.opponentPlayer.board.activeRow === null) return 'NO'
+		if (pos.opponentPlayer.board.activeRow === null) result.push('UNMET_CONDITION')
 
-		return 'YES'
+		return result
 	}
 
 	override onDetach(game: GameModel, instance: string, pos: CardPosModel) {
 		const {player} = pos
 		player.hooks.onApply.remove(instance)
+	}
+
+	override sidebarDescriptions() {
+		return [
+			{
+				type: 'statusEffect',
+				name: 'fire',
+			},
+		]
 	}
 }
 

@@ -2,7 +2,7 @@ import {CardPosModel} from '../../../models/card-pos-model'
 import {GameModel} from '../../../models/game-model'
 import {flipCoin} from '../../../utils/coinFlips'
 import HermitCard from '../../base/hermit-card'
-import {applyAilment, getActiveRow} from '../../../utils/board'
+import {applyStatusEffect, getActiveRow} from '../../../utils/board'
 
 class EthosLabRareHermitCard extends HermitCard {
 	constructor() {
@@ -23,8 +23,7 @@ class EthosLabRareHermitCard extends HermitCard {
 				name: 'Blue Fire',
 				cost: ['redstone', 'redstone'],
 				damage: 80,
-				power:
-					'Flip a coin. If heads, the opposing active Hermit is now burned.\n\nBurn does an additional 20hp damage at the end of your turns.\n\nGoing AFK does not eliminate the burn.',
+				power: "Flip a coin.\nIf heads, burn your opponent's active Hermit.",
 			},
 		})
 	}
@@ -33,17 +32,19 @@ class EthosLabRareHermitCard extends HermitCard {
 		const {player, opponentPlayer} = pos
 
 		player.hooks.onAttack.add(instance, (attack) => {
+			const attacker = attack.getAttacker()
 			const attackId = this.getInstanceKey(instance)
-			if (attack.id !== attackId || attack.type !== 'secondary' || !attack.target) return
+			if (attack.id !== attackId || attack.type !== 'secondary' || !attack.getTarget() || !attacker)
+				return
 
-			const coinFlip = flipCoin(player, this.id)
+			const coinFlip = flipCoin(player, attacker.row.hermitCard)
 
 			if (coinFlip[0] !== 'heads') return
 
 			const opponentActiveRow = getActiveRow(opponentPlayer)
 			if (!opponentActiveRow || !opponentActiveRow.hermitCard) return
 
-			applyAilment(game, 'fire', opponentActiveRow?.hermitCard.cardInstance)
+			applyStatusEffect(game, 'fire', opponentActiveRow?.hermitCard.cardInstance)
 		})
 	}
 
@@ -51,6 +52,15 @@ class EthosLabRareHermitCard extends HermitCard {
 		const {player} = pos
 		// Remove hooks
 		player.hooks.onAttack.remove(instance)
+	}
+
+	override sidebarDescriptions() {
+		return [
+			{
+				type: 'statusEffect',
+				name: 'fire',
+			},
+		]
 	}
 }
 

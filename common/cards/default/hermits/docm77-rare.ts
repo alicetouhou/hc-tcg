@@ -22,8 +22,7 @@ class Docm77RareHermitCard extends HermitCard {
 				name: 'World Eater',
 				cost: ['farm', 'farm'],
 				damage: 80,
-				power:
-					'Flip a Coin.\n\nIf heads, attack damage doubles.\n\nIf tails, attack damage is halved.',
+				power: 'Flip a Coin.\nIf heads, attack damage doubles.\nIf tails, attack damage is halved.',
 			},
 		})
 	}
@@ -33,9 +32,10 @@ class Docm77RareHermitCard extends HermitCard {
 
 		player.hooks.onAttack.add(instance, (attack) => {
 			const attackId = this.getInstanceKey(instance)
-			if (attack.id !== attackId || attack.type !== 'secondary') return
+			const attacker = attack.getAttacker()
+			if (attack.id !== attackId || attack.type !== 'secondary' || !attacker) return
 
-			const coinFlip = flipCoin(player, this.id)
+			const coinFlip = flipCoin(player, attacker.row.hermitCard)
 
 			if (coinFlip[0] === 'heads') {
 				attack.addDamage(this.id, this.secondary.damage)

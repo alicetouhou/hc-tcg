@@ -23,7 +23,7 @@ class PearlescentMoonRareHermitCard extends HermitCard {
 				cost: ['terraform', 'any'],
 				damage: 70,
 				power:
-					'Opponent flips a coin on their next turn. If heads, their attack misses. Opponent can not miss on consecutive turns.',
+					'If your opponent attacks on their next turn, flip a coin.\nIf heads, their attack $kmisses$. Your opponent can not miss due to this ability on consecutive turns.',
 			},
 		})
 	}
@@ -34,26 +34,29 @@ class PearlescentMoonRareHermitCard extends HermitCard {
 		player.custom[status] = 'none'
 
 		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary') return
+			const attacker = attack.getAttacker()
+			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary' || !attacker)
+				return
 
 			if (player.custom[status] === 'missed') {
 				player.custom[status] = 'none'
 				return
 			}
 
+			const attackerHermit = attacker.row.hermitCard
 			opponentPlayer.hooks.beforeAttack.add(instance, (attack) => {
-				if (attack.isType('ailment', 'effect') || attack.isBacklash) return
+				if (!attack.isType('primary', 'secondary')) return
 
 				const hasFlipped = player.custom[status] === 'heads' || player.custom[status] === 'tails'
 
 				// Only flip a coin once
 				if (!hasFlipped) {
-					const coinFlip = flipCoin(player, this.id, 1, opponentPlayer)
+					const coinFlip = flipCoin(player, attackerHermit, 1, opponentPlayer)
 					player.custom[status] = coinFlip[0]
 				}
 
 				if (player.custom[status] === 'heads') {
-					attack.multiplyDamage(this.id, 0).lockDamage()
+					attack.multiplyDamage(this.id, 0).lockDamage(this.id)
 				}
 			})
 
@@ -81,6 +84,15 @@ class PearlescentMoonRareHermitCard extends HermitCard {
 		opponentPlayer.hooks.beforeAttack.remove(instance)
 		opponentPlayer.hooks.onTurnEnd.remove(instance)
 		delete player.custom[this.getInstanceKey(instance, 'status')]
+	}
+
+	override sidebarDescriptions() {
+		return [
+			{
+				type: 'glossary',
+				name: 'missed',
+			},
+		]
 	}
 }
 
