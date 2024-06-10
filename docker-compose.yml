@@ -8,5 +8,16 @@ services:
     volumes:
       - hc-tcg:/app
     restart: unless-stopped
+
+  hctcg:
+    build: Dockerfile.development
+    container_name: dev
+    ports:
+      - 9000:9000
+      - 3002:3002
+    volumes:
+      - hc-tcg:/app
+    restart: unless-stopped
+
 volumes:
   hc-tcg:
