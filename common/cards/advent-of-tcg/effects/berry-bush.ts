@@ -1,5 +1,5 @@
 import {GameModel} from '../../../models/game-model'
-import {query, slot} from '../../../components/query'
+import * as query from '../../../components/query'
 import Card from '../../base/card'
 import {attach} from '../../base/defaults'
 import {Attach} from '../../base/types'
@@ -18,12 +18,12 @@ class BerryBush extends Card {
 		description:
 			"Use like a Hermit card. Place on one of your opponent's empty Hermit slots. Has 30hp.\nCan not attach cards to it.\nYou do not get a point when it's knocked out.\nLoses 10hp per turn. If you knock out Sweet Berry Bush before it's HP becomes 0, add 2 Instant Healing II into your hand.",
 		attachCondition: query.every(
-			slot.opponent,
-			slot.hermit,
-			slot.empty,
-			slot.playerHasActiveHermit,
-			slot.opponentHasActiveHermit,
-			query.not(slot.frozen)
+			query.slot.opponent,
+			query.slot.hermit,
+			query.slot.empty,
+			query.slot.playerHasActiveHermit,
+			query.slot.opponentHasActiveHermit,
+			query.not(query.slot.frozen)
 		),
 	}
 

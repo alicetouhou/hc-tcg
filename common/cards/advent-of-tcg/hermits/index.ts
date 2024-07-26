@@ -28,7 +28,7 @@ const hermitCardClasses: Array<new () => Card> = [
 	LDShadowLadyRare,
 	SmallishbeansRare,
 	BigBSt4tzRare,
-	PharaohRare,
+	// PharaohRare,
 	GrianchRare,
 ]
 

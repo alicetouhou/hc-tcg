@@ -1,5 +1,5 @@
 import {GameModel} from '../../../models/game-model'
-import {query} from '../../../components/query'
+import * as query from '../../../components/query'
 import {CardComponent} from '../../../components'
 import Card from '../../base/card'
 import {SingleUse} from '../../base/types'
@@ -19,7 +19,7 @@ class Brush extends Card {
 		showConfirmationModal: true,
 		attachCondition: query.every(
 			singleUse.attachCondition,
-			(game, pos) => pos.player.pile.length >= 3
+			(game, pos) => pos.player.getDiscarded().length >= 3
 		),
 	}
 

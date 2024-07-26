@@ -1,5 +1,5 @@
 import {GameModel} from '../../../models/game-model'
-import {query, row, slot} from '../../../components/query'
+import * as query from '../../../components/query'
 import {CardComponent} from '../../../components'
 import Card from '../../base/card'
 import {attach} from '../../base/defaults'
@@ -17,12 +17,12 @@ class Slimeball extends Card {
 		description:
 			"Attach to any Hermit, including your opponent's. That Hermit and its attached items will not be removed from the slot they are attached to, unless that Hermit is knocked out. Attached cards cannot be removed until slimeball is discarded.",
 		attachCondition: query.every(
-			slot.opponent,
-			slot.attach,
-			slot.empty,
-			slot.row(row.hasHermit),
-			slot.actionAvailable('PLAY_EFFECT_CARD'),
-			query.not(slot.frozen)
+			query.slot.opponent,
+			query.slot.attach,
+			query.slot.empty,
+			query.slot.row(query.row.hasHermit),
+			query.actionAvailable('PLAY_EFFECT_CARD'),
+			query.not(query.slot.frozen)
 		),
 	}
 
