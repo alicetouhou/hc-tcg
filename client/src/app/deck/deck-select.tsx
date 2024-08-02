@@ -1,34 +1,44 @@
-import CardList from 'components/card-list'
-import css from './deck.module.scss'
-import Accordion from 'components/accordion'
-import DeckLayout from './layout'
-import Button from 'components/button'
-import AlertModal from 'components/alert-modal'
-import {ImportModal, ExportModal} from 'components/import-export'
-import {CONFIG} from '../../../../common/config'
-import {MassExportModal} from 'components/import-export/mass-export-modal'
-import {ReactNode, useState} from 'react'
 import classNames from 'classnames'
+import {ToastT} from 'common/types/app'
 import {PlayerDeckT} from 'common/types/deck'
 import {getDeckCost} from 'common/utils/ranks'
-import {EditIcon, ExportIcon, CopyIcon, DeleteIcon, ErrorIcon} from 'components/svgs'
+import {validateDeck} from 'common/utils/validation'
+import Accordion from 'components/accordion'
+import AlertModal from 'components/alert-modal'
+import Button from 'components/button'
+import CardList from 'components/card-list'
+import {ExportModal, ImportModal} from 'components/import-export'
+import {MassExportModal} from 'components/import-export/mass-export-modal'
 import {
-	getLegacyDecks,
+	CopyIcon,
+	DeleteIcon,
+	EditIcon,
+	ErrorIcon,
+	ExportIcon,
+} from 'components/svgs'
+import {getSettings} from 'logic/local-settings/local-settings-selectors'
+import {
 	convertLegacyDecks,
-	getSavedDecks,
-	setActiveDeck,
-	saveDeck,
-	getSavedDeck,
 	deleteDeck,
+	getLegacyDecks,
+	getSavedDeck,
+	getSavedDecks,
+	saveDeck,
+	setActiveDeck,
 } from 'logic/saved-decks/saved-decks'
 import {cardGroupHeader} from './deck'
 import {getDeckIconPath, sortCards} from './deck-edit'
 import {validateDeck} from 'common/utils/validation'
 import {useDispatch, useSelector} from 'react-redux'
 import {getPlayerDeck} from 'logic/session/session-selectors'
-import {getSettings} from 'logic/local-settings/local-settings-selectors'
-import {ToastT} from 'common/types/app'
 import {playSound} from 'logic/sound/sound-actions'
+import {ReactNode, useState} from 'react'
+import {useDispatch, useSelector} from 'react-redux'
+import {CONFIG} from '../../../../common/config'
+import {cardGroupHeader} from './deck'
+import {sortCards} from './deck-edit'
+import css from './deck.module.scss'
+import DeckLayout from './layout'
 
 type Props = {
 	setMenuSection: (section: string) => void
@@ -37,7 +47,12 @@ type Props = {
 	loadedDeck: PlayerDeckT
 }
 
-function SelectDeck({setLoadedDeck, setMenuSection, setMode, loadedDeck}: Props) {
+function SelectDeck({
+	setLoadedDeck,
+	setMenuSection,
+	setMode,
+	loadedDeck,
+}: Props) {
 	// REDUX
 	const dispatch = useDispatch()
 	const playerDeck = useSelector(getPlayerDeck)
@@ -46,7 +61,9 @@ function SelectDeck({setLoadedDeck, setMenuSection, setMode, loadedDeck}: Props)
 	// STATE
 	const [savedDecks, setSavedDecks] = useState<Array<string>>(getSavedDecks)
 
-	const savedDeckNames = savedDecks.map((deck) => (deck ? getSavedDeck(deck)?.name : null))
+	const savedDeckNames = savedDecks.map((deck) =>
+		deck ? getSavedDeck(deck)?.name : null,
+	)
 	const [importedDeck, setImportedDeck] = useState<PlayerDeckT>({
 		name: 'undefined',
 		icon: 'any',
@@ -54,15 +71,18 @@ function SelectDeck({setLoadedDeck, setMenuSection, setMode, loadedDeck}: Props)
 		cards: [],
 	})
 	const [showDeleteDeckModal, setShowDeleteDeckModal] = useState<boolean>(false)
-	const [showDuplicateDeckModal, setShowDuplicateDeckModal] = useState<boolean>(false)
+	const [showDuplicateDeckModal, setShowDuplicateDeckModal] =
+		useState<boolean>(false)
 	const [showImportModal, setShowImportModal] = useState<boolean>(false)
 	const [showExportModal, setShowExportModal] = useState<boolean>(false)
 	const [showMassExportModal, setShowMassExportModal] = useState<boolean>(false)
-	const [showValidateDeckModal, setShowValidateDeckModal] = useState<boolean>(false)
+	const [showValidateDeckModal, setShowValidateDeckModal] =
+		useState<boolean>(false)
 	const [showOverwriteModal, setShowOverwriteModal] = useState<boolean>(false)
 
 	// TOASTS
-	const dispatchToast = (toast: ToastT) => dispatch({type: 'SET_TOAST', payload: toast})
+	const dispatchToast = (toast: ToastT) =>
+		dispatch({type: 'SET_TOAST', payload: toast})
 	const deleteToast: ToastT = {
 		open: true,
 		title: 'Deck Deleted!',
@@ -114,9 +134,11 @@ function SelectDeck({setLoadedDeck, setMenuSection, setMode, loadedDeck}: Props)
 
 	//DECK LOGIC
 	const loadDeck = (deckName: string) => {
-		if (!deckName) return console.log(`[LoadDeck]: Could not load the ${deckName} deck.`)
+		if (!deckName)
+			return console.log(`[LoadDeck]: Could not load the ${deckName} deck.`)
 		const deck = getSavedDeck(deckName)
-		if (!deck) return console.log(`[LoadDeck]: Could not load the ${deckName} deck.`)
+		if (!deck)
+			return console.log(`[LoadDeck]: Could not load the ${deckName} deck.`)
 
 		setLoadedDeck({
 			...deck,
@@ -199,16 +221,26 @@ function SelectDeck({setLoadedDeck, setMenuSection, setMode, loadedDeck}: Props)
 	})
 	const validationMessage = validateDeck(loadedDeck.cards)
 	const selectedCards = {
-		hermits: loadedDeck.cards.filter((card) => card.props.category === 'hermit'),
+		hermits: loadedDeck.cards.filter(
+			(card) => card.props.category === 'hermit',
+		),
 		items: loadedDeck.cards.filter((card) => card.props.category === 'item'),
-		attachableEffects: loadedDeck.cards.filter((card) => card.props.category === 'attach'),
-		singleUseEffects: loadedDeck.cards.filter((card) => card.props.category === 'single_use'),
+		attachableEffects: loadedDeck.cards.filter(
+			(card) => card.props.category === 'attach',
+		),
+		singleUseEffects: loadedDeck.cards.filter(
+			(card) => card.props.category === 'single_use',
+		),
 	}
 
 	//MISC
 	const playSwitchDeckSFX = () => {
 		if (settings.soundOn !== 'off') {
-			const pageTurn = ['/sfx/Page_turn1.ogg', '/sfx/Page_turn2.ogg', '/sfx/Page_turn3.ogg']
+			const pageTurn = [
+				'/sfx/Page_turn1.ogg',
+				'/sfx/Page_turn2.ogg',
+				'/sfx/Page_turn3.ogg',
+			]
 			dispatch(playSound(pageTurn[Math.floor(Math.random() * pageTurn.length)]))
 		}
 	}
@@ -269,7 +301,11 @@ function SelectDeck({setLoadedDeck, setMenuSection, setMode, loadedDeck}: Props)
 				actionText="Overwrite"
 			/>
 
-			<DeckLayout title="Deck Selection" back={backToMenu} returnText="Back To Menu">
+			<DeckLayout
+				title="Deck Selection"
+				back={backToMenu}
+				returnText="Back To Menu"
+			>
 				<DeckLayout.Main
 					header={
 						<>
@@ -349,7 +385,8 @@ function SelectDeck({setLoadedDeck, setMenuSection, setMode, loadedDeck}: Props)
 					</div>
 					{validationMessage && (
 						<div className={css.validationMessage}>
-							<span style={{paddingRight: '0.5rem'}}>{<ErrorIcon />}</span> {validationMessage}
+							<span style={{paddingRight: '0.5rem'}}>{<ErrorIcon />}</span>{' '}
+							{validationMessage}
 						</div>
 					)}
 
@@ -362,7 +399,10 @@ function SelectDeck({setLoadedDeck, setMenuSection, setMode, loadedDeck}: Props)
 					</Accordion>
 
 					<Accordion
-						header={cardGroupHeader('Attachable Effects', selectedCards.attachableEffects)}
+						header={cardGroupHeader(
+							'Attachable Effects',
+							selectedCards.attachableEffects,
+						)}
 					>
 						<CardList
 							cards={sortCards(selectedCards.attachableEffects)}
@@ -370,7 +410,12 @@ function SelectDeck({setLoadedDeck, setMenuSection, setMode, loadedDeck}: Props)
 							disableAnimations={true}
 						/>
 					</Accordion>
-					<Accordion header={cardGroupHeader('Single Use Effects', selectedCards.singleUseEffects)}>
+					<Accordion
+						header={cardGroupHeader(
+							'Single Use Effects',
+							selectedCards.singleUseEffects,
+						)}
+					>
 						<CardList
 							cards={sortCards(selectedCards.singleUseEffects)}
 							wrap={true}
@@ -379,13 +424,21 @@ function SelectDeck({setLoadedDeck, setMenuSection, setMode, loadedDeck}: Props)
 					</Accordion>
 
 					<Accordion header={cardGroupHeader('Items', selectedCards.items)}>
-						<CardList cards={sortCards(selectedCards.items)} wrap={true} disableAnimations={true} />
+						<CardList
+							cards={sortCards(selectedCards.items)}
+							wrap={true}
+							disableAnimations={true}
+						/>
 					</Accordion>
 				</DeckLayout.Main>
 				<DeckLayout.Sidebar
 					header={
 						<>
-							<img src="../images/card-icon.png" alt="card-icon" className={css.sidebarIcon} />
+							<img
+								src="../images/card-icon.png"
+								alt="card-icon"
+								className={css.sidebarIcon}
+							/>
 							<p style={{textAlign: 'center'}}>My Decks</p>
 						</>
 					}
@@ -405,8 +458,8 @@ function SelectDeck({setLoadedDeck, setMenuSection, setMode, loadedDeck}: Props)
 													title: 'Convert Legacy Decks',
 													description: conversionCount
 														? `Converted ${conversionCount} decks!`
-														: `No decks to convert!`,
-													image: `/images/card-icon.png`,
+														: 'No decks to convert!',
+													image: '/images/card-icon.png',
 												},
 											})
 										}}
@@ -417,7 +470,10 @@ function SelectDeck({setLoadedDeck, setMenuSection, setMode, loadedDeck}: Props)
 								<Button variant="primary" onClick={() => setMode('create')}>
 									Create New Deck
 								</Button>
-								<Button variant="primary" onClick={() => setShowImportModal(!showImportModal)}>
+								<Button
+									variant="primary"
+									onClick={() => setShowImportModal(!showImportModal)}
+								>
 									<ExportIcon reversed />
 									<span>Import Decks</span>
 								</Button>
