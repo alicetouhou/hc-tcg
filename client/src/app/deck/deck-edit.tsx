@@ -7,7 +7,7 @@ import DeckLayout from './layout'
 import {CARDS_LIST} from 'common/cards'
 import Card from 'common/cards/base/card'
 import {LocalCardInstance, WithoutFunctions} from 'common/types/server-requests'
-import {PlayerDeckT} from 'common/types/deck'
+import {DeckIcon, PlayerDeckT} from 'common/types/deck'
 import CardList from 'components/card-list'
 import Accordion from 'components/accordion'
 import Button from 'components/button'
@@ -25,18 +25,20 @@ import {isHermit, isItem} from 'common/cards/base/types'
 import {EXPANSIONS, ExpansionT} from 'common/const/expansions'
 
 const RANK_NAMES = ['any', 'stone', 'iron', 'gold', 'emerald', 'diamond']
-const DECK_ICONS = [
-	'any',
-	'balanced',
-	'builder',
-	'explorer',
-	'farm',
-	'miner',
-	'prankster',
-	'pvp',
-	'redstone',
-	'speedrunner',
-	'terraform',
+
+const DECK_ICONS: Array<DeckIcon> = [
+	{type: 'energy', name: 'any'},
+	{type: 'energy', name: 'balanced'},
+	{type: 'energy', name: 'builder'},
+	{type: 'energy', name: 'explorer'},
+	{type: 'energy', name: 'farm'},
+	{type: 'energy', name: 'miner'},
+	{type: 'energy', name: 'prankster'},
+	{type: 'energy', name: 'pvp'},
+	{type: 'energy', name: 'redstone'},
+	{type: 'energy', name: 'speedrunner'},
+	{type: 'energy', name: 'terraform'},
+	{type: 'hermit', name: 'ethoslab'},
 ]
 
 const EXPANSION_NAMES = [
@@ -48,10 +50,27 @@ const EXPANSION_NAMES = [
 	}),
 ]
 
+export const getDeckIconPath = (icon: string | null) => {
+	if (!icon) return `/images/types/type-any.png`
+	try {
+		const option: DeckIcon = JSON.parse(icon)
+		switch (option.type) {
+			case 'energy':
+				return `/images/types/type-${option.name}.png`
+			case 'hermit':
+				return `/images/hermits-emoji/${option.name}.png`
+			default:
+				return `/images/types/type-any.png`
+		}
+	} catch {
+		return `/images/types/type-${icon}.png`
+	}
+}
+
 const iconDropdownOptions = DECK_ICONS.map((option) => ({
-	name: option,
-	key: option,
-	icon: `/images/types/type-${option}.png`,
+	name: option.name,
+	key: JSON.stringify(option),
+	icon: getDeckIconPath(JSON.stringify(option)),
 }))
 
 const rarityDropdownOptions = RANK_NAMES.map((option) => ({
@@ -269,6 +288,12 @@ function EditDeck({back, title, saveDeck, deck}: Props) {
 			icon: option,
 		}))
 	}
+	const handleSecondaryDeckIcon = (option: any) => {
+		setLoadedDeck((loadedDeck) => ({
+			...loadedDeck,
+			secondaryIcon: option,
+		}))
+	}
 	const handleBack = () => {
 		if (initialDeckState == loadedDeck) {
 			back()
@@ -310,7 +335,7 @@ function EditDeck({back, title, saveDeck, deck}: Props) {
 				open: true,
 				title: 'Deck Saved!',
 				description: `Saved ${deck.name}`,
-				image: `/images/types/type-${deck.icon}.png`,
+				image: getDeckIconPath(deck.icon),
 			},
 		})
 		back()
@@ -489,12 +514,26 @@ function EditDeck({back, title, saveDeck, deck}: Props) {
 									<Dropdown
 										button={
 											<button className={css.dropdownButton}>
-												<img src={`/images/types/type-${loadedDeck.icon}.png`} />
+												<img src={getDeckIconPath(loadedDeck.icon)} />
 											</button>
 										}
-										label="Deck Icon"
+										label="Primary Deck Icon"
 										options={iconDropdownOptions}
 										action={(option) => handleDeckIcon(option)}
+									/>
+									<Dropdown
+										button={
+											<button className={css.dropdownButton}>
+												<img
+													src={getDeckIconPath(
+														loadedDeck.secondaryIcon ? loadedDeck.secondaryIcon : 'any'
+													)}
+												/>
+											</button>
+										}
+										label="Secondary Deck Icon"
+										options={iconDropdownOptions}
+										action={(option) => handleSecondaryDeckIcon(option)}
 									/>
 									<DeckName
 										loadedDeck={loadedDeck}

@@ -1,37 +1,22 @@
 import {CARDS} from '../cards'
 import {LocalCardInstance, WithoutFunctions} from './server-requests'
 
+export type DeckIcon = {
+	type: 'energy' | 'hermit'
+	name: string
+}
+
 export type PlayerDeckT = {
 	name: string
-	icon:
-		| 'any'
-		| 'balanced'
-		| 'builder'
-		| 'explorer'
-		| 'farm'
-		| 'miner'
-		| 'prankster'
-		| 'pvp'
-		| 'redstone'
-		| 'speedrunner'
-		| 'terraform'
+	icon: string
+	secondaryIcon: string | null
 	cards: Array<LocalCardInstance>
 }
 
 export type SavedDeckT = {
 	name: string
-	icon:
-		| 'any'
-		| 'balanced'
-		| 'builder'
-		| 'explorer'
-		| 'farm'
-		| 'miner'
-		| 'prankster'
-		| 'pvp'
-		| 'redstone'
-		| 'speedrunner'
-		| 'terraform'
+	icon: string
+	secondaryIcon: string | null
 	// This type is used to ensure saving and loading compatibility with older versions of hc-tcg
 	cards: Array<{
 		cardId: string
@@ -42,6 +27,7 @@ export type SavedDeckT = {
 export function deckToSavedDeck(deck: PlayerDeckT): SavedDeckT {
 	let name = deck.name
 	let icon = deck.icon
+	let secondaryIcon = deck.secondaryIcon
 
 	let cards = deck.cards.map((card) => {
 		return {cardId: card.props.id, cardInstance: card.entity}
@@ -50,6 +36,7 @@ export function deckToSavedDeck(deck: PlayerDeckT): SavedDeckT {
 	return {
 		name,
 		icon,
+		secondaryIcon,
 		cards,
 	}
 }
@@ -59,6 +46,7 @@ export function loadSavedDeck(deck: SavedDeckT | null): PlayerDeckT | null {
 
 	let name = deck.name
 	let icon = deck.icon
+	let secondaryIcon = deck.secondaryIcon
 
 	let cards = deck.cards
 		.map((card) => {
@@ -74,6 +62,7 @@ export function loadSavedDeck(deck: SavedDeckT | null): PlayerDeckT | null {
 	return {
 		name,
 		icon,
+		secondaryIcon,
 		cards,
 	}
 }

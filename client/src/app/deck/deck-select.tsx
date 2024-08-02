@@ -22,7 +22,7 @@ import {
 	deleteDeck,
 } from 'logic/saved-decks/saved-decks'
 import {cardGroupHeader} from './deck'
-import {sortCards} from './deck-edit'
+import {getDeckIconPath, sortCards} from './deck-edit'
 import {validateDeck} from 'common/utils/validation'
 import {useDispatch, useSelector} from 'react-redux'
 import {getPlayerDeck} from 'logic/session/session-selectors'
@@ -50,6 +50,7 @@ function SelectDeck({setLoadedDeck, setMenuSection, setMode, loadedDeck}: Props)
 	const [importedDeck, setImportedDeck] = useState<PlayerDeckT>({
 		name: 'undefined',
 		icon: 'any',
+		secondaryIcon: null,
 		cards: [],
 	})
 	const [showDeleteDeckModal, setShowDeleteDeckModal] = useState<boolean>(false)
@@ -183,7 +184,14 @@ function SelectDeck({setLoadedDeck, setMenuSection, setMode, loadedDeck}: Props)
 				}}
 			>
 				<div className={css.deckImage}>
-					<img src={'../images/types/type-' + deck.icon + '.png'} alt={'deck-icon'} />
+					<img
+						className={css.secondaryDeckImage ? css.secondIcon : ''}
+						src={getDeckIconPath(deck.icon)}
+						alt={'deck-icon'}
+					/>
+				</div>
+				<div className={css.secondaryDeckImage}>
+					<img src={getDeckIconPath(deck.secondaryIcon)} alt={''} />
 				</div>
 				{deck.name}
 			</li>
