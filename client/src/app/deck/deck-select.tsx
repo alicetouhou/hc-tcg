@@ -26,17 +26,13 @@ import {
 	saveDeck,
 	setActiveDeck,
 } from 'logic/saved-decks/saved-decks'
-import {cardGroupHeader} from './deck'
-import {getDeckIconPath, sortCards} from './deck-edit'
-import {validateDeck} from 'common/utils/validation'
-import {useDispatch, useSelector} from 'react-redux'
 import {getPlayerDeck} from 'logic/session/session-selectors'
 import {playSound} from 'logic/sound/sound-actions'
 import {ReactNode, useState} from 'react'
 import {useDispatch, useSelector} from 'react-redux'
 import {CONFIG} from '../../../../common/config'
 import {cardGroupHeader} from './deck'
-import {sortCards} from './deck-edit'
+import {getDeckIconPath, sortCards} from './deck-edit'
 import css from './deck.module.scss'
 import DeckLayout from './layout'
 
@@ -195,30 +191,35 @@ function SelectDeck({
 			return deck
 		})
 		.sort((a, b) => a.name.localeCompare(b.name))
-	const deckList: ReactNode = sortedDecks.map((deck: PlayerDeckT, i: number) => {
-		return (
-			<li
-				className={classNames(css.myDecksItem, loadedDeck.name === deck.name && css.selectedDeck)}
-				key={i}
-				onClick={() => {
-					playSwitchDeckSFX()
-					loadDeck(deck.name)
-				}}
-			>
-				<div className={css.deckImage}>
-					<img
-						className={css.secondaryDeckImage ? css.secondIcon : ''}
-						src={getDeckIconPath(deck.icon)}
-						alt={'deck-icon'}
-					/>
-				</div>
-				<div className={css.secondaryDeckImage}>
-					<img src={getDeckIconPath(deck.secondaryIcon)} alt={''} />
-				</div>
-				{deck.name}
-			</li>
-		)
-	})
+	const deckList: ReactNode = sortedDecks.map(
+		(deck: PlayerDeckT, i: number) => {
+			return (
+				<li
+					className={classNames(
+						css.myDecksItem,
+						loadedDeck.name === deck.name && css.selectedDeck,
+					)}
+					key={i}
+					onClick={() => {
+						playSwitchDeckSFX()
+						loadDeck(deck.name)
+					}}
+				>
+					<div className={css.deckImage}>
+						<img
+							className={css.secondaryDeckImage ? css.secondIcon : ''}
+							src={getDeckIconPath(deck.icon)}
+							alt={'deck-icon'}
+						/>
+					</div>
+					<div className={css.secondaryDeckImage}>
+						<img src={getDeckIconPath(deck.secondaryIcon)} alt={''} />
+					</div>
+					{deck.name}
+				</li>
+			)
+		},
+	)
 	const validationMessage = validateDeck(loadedDeck.cards)
 	const selectedCards = {
 		hermits: loadedDeck.cards.filter(

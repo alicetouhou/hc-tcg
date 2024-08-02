@@ -1,9 +1,13 @@
 import classNames from 'classnames'
 import {CARDS_LIST} from 'common/cards'
 import Card from 'common/cards/base/card'
-import {LocalCardInstance, WithoutFunctions} from 'common/types/server-requests'
+import {isHermit, isItem} from 'common/cards/base/types'
+import {EXPANSIONS, ExpansionT} from 'common/const/expansions'
+import {CardEntity, newEntity} from 'common/entities'
 import {DeckIcon, PlayerDeckT} from 'common/types/deck'
-import CardList from 'components/card-list'
+import {LocalCardInstance, WithoutFunctions} from 'common/types/server-requests'
+import {getCardRank, getDeckCost} from 'common/utils/ranks'
+import {validateDeck} from 'common/utils/validation'
 import Accordion from 'components/accordion'
 import AlertModal from 'components/alert-modal'
 import Button from 'components/button'
@@ -49,7 +53,7 @@ const EXPANSION_NAMES = [
 ]
 
 export const getDeckIconPath = (icon: string | null) => {
-	if (!icon) return `/images/types/type-any.png`
+	if (!icon) return '/images/types/type-any.png'
 	try {
 		const option: DeckIcon = JSON.parse(icon)
 		switch (option.type) {
@@ -58,7 +62,7 @@ export const getDeckIconPath = (icon: string | null) => {
 			case 'hermit':
 				return `/images/hermits-emoji/${option.name}.png`
 			default:
-				return `/images/types/type-any.png`
+				return '/images/types/type-any.png'
 		}
 	} catch {
 		return `/images/types/type-${icon}.png`
@@ -393,7 +397,9 @@ function EditDeck({back, title, saveDeck, deck}: Props) {
 								button={
 									<button className={css.dropdownButton}>
 										<img
-											src={`/images/ranks/${rankQuery === '' ? 'any' : rankQuery}.png`}
+											src={`/images/ranks/${
+												rankQuery === '' ? 'any' : rankQuery
+											}.png`}
 											draggable={false}
 										/>
 									</button>
@@ -408,7 +414,9 @@ function EditDeck({back, title, saveDeck, deck}: Props) {
 								button={
 									<button className={css.dropdownButton}>
 										<img
-											src={`/images/types/type-${typeQuery === '' ? 'any' : typeQuery}.png`}
+											src={`/images/types/type-${
+												typeQuery === '' ? 'any' : typeQuery
+											}.png`}
 										/>
 									</button>
 								}
@@ -570,7 +578,9 @@ function EditDeck({back, title, saveDeck, deck}: Props) {
 											<button className={css.dropdownButton}>
 												<img
 													src={getDeckIconPath(
-														loadedDeck.secondaryIcon ? loadedDeck.secondaryIcon : 'any'
+														loadedDeck.secondaryIcon
+															? loadedDeck.secondaryIcon
+															: 'any',
 													)}
 												/>
 											</button>
