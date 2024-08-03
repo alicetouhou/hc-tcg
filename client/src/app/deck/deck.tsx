@@ -69,6 +69,7 @@ const Deck = ({setMenuSection}: Props) => {
 						deck={{
 							name: '',
 							icon: 'any',
+							secondaryIcon: 'any',
 							cards: [],
 						}}
 					/>

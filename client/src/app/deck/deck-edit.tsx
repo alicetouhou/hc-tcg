@@ -27,18 +27,41 @@ import DeckLayout from './layout'
 const RANK_NAMES = ['any', 'stone', 'iron', 'gold', 'emerald', 'diamond']
 
 const DECK_ICONS: Array<DeckIcon> = [
-	{type: 'energy', name: 'any'},
-	{type: 'energy', name: 'balanced'},
-	{type: 'energy', name: 'builder'},
-	{type: 'energy', name: 'explorer'},
-	{type: 'energy', name: 'farm'},
-	{type: 'energy', name: 'miner'},
-	{type: 'energy', name: 'prankster'},
-	{type: 'energy', name: 'pvp'},
-	{type: 'energy', name: 'redstone'},
-	{type: 'energy', name: 'speedrunner'},
-	{type: 'energy', name: 'terraform'},
-	{type: 'hermit', name: 'ethoslab'},
+	{type: 'energy', icon: 'any'},
+	{type: 'energy', icon: 'balanced'},
+	{type: 'energy', icon: 'builder'},
+	{type: 'energy', icon: 'explorer'},
+	{type: 'energy', icon: 'farm'},
+	{type: 'energy', icon: 'miner'},
+	{type: 'energy', icon: 'prankster'},
+	{type: 'energy', icon: 'pvp'},
+	{type: 'energy', icon: 'redstone'},
+	{type: 'energy', icon: 'speedrunner'},
+	{type: 'energy', icon: 'terraform'},
+	{type: 'hermit', icon: 'bdoubleo100', name: 'Bdubs'},
+	{type: 'hermit', icon: 'vintagebeef', name: 'Beef'},
+	{type: 'hermit', icon: 'zombiecleo', name: 'Cleo'},
+	{type: 'hermit', icon: 'docm77', name: 'Doc'},
+	{type: 'hermit', icon: 'ethoslab', name: 'Etho'},
+	{type: 'hermit', icon: 'falsesymmetry', name: 'False'},
+	{type: 'hermit', icon: 'geminitay', name: 'Gem'},
+	{type: 'hermit', icon: 'grian', name: 'Grian'},
+	{type: 'hermit', icon: 'hypnotizd', name: 'Hypno'},
+	{type: 'hermit', icon: 'impulsesv', name: 'Impulse'},
+	{type: 'hermit', icon: 'iskall85', name: 'Iskall'},
+	{type: 'hermit', icon: 'ijevin', name: 'Jevin'},
+	{type: 'hermit', icon: 'joehills', name: 'Joehills'},
+	{type: 'hermit', icon: 'keralis', name: 'Keralis'},
+	{type: 'hermit', icon: 'mumbojumbo', name: 'Mumbo'},
+	{type: 'hermit', icon: 'pearlescentmoon', name: 'Pearl'},
+	{type: 'hermit', icon: 'rendog', name: 'Ren'},
+	{type: 'hermit', icon: 'stressmonster101', name: 'Stress'},
+	{type: 'hermit', icon: 'tangotek', name: 'Tango'},
+	{type: 'hermit', icon: 'tinfoilchef', name: 'TFC'},
+	{type: 'hermit', icon: 'welsknight', name: 'Wels'},
+	{type: 'hermit', icon: 'xbcrafted', name: 'xB'},
+	{type: 'hermit', icon: 'xisumavoid', name: 'Xisuma'},
+	{type: 'hermit', icon: 'zedaphplays', name: 'Zedaph'},
 ]
 
 const EXPANSION_NAMES = [
@@ -58,9 +81,11 @@ export const getDeckIconPath = (icon: string | null) => {
 		const option: DeckIcon = JSON.parse(icon)
 		switch (option.type) {
 			case 'energy':
-				return `/images/types/type-${option.name}.png`
+				return `/images/types/type-${option.icon}.png`
 			case 'hermit':
-				return `/images/hermits-emoji/${option.name}.png`
+				return `/images/hermits-emoji/${option.icon}.png`
+			case 'effect':
+				return `/images/status/${option.icon}.png`
 			default:
 				return '/images/types/type-any.png'
 		}
@@ -70,8 +95,16 @@ export const getDeckIconPath = (icon: string | null) => {
 }
 
 const iconDropdownOptions = DECK_ICONS.map((option) => ({
-	name: option.name,
+	name: option.name ? option.name : option.icon,
 	key: JSON.stringify(option),
+	icon: getDeckIconPath(JSON.stringify(option)),
+}))
+
+const typeDropdownOptions = DECK_ICONS.filter(
+	(option) => option.type === 'energy',
+).map((option) => ({
+	name: option.name ? option.name : option.icon,
+	key: option.name,
 	icon: getDeckIconPath(JSON.stringify(option)),
 }))
 
@@ -421,7 +454,7 @@ function EditDeck({back, title, saveDeck, deck}: Props) {
 									</button>
 								}
 								label="Type Filter"
-								options={iconDropdownOptions}
+								options={typeDropdownOptions}
 								action={(option) =>
 									setTypeQuery(option === 'any' ? '' : option)
 								}

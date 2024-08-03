@@ -43,6 +43,28 @@ type Props = {
 	loadedDeck: PlayerDeckT
 }
 
+function getIcon(deck: PlayerDeckT) {
+	const secondaryIcon =
+		deck.secondaryIcon && !deck.secondaryIcon.includes('any')
+
+	return (
+		<div className={css.deckImage}>
+			<img
+				src={getDeckIconPath(deck.icon)}
+				alt={'deck-icon'}
+				className={secondaryIcon ? css.primaryOffset : ''}
+			/>
+			{secondaryIcon && (
+				<img
+					src={getDeckIconPath(deck.secondaryIcon)}
+					alt={''}
+					className={css.secondaryOffset}
+				/>
+			)}
+		</div>
+	)
+}
+
 function SelectDeck({
 	setLoadedDeck,
 	setMenuSection,
@@ -205,16 +227,7 @@ function SelectDeck({
 						loadDeck(deck.name)
 					}}
 				>
-					<div className={css.deckImage}>
-						<img
-							className={css.secondaryDeckImage ? css.secondIcon : ''}
-							src={getDeckIconPath(deck.icon)}
-							alt={'deck-icon'}
-						/>
-					</div>
-					<div className={css.secondaryDeckImage}>
-						<img src={getDeckIconPath(deck.secondaryIcon)} alt={''} />
-					</div>
+					{getIcon(deck)}
 					{deck.name}
 				</li>
 			)
@@ -311,16 +324,7 @@ function SelectDeck({
 					header={
 						<>
 							<div className={css.headerGroup}>
-								<div className={css.deckImage}>
-									<img
-										src={
-											'../images/types/type-' +
-											(!loadedDeck.icon ? 'any' : loadedDeck.icon) +
-											'.png'
-										}
-										alt="deck-icon"
-									/>
-								</div>
+								{getIcon(loadedDeck)}
 								<div className={css.deckName}>
 									<span>{loadedDeck.name}</span>
 								</div>
