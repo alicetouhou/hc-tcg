@@ -37,7 +37,7 @@ class BoomerBdubsRare extends Card {
 			cost: ['redstone', 'redstone'],
 			damage: 80,
 			power:
-				'Flip a coin as many times as you want.\nDo an additional 20hp damage for every heads, but if tails is flipped, this attack deals 0hp total damage.\nWhen this attack is used with Fortune, only the first coinflip will be affected.',
+				'Flip 2 coins as many times as you want.\nDo an additional 20hp damage for each coin that flips heads, but if both coins flip tails, this attack deals 0hp total damage.\nWhen this attack is used with Fortune, only the first coinflip will be affected.',
 		},
 	}
 
@@ -75,7 +75,7 @@ class BoomerBdubsRare extends Card {
 						modalId: 'selectCards',
 						payload: {
 							modalName: 'Boomer BDubs: Coin Flip',
-							modalDescription: 'Do you want to flip a coin for your attack?',
+							modalDescription: `Do you want to flip a coin for your attack? Total damage so far: ${80 + extraDamage}`,
 							cards: [],
 							selectionSize: 0,
 							primaryButton: {
@@ -92,14 +92,14 @@ class BoomerBdubsRare extends Card {
 						if (!modalResult) return 'SUCCESS'
 						if (!modalResult.result) return 'SUCCESS'
 
-						const flip = flipCoin(player, activeHermit)[0]
+						const flips = flipCoin(player, activeHermit, 2)
 
-						if (flip === 'tails') {
+						if (!flips.includes('heads')) {
 							flippedTails = true
 							return 'SUCCESS'
 						}
 
-						extraDamage += 20
+						extraDamage += 20 * flips.filter((flip) => flip === 'heads').length
 
 						player.hooks.getAttackRequests.call(
 							activeInstance,
