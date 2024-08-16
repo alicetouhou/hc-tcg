@@ -400,7 +400,9 @@
 	display: none;
 	visibility: hidden;
 	overflow: scroll;
-	width: 45%;
+	width: 11rem;
+	max-width: 11rem;
+	overflow: hidden;
 }
 
 .mobileSelector {
@@ -474,16 +476,14 @@
 	}
 
 	.deckList {
-		width: 100%;
-		min-width: 100%;
-		max-width: 100%;
 		background-color: #2b2c2c;
 		height: 100%;
 		overflow: scroll;
 	}
 
 	.mobileDeckPreview {
-		display: inherit;
+		display: flex;
+		flex-direction: column;
 		visibility: visible;
 	}
 

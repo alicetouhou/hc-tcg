@@ -368,10 +368,39 @@ function SelectDeck({
 							</div>
 							<div className={css.deckListBox}>
 								<div className={css.mobileDeckPreview}>
-									<MobileCardList
-										cards={sortCards(loadedDeck.cards)}
-										small={true}
-									/>
+									{selectedCards.hermits.length > 0 && (
+										<div>
+											Hermits
+											<MobileCardList
+												cards={sortCards(selectedCards.hermits)}
+												small={true}
+											/>
+										</div>
+									)}
+									{[
+										...selectedCards.singleUseEffects,
+										...selectedCards.attachableEffects,
+									].length > 0 && (
+										<div>
+											Effects
+											<MobileCardList
+												cards={sortCards([
+													...selectedCards.singleUseEffects,
+													...selectedCards.attachableEffects,
+												])}
+												small={true}
+											/>
+										</div>
+									)}
+									{selectedCards.items.length > 0 && (
+										<div>
+											Items
+											<MobileCardList
+												cards={sortCards(selectedCards.items)}
+												small={true}
+											/>
+										</div>
+									)}
 								</div>
 								<div className={css.deckListContainer}>
 									<div className={css.deckList}>{deckList}</div>

@@ -61,14 +61,11 @@
 
 .MobileCardComponentContainer {
 	display: flex;
-
-	.mainButton {
-		flex-grow: 1;
-	}
 }
 
 .MobileCardComponent {
 	display: flex;
+	flex-grow: 1;
 	flex-direction: row;
 	gap: 0.5rem;
 	padding: 0.5rem;
@@ -119,7 +116,7 @@
 .rarityStar {
 	font-size: 1rem;
 	font-family: Unifont;
-	transform: translate(0.2rem, -0.8rem);
+	transform: translate(-2.5rem, -1rem);
 	filter: drop-shadow(1px 0px 0 white) drop-shadow(-1px 0px 0 white)
 		drop-shadow(0px 1px 0 white) drop-shadow(0px -1px 0 white);
 
