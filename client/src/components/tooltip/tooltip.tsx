@@ -1,18 +1,5 @@
-import {
-	FloatingPortal,
-	autoUpdate,
-	flip,
-	offset,
-	shift,
-	useDismiss,
-	useFloating,
-	useFocus,
-	useHover,
-	useInteractions,
-	useRole,
-} from '@floating-ui/react'
 import classNames from 'classnames'
-import React, {memo, useState} from 'react'
+import React, {memo, useEffect, useRef, useState} from 'react'
 import css from './tooltip.module.scss'
 
 type Props = {
@@ -22,72 +9,70 @@ type Props = {
 }
 
 const Tooltip = memo(({children, tooltip, showAboveModal}: Props) => {
-	const [open, setOpen] = useState(false)
+	const [open, setOpen] = useState<boolean>(false)
+	const childRef = useRef<HTMLDivElement>(null)
+	const tooltipRef = useRef<HTMLDivElement>(null)
 
-	const {x, y, refs, strategy, context} = useFloating({
-		open,
-		onOpenChange: setOpen,
-		placement: 'top',
-		// Make sure the tooltip stays on the screen
-		whileElementsMounted: autoUpdate,
-		middleware: [
-			offset(5),
-			flip({
-				crossAxis: false,
-				fallbackAxisSideDirection: 'start',
-			}),
-			shift(),
-		],
-	})
+	const [childrenRect, setChildrenRect] = useState<DOMRect | null>(null)
+	const [parentRect, setParentRect] = useState<DOMRect | null>(null)
+	const [tooltipRect, setTooltipRect] = useState<DOMRect | null>(null)
 
-	// Event listeners to change the open state
-	const hover = useHover(context, {move: false, restMs: 200})
-	const focus = useFocus(context)
-	const dismiss = useDismiss(context)
-	// Role props for screen readers
-	const role = useRole(context, {role: 'tooltip'})
+	function onSetOpen(newOpen: boolean) {
+		const childrenCoordinates = childRef.current?.getBoundingClientRect()
+		const parentCoordinates =
+			childRef.current?.parentElement?.parentElement?.getBoundingClientRect()
+		if (childrenCoordinates === undefined || parentCoordinates === undefined) {
+			setOpen(false)
+			return
+		}
 
-	// Merge all the interactions into prop getters
-	const {getReferenceProps, getFloatingProps} = useInteractions([
-		hover,
-		focus,
-		dismiss,
-		role,
-	])
+		setChildrenRect(childrenCoordinates)
+		setParentRect(parentCoordinates)
+		setOpen(newOpen)
+	}
 
-	let floatingPortal = null
+	const childrenContainer = (
+		<div
+			ref={childRef}
+			onPointerOver={() => onSetOpen(true)}
+			onPointerOut={() => onSetOpen(false)}
+		>
+			{children}
+		</div>
+	)
+
+	const top =
+		childrenRect !== null && parentRect !== null
+			? childrenRect.y - parentRect.y - 30
+			: 0
+	const left =
+		childrenRect !== null && parentRect !== null
+			? childrenRect.x - parentRect.x
+			: 0
 
 	if (open) {
-		floatingPortal = (
-			<FloatingPortal>
+		return (
+			<>
 				<div
 					className={classNames(
 						css.tooltip,
 						showAboveModal && css.showAboveModal,
 					)}
-					ref={refs.setFloating}
 					style={{
-						position: strategy,
-						top: y ?? 0,
-						left: x ?? 0,
+						position: 'fixed',
+						top: top,
+						left: left,
 					}}
-					{...getFloatingProps()}
+					ref={tooltipRef}
 				>
 					{tooltip}
 				</div>
-			</FloatingPortal>
+				{childrenContainer}
+			</>
 		)
 	}
 
-	return (
-		<>
-			{React.cloneElement(children, {
-				ref: refs.setReference,
-				...getReferenceProps(),
-			})}
-			{floatingPortal}
-		</>
-	)
+	return childrenContainer
 })
 
 export default Tooltip
