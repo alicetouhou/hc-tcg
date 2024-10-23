@@ -1,5 +1,5 @@
 import classNames from 'classnames'
-import React, {memo, useEffect, useRef, useState} from 'react'
+import React, {memo, useReducer, useRef, useState} from 'react'
 import css from './tooltip.module.scss'
 
 type Props = {
@@ -14,21 +14,41 @@ const Tooltip = memo(({children, tooltip, showAboveModal}: Props) => {
 	const tooltipRef = useRef<HTMLDivElement>(null)
 
 	const [childrenRect, setChildrenRect] = useState<DOMRect | null>(null)
-	const [parentRect, setParentRect] = useState<DOMRect | null>(null)
 	const [tooltipRect, setTooltipRect] = useState<DOMRect | null>(null)
+	const [top, setTop] = useState<number>(0)
+	const [left, setLeft] = useState<number>(0)
 
 	function onSetOpen(newOpen: boolean) {
+		if (newOpen === false) {
+			setChildrenRect(null)
+			setTooltipRect(null)
+			setOpen(false)
+			return
+		}
 		const childrenCoordinates = childRef.current?.getBoundingClientRect()
-		const parentCoordinates =
-			childRef.current?.parentElement?.parentElement?.getBoundingClientRect()
-		if (childrenCoordinates === undefined || parentCoordinates === undefined) {
+		const tooltipCoordinates = tooltipRef.current?.getBoundingClientRect()
+		if (childrenCoordinates === undefined) {
 			setOpen(false)
 			return
 		}
 
+		if (tooltipCoordinates === undefined) {
+			setOpen(true)
+			onSetOpen(newOpen)
+			return
+		}
+
 		setChildrenRect(childrenCoordinates)
-		setParentRect(parentCoordinates)
+		if (tooltipCoordinates) setTooltipRect(tooltipCoordinates)
 		setOpen(newOpen)
+
+		setTop(childrenCoordinates.y - tooltipCoordinates.height)
+		setLeft(
+			childrenCoordinates.x +
+				childrenCoordinates.width / 2 -
+				tooltipCoordinates.width / 2,
+		)
+		if (tooltipRef.current) tooltipRef.current.style.visibility = 'visible'
 	}
 
 	const childrenContainer = (
@@ -41,16 +61,16 @@ const Tooltip = memo(({children, tooltip, showAboveModal}: Props) => {
 		</div>
 	)
 
-	const top =
-		childrenRect !== null && parentRect !== null
-			? childrenRect.y - parentRect.y - 30
-			: 0
-	const left =
-		childrenRect !== null && parentRect !== null
-			? childrenRect.x - parentRect.x
-			: 0
+	const root = document.getElementById('tooltip')
+	if (tooltipRef.current) {
+		root?.appendChild(tooltipRef.current)
+	}
+	if (tooltipRef.current && (!open || !childRef)) {
+		root?.removeChild(tooltipRef.current)
+		tooltipRef.current.style.visibility = 'hidden'
+	}
 
-	if (open) {
+	if (open || tooltipRef.current) {
 		return (
 			<>
 				<div
@@ -59,9 +79,9 @@ const Tooltip = memo(({children, tooltip, showAboveModal}: Props) => {
 						showAboveModal && css.showAboveModal,
 					)}
 					style={{
-						position: 'fixed',
 						top: top,
 						left: left,
+						visibility: 'hidden',
 					}}
 					ref={tooltipRef}
 				>
