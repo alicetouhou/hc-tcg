@@ -127,17 +127,18 @@ const HermitCardModule = memo(({card, displayTokenCost}: HermitCardProps) => {
 			) : null}
 			<g id="hermit-attacks" className={css.hermitAttacks}>
 				<g>
-					{card.primary.cost.map((type, i: number) => (
-						<image
-							key={i}
-							href={getCardTypeIcon(type)}
-							x={COST_X[card.primary.cost.length - 1][i]}
-							y="273"
-							width={COST_SIZE}
-							height={COST_SIZE}
-							className={classnames(css.attackItems, css[palette], css[type])}
-						/>
-					))}
+					{!card.primary.passive &&
+						card.primary.cost.map((type, i: number) => (
+							<image
+								key={i}
+								href={getCardTypeIcon(type)}
+								x={COST_X[card.primary.cost.length - 1][i]}
+								y="273"
+								width={COST_SIZE}
+								height={COST_SIZE}
+								className={classnames(css.attackItems, css[palette], css[type])}
+							/>
+						))}
 				</g>
 				<text
 					x="200"
@@ -162,17 +163,21 @@ const HermitCardModule = memo(({card, displayTokenCost}: HermitCardProps) => {
 					{card.primary.damage === 0 ? '00' : card.primary.damage}
 				</text>
 				<rect x="20" y="315" width="360" height="10" fill="white" />
-				{card.secondary.cost.map((type, i: number) => (
-					<image
-						key={i}
-						href={getCardTypeIcon(type)}
-						x={COST_X[card.secondary.cost.length - 1][i]}
-						y="343"
-						width={COST_SIZE}
-						height={COST_SIZE}
-						className={classnames(css.attackItems, css[palette], css[type])}
-					/>
-				))}
+				{card.primary.passive && (
+					<image href={'/images/hermits-emoji/ethoslab.png'} />
+				)}
+				{!card.primary.passive &&
+					card.secondary.cost.map((type, i: number) => (
+						<image
+							key={i}
+							href={getCardTypeIcon(type)}
+							x={COST_X[card.secondary.cost.length - 1][i]}
+							y="343"
+							width={COST_SIZE}
+							height={COST_SIZE}
+							className={classnames(css.attackItems, css[palette], css[type])}
+						/>
+					))}
 				<text
 					x="200"
 					y="342"

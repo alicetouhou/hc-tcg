@@ -13,6 +13,7 @@ const PearlescentMoonCommon: Hermit = {
 	health: 270,
 	primary: {
 		name: '5 AM',
+		passive: true,
 		cost: ['any'],
 		damage: 40,
 		power: null,
