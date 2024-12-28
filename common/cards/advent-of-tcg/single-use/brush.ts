@@ -1,56 +1,75 @@
-import {CardPosModel} from '../../../models/card-pos-model'
+import {
+	CardComponent,
+	DeckSlotComponent,
+	ObserverComponent,
+} from '../../../components'
+import query from '../../../components/query'
 import {GameModel} from '../../../models/game-model'
-import {CardT} from '../../../types/game-state'
-import SingleUseCard from '../../base/single-use-card'
+import {singleUse} from '../../defaults'
+import {SingleUse} from '../../types'
 
-class BrushSingleUseCard extends SingleUseCard {
-	constructor() {
-		super({
-			id: 'brush',
-			numericId: 221,
-			name: 'Brush',
-			rarity: 'rare',
-			description:
-				'View the top 3 cards of your deck, then choose any number to keep on the top of your deck. The rest will be placed on the bottom in their original order.',
-		})
-	}
+const Brush: SingleUse = {
+	...singleUse,
+	id: 'brush',
+	numericId: 221,
+	name: 'Brush',
+	expansion: 'advent_of_tcg',
+	rarity: 'common',
+	tokens: 0,
+	description:
+		'View the top 2 cards of your deck, then choose any number to keep on the top of your deck. The rest will be placed on the bottom of your deck.',
+	showConfirmationModal: true,
+	attachCondition: query.every(
+		singleUse.attachCondition,
+		(_game, pos) => pos.player.getDeck().length >= 3,
+	),
+	log: (values) => values.defaultLog,
+	onAttach(
+		game: GameModel,
+		component: CardComponent,
+		observer: ObserverComponent,
+	) {
+		const {player} = component
 
-	override canApply() {
-		return true
-	}
+		observer.subscribe(player.hooks.onApply, () => {
+			const topCards = player
+				.getDeck()
+				.sort(CardComponent.compareOrder)
+				.slice(0, 2)
 
-	override onAttach(game: GameModel, instance: string, pos: CardPosModel) {
-		const {player} = pos
-
-		player.hooks.onApply.add(instance, () => {
 			game.addModalRequest({
-				playerId: player.id,
-				data: {
-					modalId: 'selectCards',
-					payload: {
-						modalName: 'Brush: Choose cards to place on the top of your deck.',
-						modalDescription: 'Select cards you would like to draw sooner first.',
-						cards: player.pile.slice(0, 3),
-						selectionSize: 3,
-						primaryButton: {
-							text: 'Confirm Selection',
-							variant: 'default',
-						},
-					},
+				player: player.entity,
+				modal: {
+					type: 'dragCards',
+					name: 'Brush',
+					description:
+						'Drag cards to put them on the top or bottom of your deck. Cards closer to the right will be drawn first.',
+					leftCards: [],
+					rightCards: topCards.map((card) => card.entity),
+					leftAreaName: 'Bottom of Deck',
+					leftAreaMax: null,
+					rightAreaName: 'Top of Deck',
+					rightAreaMax: null,
 				},
 				onResult(modalResult) {
 					if (!modalResult) return 'FAILURE_INVALID_DATA'
-					if (!modalResult.cards) return 'SUCCESS'
+					if (!modalResult.result) return 'SUCCESS'
 
-					const cards: Array<CardT> = modalResult.cards
-					const bottomCards: Array<CardT> = player.pile.slice(0, 3).filter((c) => {
-						if (cards.some((d) => c.cardInstance === d.cardInstance)) return false
-						return true
+					modalResult.rightCards.reverse().forEach((c) => {
+						c.attach(
+							game.components.new(DeckSlotComponent, player.entity, {
+								position: 'front',
+							}),
+						)
 					})
 
-					player.pile = player.pile.slice(3)
-					cards.reverse().forEach((c) => player.pile.unshift(c))
-					bottomCards.forEach((c) => player.pile.push(c))
+					modalResult.leftCards.forEach((c) => {
+						c.attach(
+							game.components.new(DeckSlotComponent, player.entity, {
+								position: 'back',
+							}),
+						)
+					})
 
 					return 'SUCCESS'
 				},
@@ -59,26 +78,7 @@ class BrushSingleUseCard extends SingleUseCard {
 				},
 			})
 		})
-	}
-
-	override canAttach(game: GameModel, pos: CardPosModel) {
-		const result = super.canAttach(game, pos)
-		const {player} = pos
-
-		// Cannot use if you have 3 or less cards
-		if (player.pile.length <= 3) result.push('UNMET_CONDITION')
-
-		return result
-	}
-
-	override onDetach(game: GameModel, instance: string, pos: CardPosModel) {
-		const {player} = pos
-		player.hooks.onApply.remove(instance)
-	}
-
-	override getExpansion() {
-		return 'advent_of_tcg'
-	}
+	},
 }
 
-export default BrushSingleUseCard
+export default Brush

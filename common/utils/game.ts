@@ -1,19 +1,16 @@
-import {CARDS} from '../cards'
-import Card from '../cards/base/card'
-import {PlayerState} from '../types/game-state'
+import type {Card} from '../cards/types'
 
-export function hasActive(playerState: PlayerState): boolean {
-	return playerState.board.activeRow !== null
-}
+let CARDS: Record<any, Card>
+import('../cards').then((mod) => (CARDS = mod.CARDS))
 
 export function getFormattedName(cardId: string, opponent: boolean) {
 	const cardInfo = CARDS[cardId]
 
 	const getFormatting = (cardInfo: Card, opponent: boolean): string | null => {
-		if (cardInfo.type === 'hermit') return opponent ? '$o' : '$p'
-		if (cardInfo.type === 'single_use') return '$e'
-		if (cardInfo.type === 'effect') return '$e'
-		if (cardInfo.type === 'item') return '$m'
+		if (cardInfo.category === 'hermit') return opponent ? '$o' : '$p'
+		if (cardInfo.category === 'single_use') return '$e'
+		if (cardInfo.category === 'attach') return '$e'
+		if (cardInfo.category === 'item') return '$m'
 		return null
 	}
 

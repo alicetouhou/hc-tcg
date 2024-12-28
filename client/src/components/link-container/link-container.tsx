@@ -1,10 +1,10 @@
+import {VERSION} from '../../../../common/config'
 import css from './link-container.module.scss'
-import {CONFIG} from '../../../../common/config'
 
 export function VersionLinks() {
 	return (
 		<p className={css.version}>
-			<span>v{CONFIG.version} - </span>
+			<span>v{VERSION} - </span>
 			<a
 				href="https://www.reddit.com/r/HermitCraft/comments/10wksaw/hctcg_online/"
 				target="_blank"
@@ -23,7 +23,12 @@ export function VersionLinks() {
 				<img draggable={false} src="/images/icons/github.svg" />
 				GitHub
 			</a>
-			<a href="https://discord.gg/AjGbqNfcQX" target="_blank" rel="noreferrer" title="Discord">
+			<a
+				href="https://discord.gg/AjGbqNfcQX"
+				target="_blank"
+				rel="noreferrer"
+				title="Discord"
+			>
 				<img draggable={false} src="/images/icons/discord.svg" />
 				Discord
 			</a>
@@ -51,7 +56,12 @@ function LinkContainer() {
 				<img draggable={false} src="/images/icons/github.svg" />
 			</a>
 
-			<a href="https://discord.gg/AjGbqNfcQX" target="_blank" rel="noreferrer" title="Discord">
+			<a
+				href="https://discord.gg/AjGbqNfcQX"
+				target="_blank"
+				rel="noreferrer"
+				title="Discord"
+			>
 				<img draggable={false} src="/images/icons/discord.svg" />
 			</a>
 		</div>

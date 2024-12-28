@@ -1,22 +1,24 @@
 import classnames from 'classnames'
-import ItemCard from '../../../../common/cards/base/item-card'
+import {getCardImage, getCardRankIcon} from 'common/cards/card'
+import {Item} from 'common/cards/types'
+import {WithoutFunctions} from 'common/types/server-requests'
+import {memo} from 'react'
 import css from './item-card-svg.module.scss'
-import {useSelector} from 'react-redux'
-import {getGameState} from 'logic/game/game-selectors'
-import {getCardRank} from 'common/utils/ranks'
 
 export type ItemCardProps = {
-	card: ItemCard
+	card: WithoutFunctions<Item> | Item
+	displayTokenCost: boolean
 }
 
-const ItemCardModule = ({card}: ItemCardProps) => {
-	const rank = getCardRank(card.id)
-	const showCost = !useSelector(getGameState)
+const ItemCardModule = memo(({card, displayTokenCost}: ItemCardProps) => {
+	const rank = getCardRankIcon(card)
+	const image = getCardImage(card)
+	const isDouble = card.energy.length === 2
 	return (
 		<svg className={css.card} width="100%" height="100%" viewBox="0 0 400 400">
 			<rect
 				className={classnames(css.cardBackground, {
-					[css[card.hermitType]]: true,
+					[css[card.type]]: true,
 				})}
 				x="10"
 				y="10"
@@ -26,10 +28,16 @@ const ItemCardModule = ({card}: ItemCardProps) => {
 				ry="15"
 			/>
 			<g>
-				<image className={css.star} href={`/images/star_white.svg`} x="-15" y="65" width="390" />
 				<image
-					className={css.icon}
-					href={`/images/types/type-${card.hermitType}.png`}
+					className={css.star}
+					href={'/images/star_white.svg'}
+					x="-15"
+					y="65"
+					width="390"
+				/>
+				<image
+					className={classnames(css.icon, css[card.type])}
+					href={image}
 					width="220"
 					height="220"
 					x="90"
@@ -52,14 +60,22 @@ const ItemCardModule = ({card}: ItemCardProps) => {
 					className={css.type}
 					textAnchor="middle"
 					dominantBaseline="hanging"
-					key={Math.random()}
+					key={0}
 				>
 					ITEM
 				</text>
 			</g>
-			{card.rarity === 'rare' ? (
+			{isDouble ? (
 				<g>
-					<rect className={css.rarity} x="302" y="302" width="100" height="100" rx="50" ry="50" />
+					<rect
+						className={css.rarity}
+						x="302"
+						y="302"
+						width="100"
+						height="100"
+						rx="50"
+						ry="50"
+					/>
 					<text
 						x="351"
 						y="331"
@@ -67,22 +83,30 @@ const ItemCardModule = ({card}: ItemCardProps) => {
 						fill="black"
 						textAnchor="middle"
 						dominantBaseline="hanging"
-						key={Math.random()}
+						key={1}
 					>
 						x2
 					</text>
 				</g>
 			) : null}
 
-			{showCost && rank.name !== 'stone' ? (
+			{displayTokenCost && rank !== null ? (
 				<g>
-					<rect className={css.rarity} x="0" y="302" width="100" height="100" rx="50" ry="50" />
+					<rect
+						className={css.rarity}
+						x="0"
+						y="302"
+						width="100"
+						height="100"
+						rx="50"
+						ry="50"
+					/>
 					<image
 						x="15"
 						y="315"
 						width="70"
 						height="70"
-						href={`/images/ranks/${rank.name}.png`}
+						href={rank}
 						className={css.rank}
 					/>
 				</g>
@@ -97,11 +121,21 @@ const ItemCardModule = ({card}: ItemCardProps) => {
 					height="200%"
 					width="200%"
 				>
-					<feGaussianBlur id="blur" in="SourceAlpha" stdDeviation="5" result="SA-o-blur" />
+					<feGaussianBlur
+						id="blur"
+						in="SourceAlpha"
+						stdDeviation="5"
+						result="SA-o-blur"
+					/>
 					<feComponentTransfer in="SA-o-blur" result="SA-o-b-contIN">
 						<feFuncA id="contour" type="table" tableValues="0 1" />
 					</feComponentTransfer>
-					<feComposite operator="in" in="SA-o-blur" in2="SA-o-b-contIN" result="SA-o-b-cont" />
+					<feComposite
+						operator="in"
+						in="SA-o-blur"
+						in2="SA-o-b-contIN"
+						result="SA-o-b-cont"
+					/>
 					<feComponentTransfer in="SA-o-b-cont" result="SA-o-b-c-sprd">
 						<feFuncA id="spread-ctrl" type="linear" slope="200" />
 					</feComponentTransfer>
@@ -120,6 +154,6 @@ const ItemCardModule = ({card}: ItemCardProps) => {
 			</defs>
 		</svg>
 	)
-}
+})
 
 export default ItemCardModule

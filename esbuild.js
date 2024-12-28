@@ -1,5 +1,6 @@
 import {build} from 'esbuild'
 import {copy} from 'esbuild-plugin-copy'
+import {getAppVersion} from './version.js'
 
 await build({
 	entryPoints: ['./server/src'],
@@ -9,6 +10,7 @@ await build({
 	format: 'esm',
 	bundle: true,
 	outfile: 'server/dist/index.js',
+	sourcemap: true,
 	plugins: [
 		copy({
 			assets: [
@@ -18,6 +20,10 @@ await build({
 			],
 		}),
 	],
+	define: {
+		__APP_VERSION__: `'${getAppVersion()}'`,
+		__DEBUG_BUILD__: JSON.stringify(process.env.NODE_ENV !== 'production'),
+	},
 })
 
 console.log('Build complete')

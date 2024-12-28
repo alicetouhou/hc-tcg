@@ -1,95 +1,74 @@
-import StatusEffect from './status-effect'
+import {
+	CardComponent,
+	ObserverComponent,
+	PlayerComponent,
+	StatusEffectComponent,
+} from '../components'
 import {GameModel} from '../models/game-model'
-import {CARDS} from '../cards'
-import {CardPosModel, getCardPos} from '../models/card-pos-model'
-import {getActiveRow, removeStatusEffect} from '../utils/board'
-import {StatusEffectT} from '../types/game-state'
-import {isTargetingPos} from '../utils/attacks'
+import {beforeAttack} from '../types/priorities'
+import {Counter, statusEffect} from './status-effect'
 
-class WeaknessStatusEffect extends StatusEffect {
-	constructor() {
-		super({
-			id: 'weakness',
-			name: 'Weakness',
-			description: "This Hermit is weak to the opponent's active Hermit's type.",
-			duration: 3,
-			counter: false,
-			damageEffect: false,
-			visible: true,
-		})
-	}
+const WeaknessEffect: Counter<PlayerComponent> = {
+	...statusEffect,
+	id: 'weakness',
+	icon: 'weakness',
+	name: 'Weakness',
+	description:
+		'[weakType] is weak to [strongType] for the duration fo this counter.',
+	counter: 3,
+	counterType: 'turns',
+	onApply(
+		game: GameModel,
+		effect: StatusEffectComponent,
+		target: PlayerComponent,
+		observer: ObserverComponent,
+	) {
+		const player = target
+		const {opponentPlayer} = target
 
-	override onApply(game: GameModel, statusEffectInfo: StatusEffectT, pos: CardPosModel) {
-		game.state.statusEffects.push(statusEffectInfo)
-		const {player, opponentPlayer} = pos
+		const playerActive = player.getActiveHermit()
+		const opponentActive = opponentPlayer.getActiveHermit()
 
-		if (!statusEffectInfo.duration) statusEffectInfo.duration = this.duration
+		if (!playerActive?.isHermit() || !opponentActive?.isHermit()) return
 
-		if (pos.card) {
-			game.battleLog.addEntry(
-				player.id,
-				`$p${CARDS[pos.card.cardId].name}$ was inflicted with $eWeakness$`
-			)
+		const weakType = playerActive.props.type
+		const strongType = opponentActive.props.type
+		function capitalize(s: string) {
+			return s[0].toUpperCase() + s.slice(1)
 		}
 
-		player.hooks.onTurnStart.add(statusEffectInfo.statusEffectInstance, () => {
-			if (!statusEffectInfo.duration) return
-			statusEffectInfo.duration--
+		effect.description =
+			capitalize(weakType) +
+			' type is weak to ' +
+			capitalize(strongType) +
+			' type for the duration of this counter.'
 
-			if (statusEffectInfo.duration === 0)
-				removeStatusEffect(game, pos, statusEffectInfo.statusEffectInstance)
+		observer.subscribe(opponentPlayer.hooks.onTurnStart, () => {
+			if (!effect.counter) return
+			effect.counter--
+
+			if (effect.counter === 0) effect.remove()
 		})
 
-		opponentPlayer.hooks.onAttack.add(statusEffectInfo.statusEffectInstance, (attack) => {
-			const targetPos = getCardPos(game, statusEffectInfo.targetInstance)
+		observer.subscribeWithPriority(
+			game.hooks.beforeAttack,
+			beforeAttack.FORCE_WEAKNESS_ATTACK,
+			(attack) => {
+				const targetCardInfo = attack.target?.getHermit()
+				if (!(attack.attacker instanceof CardComponent)) return
+				if (!attack.attacker.isHermit() || !targetCardInfo?.isHermit()) return
 
-			if (!targetPos) return
+				if (attack.createWeakness === 'never') return
 
-			if (!isTargetingPos(attack, targetPos) || attack.createWeakness === 'never') {
-				return
-			}
-
-			attack.createWeakness = 'always'
-		})
-
-		player.hooks.onAttack.add(statusEffectInfo.statusEffectInstance, (attack) => {
-			const targetPos = getCardPos(game, statusEffectInfo.targetInstance)
-
-			if (!targetPos) return
-
-			if (!isTargetingPos(attack, targetPos) || attack.createWeakness === 'never') {
-				return
-			}
-
-			const attacker = attack.getAttacker()
-			const opponentActiveHermit = getActiveRow(opponentPlayer)
-
-			if (!attacker || !opponentActiveHermit) return
-
-			const attackerType = CARDS[attacker.row.hermitCard.cardId].type
-			const opponentType = CARDS[opponentActiveHermit.hermitCard.cardId].type
-
-			if (attackerType !== opponentType) return
-
-			attack.createWeakness = 'always'
-		})
-
-		player.hooks.afterDefence.add(statusEffectInfo.statusEffectInstance, (attack) => {
-			const attackTarget = attack.getTarget()
-			if (!attackTarget) return
-			if (attackTarget.row.hermitCard.cardInstance !== statusEffectInfo.targetInstance) return
-			if (attackTarget.row.health > 0) return
-			removeStatusEffect(game, pos, statusEffectInfo.statusEffectInstance)
-		})
-	}
-
-	override onRemoval(game: GameModel, statusEffectInfo: StatusEffectT, pos: CardPosModel) {
-		const {player, opponentPlayer} = pos
-		opponentPlayer.hooks.onAttack.remove(statusEffectInfo.statusEffectInstance)
-		opponentPlayer.hooks.onAttack.remove(statusEffectInfo.statusEffectInstance)
-		player.hooks.onTurnStart.remove(statusEffectInfo.statusEffectInstance)
-		player.hooks.afterDefence.remove(statusEffectInfo.statusEffectInstance)
-	}
+				if (
+					targetCardInfo.props.type == weakType &&
+					attack.attacker.props.type == strongType
+				) {
+					attack.createWeakness = 'always'
+				}
+			},
+		)
+	},
 }
 
-export default WeaknessStatusEffect
+export default WeaknessEffect

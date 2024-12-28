@@ -1,46 +1,96 @@
 import cn from 'classnames'
-import css from './card.module.scss'
+import {getRenderedCardImage} from 'common/cards/card'
+import {Card as CardObject} from 'common/cards/types'
+import debugConfig from 'common/config/debug-config'
+import {WithoutFunctions} from 'common/types/server-requests'
 import Tooltip from 'components/tooltip'
-import CardTooltip from './card-tooltip'
-import HermitCardModule, {HermitCardProps} from './hermit-card-svg'
+import CardInstanceTooltip from './card-tooltip'
+import css from './card.module.scss'
 import EffectCardModule, {EffectCardProps} from './effect-card-svg'
+import HermitCardModule, {HermitCardProps} from './hermit-card-svg'
 import ItemCardModule, {ItemCardProps} from './item-card-svg'
-import HealthCardModule, {HealthCardProps} from './health-card-svg'
-import CardClass from 'common/cards/base/card'
 
-interface CardProps
+interface CardReactProps
 	extends React.DetailedHTMLProps<
 		React.ButtonHTMLAttributes<HTMLButtonElement>,
 		HTMLButtonElement
 	> {
-	card: CardClass
+	card: WithoutFunctions<CardObject>
+	displayTokenCost: boolean
 	selected?: boolean
 	picked?: boolean
+	unpickable?: boolean
 	tooltipAboveModal?: boolean
 	onClick?: () => void
 }
 
-const Card = (props: CardProps) => {
-	const {type} = props.card
-	const {onClick, selected, picked, ...otherProps} = props
+const Card = (props: CardReactProps) => {
+	const {
+		onClick,
+		selected,
+		picked,
+		unpickable,
+		displayTokenCost,
+		...otherProps
+	} = props
+
+	const {category} = props.card
+
 	let card = null
-	if (type === 'hermit') card = <HermitCardModule {...(otherProps as HermitCardProps)} />
-	else if (type === 'item') card = <ItemCardModule {...(otherProps as ItemCardProps)} />
-	else if (['effect', 'single_use'].includes(type))
-		card = <EffectCardModule {...(otherProps as EffectCardProps)} />
-	else if (type === 'health') card = <HealthCardModule {...(otherProps as HealthCardProps)} />
-	else throw new Error('Unsupported card type: ' + type)
+	if (category === 'hermit')
+		card = (
+			<HermitCardModule
+				{...(otherProps as HermitCardProps)}
+				displayTokenCost={displayTokenCost}
+			/>
+		)
+	else if (category === 'item')
+		card = (
+			<ItemCardModule
+				{...(otherProps as ItemCardProps)}
+				displayTokenCost={displayTokenCost}
+			/>
+		)
+	else if (['attach', 'single_use'].includes(category))
+		card = (
+			<EffectCardModule
+				{...(otherProps as EffectCardProps)}
+				displayTokenCost={displayTokenCost}
+			/>
+		)
+	else throw new Error('Unsupported card category: ' + category)
+
 	return (
-		<Tooltip tooltip={<CardTooltip card={props.card} />} showAboveModal={props.tooltipAboveModal}>
+		<Tooltip
+			tooltip={
+				<CardInstanceTooltip card={props.card} showStatsOnTooltip={false} />
+			}
+			showAboveModal={props.tooltipAboveModal}
+		>
 			<button
-				{...props}
-				className={cn(props.className, css.card, {
-					[css.selected]: selected,
-					[css.picked]: picked,
-				})}
-				onClick={onClick}
+				className={cn(
+					props.className,
+					!debugConfig.renderCardsDynamically && css.cardImage,
+					{
+						[css.selected]: selected,
+						[css.picked]: picked,
+						[css.unpickable]: unpickable,
+					},
+				)}
+				onClick={unpickable ? () => {} : onClick}
 			>
-				{card}
+				{debugConfig.renderCardsDynamically ? (
+					<div className={cn(css.noPointerEvents, css.card)}>{card}</div>
+				) : (
+					<div className={css.noPointerEvents}>
+						<img
+							className={css.renderedCardImage}
+							src={getRenderedCardImage(props.card, displayTokenCost)}
+							width="100%"
+							height="100%"
+						/>
+					</div>
+				)}
 			</button>
 		</Tooltip>
 	)

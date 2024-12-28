@@ -1,45 +1,49 @@
-import StatusEffect from './status-effect'
+import {
+	CardComponent,
+	ObserverComponent,
+	StatusEffectComponent,
+} from '../components'
 import {GameModel} from '../models/game-model'
-import {CardPosModel, getBasicCardPos} from '../models/card-pos-model'
-import {StatusEffectT} from '../types/game-state'
-import {discardCard} from '../utils/movement'
+import {Counter, systemStatusEffect} from './status-effect'
 
-class SmeltingStatusEffect extends StatusEffect {
-	constructor() {
-		super({
-			id: 'smelting',
-			name: 'Smelting',
-			description:
-				'When the counter reaches 0, upgrades all item cards attached to this Hermit to double items',
-			duration: 4,
-			counter: true,
-			damageEffect: false,
-			visible: true,
-		})
-	}
+const SmeltingEffect: Counter<CardComponent> = {
+	...systemStatusEffect,
+	id: 'smelting',
+	icon: 'smelting',
+	name: 'Smelting',
+	description:
+		'When the counter reaches 0, upgrades all item cards attached to this Hermit to double items',
+	counter: 4,
+	counterType: 'turns',
+	onApply(
+		game: GameModel,
+		effect: StatusEffectComponent<CardComponent>,
+		target: CardComponent,
+		observer: ObserverComponent,
+	) {
+		const {player} = target
 
-	override onApply(game: GameModel, statusEffectInfo: StatusEffectT, pos: CardPosModel) {
-		game.state.statusEffects.push(statusEffectInfo)
-		const {player} = pos
-
-		player.hooks.onTurnStart.add(statusEffectInfo.statusEffectInstance, () => {
-			if (statusEffectInfo.duration === undefined) return
-			statusEffectInfo.duration -= 1
-			if (statusEffectInfo.duration === 0) {
-				discardCard(game, pos.card)
-				pos.row?.itemCards.forEach((card) => {
-					if (!card) return
-					card.cardId = card.cardId.replace('common', 'rare')
-				})
+		observer.subscribe(player.hooks.onTurnStart, () => {
+			if (effect.counter === null) return
+			effect.counter -= 1
+			if (effect.counter === 0) {
+				if (target.slot.inRow()) {
+					target.slot.row.getItems().forEach((item) => {
+						if (item.isItem() && item.props.id.includes('common')) {
+							// Create a new double item and delete the old single item
+							game.components.new(
+								CardComponent,
+								item.props.id.replace('common', 'rare'),
+								item.slotEntity,
+							)
+							game.components.delete(item.entity)
+						}
+					})
+				}
+				target.discard()
 			}
 		})
-	}
-
-	override onRemoval(game: GameModel, statusEffectInfo: StatusEffectT, pos: CardPosModel) {
-		const {player} = pos
-
-		player.hooks.onTurnStart.remove(statusEffectInfo.statusEffectInstance)
-	}
+	},
 }
 
-export default SmeltingStatusEffect
+export default SmeltingEffect

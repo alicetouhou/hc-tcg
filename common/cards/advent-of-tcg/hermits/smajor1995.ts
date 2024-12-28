@@ -1,86 +1,88 @@
-import {HERMIT_CARDS} from '../..'
-import {CardPosModel} from '../../../models/card-pos-model'
+import {
+	CardComponent,
+	ObserverComponent,
+	SlotComponent,
+	StatusEffectComponent,
+} from '../../../components'
+import query from '../../../components/query'
 import {GameModel} from '../../../models/game-model'
-import {RowPos} from '../../../types/cards'
-import {RowStateWithHermit} from '../../../types/game-state'
-import {getNonEmptyRows} from '../../../utils/board'
-import HermitCard from '../../base/hermit-card'
-import {applyStatusEffect, removeStatusEffect} from '../../../utils/board'
+import DyedEffect from '../../../status-effects/dyed'
+import {afterAttack} from '../../../types/priorities'
+import {hermit} from '../../defaults'
+import {Hermit} from '../../types'
 
-class Smajor1995RareHermitCard extends HermitCard {
-	constructor() {
-		super({
-			id: 'smajor1995_rare',
-			numericId: 218,
-			name: 'Scott',
-			rarity: 'rare',
-			hermitType: 'builder',
-			health: 270,
-			primary: {
-				name: 'Color Splash',
-				cost: ['any'],
-				damage: 30,
-				power: null,
+const Smajor1995Rare: Hermit = {
+	...hermit,
+	id: 'smajor1995_rare',
+	numericId: 218,
+	name: 'Scott',
+	expansion: 'advent_of_tcg',
+	palette: 'advent_of_tcg',
+	background: 'advent_of_tcg',
+	rarity: 'rare',
+	tokens: 0,
+	type: 'builder',
+	health: 270,
+	primary: {
+		name: 'Color Splash',
+		cost: ['any'],
+		damage: 30,
+		power: null,
+	},
+	secondary: {
+		name: 'To Dye For',
+		cost: ['any', 'any', 'any'],
+		damage: 70,
+		power:
+			'After your attack, select one of your AFK Hermits to use items of any type.',
+	},
+	onAttach(
+		game: GameModel,
+		component: CardComponent,
+		observer: ObserverComponent,
+	): void {
+		const {player} = component
+
+		observer.subscribeWithPriority(
+			game.hooks.afterAttack,
+			afterAttack.HERMIT_ATTACK_REQUESTS,
+			(attack) => {
+				if (!attack.isAttacker(component.entity) || attack.type !== 'secondary')
+					return
+
+				const pickCondition = query.every(
+					query.slot.currentPlayer,
+					query.slot.hermit,
+					query.not(query.slot.active),
+					query.not(query.slot.empty),
+				)
+
+				if (
+					!game.components.exists(
+						SlotComponent,
+						pickCondition,
+						query.not(query.slot.hasStatusEffect(DyedEffect)),
+					)
+				)
+					return
+
+				game.addPickRequest({
+					player: player.entity,
+					id: component.entity,
+					message: 'Choose an AFK Hermit to dye.',
+					canPick: pickCondition,
+					onResult(pickedSlot) {
+						const pickedCard = pickedSlot.getCard()
+						if (!pickedCard) return
+
+						game.components
+							.new(StatusEffectComponent, DyedEffect, component.entity)
+							.apply(pickedCard.entity)
+					},
+				})
 			},
-			secondary: {
-				name: 'To Dye For',
-				cost: ['any', 'any', 'any'],
-				damage: 70,
-				power:
-					'After your attack, select one of your Hermits. Items attached to this Hermit become any type.',
-			},
-		})
-	}
-
-	public override onAttach(game: GameModel, instance: string, pos: CardPosModel): void {
-		const {player} = pos
-		const instanceKey = this.getInstanceKey(instance)
-
-		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'secondary') return
-			const playerInactiveRows = getNonEmptyRows(player, true)
-			if (playerInactiveRows.length === 0) return
-
-			game.addPickRequest({
-				playerId: player.id,
-				id: instance,
-				message: 'Choose an AFK Hermit to dye.',
-				onResult(pickResult) {
-					if (pickResult.playerId !== player.id) return 'FAILURE_INVALID_PLAYER'
-
-					const rowIndex = pickResult.rowIndex
-					if (rowIndex === undefined || rowIndex === player.board.activeRow)
-						return 'FAILURE_INVALID_SLOT'
-					if (pickResult.slot.type !== 'hermit') return 'FAILURE_INVALID_SLOT'
-					if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
-
-					applyStatusEffect(game, 'dyed', pickResult.card.cardInstance)
-
-					return 'SUCCESS'
-				},
-			})
-		})
-	}
-
-	public override onDetach(game: GameModel, instance: string, pos: CardPosModel): void {
-		const {player} = pos
-		const instanceKey = this.getInstanceKey(instance)
-
-		player.hooks.onAttack.remove(instance)
-		delete player.custom[instanceKey]
-	}
-
-	override getExpansion() {
-		return 'advent_of_tcg'
-	}
-
-	override getPalette() {
-		return 'advent_of_tcg'
-	}
-
-	override getBackground() {
-		return 'advent_of_tcg'
-	}
+		)
+	},
 }
 
-export default Smajor1995RareHermitCard
+export default Smajor1995Rare

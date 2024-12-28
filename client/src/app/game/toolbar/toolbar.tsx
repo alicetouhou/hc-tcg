@@ -1,39 +1,64 @@
-import css from './toolbar.module.scss'
-import {useSelector, useDispatch} from 'react-redux'
-import {getGameState} from 'logic/game/game-selectors'
-import {setOpenedModal} from 'logic/game/game-actions'
-import ChatItem from './chat-item'
-import SoundItem from './sound-item'
-import ForfeitItem from './forfeit-item'
+import {getGameState, getIsSpectator} from 'logic/game/game-selectors'
 import {getSettings} from 'logic/local-settings/local-settings-selectors'
+import {localMessages, useMessageDispatch} from 'logic/messages'
+import {getActiveDeck} from 'logic/saved-decks/saved-decks'
+import {useSelector} from 'react-redux'
+import {sortCards} from './../../deck/deck-edit'
+import ChatItem from './chat-item'
+import ExitItem from './exit-item'
+import ForfeitItem from './forfeit-item'
+import SoundItem from './sound-item'
+import css from './toolbar.module.scss'
 import TooltipsItem from './tooltips-item'
 
 function Toolbar() {
 	const gameState = useSelector(getGameState)
 	const settings = useSelector(getSettings)
-	const dispatch = useDispatch()
+	const isSpectator = useSelector(getIsSpectator)
+	const activeDeck = useSelector(getActiveDeck)
+	const dispatch = useMessageDispatch()
+
+	const handleViewDeck = () => {
+		if (!gameState) return
+		gameState.currentModalData = {
+			type: 'selectCards',
+			name: 'Deck',
+			description: '',
+			cards: activeDeck ? sortCards(activeDeck.cards) : [],
+			selectionSize: 0,
+			primaryButton: {
+				text: 'Close',
+				variant: 'default',
+			},
+			cancelable: true,
+		}
+		dispatch({
+			type: localMessages.GAME_MODAL_OPENED_SET,
+			id: gameState.currentModalData.type,
+		})
+	}
 
 	const handleDiscarded = () => {
 		if (!gameState) return
-		const data = {
-			modalId: 'selectCards',
-			payload: {
-				modalName: 'Discarded',
-				modalDescription:
-					gameState.discarded.length === 0 ? 'There are no cards in your discard pile.' : '',
-				cards: gameState.discarded,
-				selectionSize: 0,
-				primaryButton: {
-					text: 'Close',
-					variant: 'default',
-				},
-				closeButton: {
-					visible: true,
-				},
+		gameState.currentModalData = {
+			type: 'selectCards',
+			name: 'Discarded',
+			description:
+				gameState.discarded.length === 0
+					? 'There are no cards in your discard pile.'
+					: '',
+			cards: gameState.discarded,
+			selectionSize: 0,
+			primaryButton: {
+				text: 'Close',
+				variant: 'default',
 			},
+			cancelable: true,
 		}
-		gameState.currentModalData = data
-		dispatch(setOpenedModal(gameState.currentModalData.modalId))
+		dispatch({
+			type: localMessages.GAME_MODAL_OPENED_SET,
+			id: gameState.currentModalData.type,
+		})
 	}
 
 	if (!gameState) return null
@@ -41,18 +66,31 @@ function Toolbar() {
 	return (
 		<div className={css.toolbar}>
 			{/* Cards in Deck */}
-			<div className={css.item} title="Cards Remaining in Deck">
-				<p>{gameState.pileCount}</p>
-			</div>
+			{!isSpectator && (
+				<button className={css.item} title="Deck" onClick={handleViewDeck}>
+					<img src="/images/toolbar/shulker.png" width="35" height="35" />
+				</button>
+			)}
+			{!isSpectator && (
+				<div className={css.item} title="Cards Remaining in Deck">
+					<p>{gameState.pileCount}</p>
+				</div>
+			)}
 
 			{/* Discard */}
-			<button className={css.item} title="Discarded" onClick={handleDiscarded}>
-				<img src="/images/toolbar/red_shulker.png" width="35" height="35" />
-				<span>{useSelector(getGameState)?.discarded.length}</span>
-			</button>
+			{!isSpectator && (
+				<button
+					className={css.item}
+					title="Discarded"
+					onClick={handleDiscarded}
+				>
+					<img src="/images/toolbar/red_shulker.png" width="35" height="35" />
+					<span>{useSelector(getGameState)?.discarded.length}</span>
+				</button>
+			)}
 
 			{/* Toggle Chat */}
-			{settings.disableChat === 'off' && <ChatItem />}
+			{settings.chatEnabled && <ChatItem />}
 
 			{/* Toggle Tooltips */}
 			<TooltipsItem />
@@ -61,7 +99,10 @@ function Toolbar() {
 			<SoundItem />
 
 			{/* Forfeit Game */}
-			<ForfeitItem />
+			{!isSpectator && <ForfeitItem />}
+
+			{/* Forfeit Game */}
+			{isSpectator && <ExitItem />}
 		</div>
 	)
 }

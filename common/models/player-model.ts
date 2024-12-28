@@ -1,41 +1,33 @@
-import {getStarterPack} from '../../server/src/utils/state-gen'
-import {CardT} from '../../common/types/game-state'
-import {PlayerDeckT} from '../../common/types/deck'
 import {Socket} from 'socket.io'
-import {validateDeck} from '../utils/validation'
+import {Deck} from '../../common/types/deck'
+import {PlayerInfo} from '../types/server-requests'
 import {censorString} from '../utils/formatting'
 
-export class PlayerModel {
-	private internalId: string
-	private internalSecret: string
-	private internalDeck: {
-		name: string
-		icon: string
-		cards: Array<CardT>
-	}
+export type PlayerId = string & {__player_id: never}
 
+export class PlayerModel {
+	private internalId: PlayerId
+	private internalSecret: string
+	private internalDeck: Deck | null
 	public name: string
 	public minecraftName: string
 	public censoredName: string
 	public socket: Socket
+	public uuid: string
+	public authenticated: boolean
 
 	constructor(playerName: string, minecraftName: string, socket: Socket) {
-		this.internalId = Math.random().toString()
+		this.internalId = Math.random().toString() as PlayerId
 		this.internalSecret = Math.random().toString()
 
-		// Always generate a starter deck as the default
-		this.internalDeck = {
-			name: 'Starter Deck',
-			icon: 'any',
-			cards: getStarterPack().map((id) => {
-				return {cardId: id, cardInstance: Math.random().toString()}
-			}),
-		}
+		this.internalDeck = null
 
 		this.name = playerName
 		this.minecraftName = minecraftName
 		this.censoredName = censorString(playerName)
 		this.socket = socket
+		this.uuid = ''
+		this.authenticated = false
 	}
 
 	public get id() {
@@ -48,7 +40,7 @@ export class PlayerModel {
 		return this.internalDeck
 	}
 
-	getPlayerInfo() {
+	getPlayerInfo(): PlayerInfo {
 		return {
 			playerId: this.id,
 			playerSecret: this.secret,
@@ -59,11 +51,16 @@ export class PlayerModel {
 		}
 	}
 
-	setPlayerDeck(newDeck: PlayerDeckT) {
-		if (!newDeck || !newDeck.cards) return
-		const validationMessage = validateDeck(newDeck.cards.map((card) => card.cardId))
-		if (validationMessage) return
-		this.internalDeck = newDeck
+	setPlayerDeck(newDeck: Deck) {
+		this.internalDeck = {
+			name: newDeck.name,
+			//@ts-ignore
+			iconType: newDeck.iconType,
+			icon: newDeck.icon,
+			cards: newDeck.cards,
+			code: newDeck.code,
+			tags: newDeck.tags,
+		}
 	}
 
 	setMinecraftName(name: string) {

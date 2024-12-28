@@ -1,20 +1,25 @@
-import React from 'react'
-import {HermitTypeT} from 'common/types/cards'
-import Card from 'common/cards/base/card'
-import css from './card-tooltip.module.scss'
-import formattingCss from '../formatting/formatting.module.scss'
-import HermitCard from 'common/cards/base/hermit-card'
-import ItemCard from 'common/cards/base/item-card'
-import HealthCard from 'common/cards/base/health-card'
-import {STRENGTHS} from 'common/const/strengths'
-import {getCardRank} from 'common/utils/ranks'
-import {EXPANSIONS} from 'common/config'
 import classNames from 'classnames'
-import {STATUS_EFFECT_CLASSES} from 'common/status-effects'
+import {getCardTypeIcon} from 'common/cards/card'
+import {
+	Card,
+	hasDescription,
+	isAttach,
+	isHermit,
+	isItem,
+	isSingleUse,
+} from 'common/cards/types'
+import {EXPANSIONS} from 'common/const/expansions'
+import {STRENGTHS} from 'common/const/strengths'
 import {GLOSSARY} from 'common/glossary'
-import {useSelector} from 'react-redux'
-import {getSettings} from 'logic/local-settings/local-settings-selectors'
+import {STATUS_EFFECTS} from 'common/status-effects'
+import {CardRarityT, TypeT} from 'common/types/cards'
+import {WithoutFunctions} from 'common/types/server-requests'
+import {EmptyNode, FormattedTextNode, formatText} from 'common/utils/formatting'
 import {FormattedText} from 'components/formatting/formatting'
+import {getSettings} from 'logic/local-settings/local-settings-selectors'
+import React from 'react'
+import {useSelector} from 'react-redux'
+import css from './card-tooltip.module.scss'
 
 const HERMIT_TYPES: Record<string, string> = {
 	balanced: 'Balanced',
@@ -30,11 +35,70 @@ const HERMIT_TYPES: Record<string, string> = {
 }
 
 type Props = {
-	card: Card
+	card: WithoutFunctions<Card>
+	showStatsOnTooltip: boolean
 }
 
-const getDescription = (card: Card): React.ReactNode => {
-	return FormattedText(card.getFormattedDescription())
+const getDescription = (card: WithoutFunctions<Card>): React.ReactNode => {
+	let text: FormattedTextNode = EmptyNode()
+	if (isHermit(card)) {
+		text = formatText(
+			[card.primary, card.secondary]
+				.flatMap((attack) =>
+					attack.power
+						? [
+								`**${attack.name}**${attack.passive ? ' (Passive)' : ''}\n*${attack.power}*`,
+							]
+						: [],
+				)
+				.join('\n'),
+		)
+	} else if (hasDescription(card)) {
+		text = formatText(`*${card.description}*`)
+	}
+	return FormattedText(text)
+}
+
+const getDescriptionWithStats = (
+	card: WithoutFunctions<Card>,
+): React.ReactNode => {
+	let text: FormattedTextNode = EmptyNode()
+	if (isHermit(card)) {
+		return (
+			<div>
+				<div>{FormattedText(formatText(`Health - **${card.health}**`))}</div>
+				{[card.primary, card.secondary].flatMap((attack) => [
+					attack.passive ? (
+						<div className={css.moveStats}>
+							<div />
+							{FormattedText(formatText(`**${attack.name}** (Passive)`))}
+						</div>
+					) : (
+						<div className={css.moveStats}>
+							<div>
+								{attack.cost.map((type, i) => (
+									<img
+										width={'16px'}
+										height={'16px'}
+										key={i}
+										src={getCardTypeIcon(type)}
+										className={classNames(css.costItem, css[type])}
+									/>
+								))}
+							</div>
+							{FormattedText(
+								formatText(`**${attack.name}** - **${attack.damage}**`),
+							)}
+						</div>
+					),
+					attack.power && <div>{FormattedText(formatText(attack.power))}</div>,
+				])}
+			</div>
+		)
+	} else if (hasDescription(card)) {
+		text = formatText(`*${card.description}*`)
+		return FormattedText(text)
+	}
 }
 
 const joinJsx = (array: Array<React.ReactNode>) => {
@@ -43,34 +107,36 @@ const joinJsx = (array: Array<React.ReactNode>) => {
 	return array.reduce((prev: any, curr: any): any => [prev, ' ', curr])
 }
 
-const getStrengthsAndWeaknesses = (card: Card): React.ReactNode => {
-	if (!(card instanceof HermitCard)) return null
+const getStrengthsAndWeaknesses = (
+	card: WithoutFunctions<Card>,
+): React.ReactNode => {
+	if (!isHermit(card)) return null
 
-	const strengths = STRENGTHS[card.hermitType]
+	const strengths = STRENGTHS[card.type]
 	const weaknesses = Object.entries(STRENGTHS)
-		.filter(([, value]) => value.includes(card.hermitType))
-		.map(([key]) => key) as Array<HermitTypeT>
+		.filter(([, value]) => value.includes(card.type))
+		.map(([key]) => key) as Array<TypeT>
 
 	const result = (
 		<div className={css.strengthsAndWeaknesses}>
 			<div className={css.strengths}>
 				<span className={css.swTitle}>Strengths: </span>
 				{joinJsx(
-					strengths.map((hermitType) => (
-						<span key={hermitType} className={css[hermitType]}>
-							{HERMIT_TYPES[hermitType]}
+					strengths.map((type, i) => (
+						<span key={i} className={css[type]}>
+							{HERMIT_TYPES[type]}
 						</span>
-					))
+					)),
 				)}
 			</div>
 			<div className={css.weaknesses}>
 				<span className={css.swTitle}>Weaknesses: </span>
 				{joinJsx(
-					weaknesses.map((hermitType) => (
-						<span key={hermitType} className={css[hermitType]}>
-							{HERMIT_TYPES[hermitType]}
+					weaknesses.map((type, i) => (
+						<span key={i} className={css[type]}>
+							{HERMIT_TYPES[type]}
 						</span>
-					))
+					)),
 				)}
 			</div>
 		</div>
@@ -78,69 +144,78 @@ const getStrengthsAndWeaknesses = (card: Card): React.ReactNode => {
 	return result
 }
 
-const getName = (card: Card): React.ReactNode => {
-	if (card instanceof ItemCard) {
-		return <div className={classNames(css.name, css[card.hermitType])}>{card.name}</div>
+const getName = (card: WithoutFunctions<Card>): React.ReactNode => {
+	if (isItem(card)) {
+		return (
+			<div className={classNames(css.name, css[card.type])}>{card.name}</div>
+		)
 	}
 	return <div className={css.name}>{card.name}</div>
 }
 
-const getRank = (card: Card): React.ReactNode => {
-	const {name, cost} = getCardRank(card.id)
-	const highlight = name === 'stone' || name === 'iron' ? '■' : '★'
+const RARITY_DISPLAY_TEXT: Record<CardRarityT, string> = {
+	common: 'Common',
+	rare: '✦ Rare ✦',
+	ultra_rare: '★ Ultra Rare ★',
+}
+
+export const getRarity = (card: WithoutFunctions<Card>): React.ReactNode => {
 	return (
-		<div className={classNames(css.rank, css[name])}>
-			{highlight} {name.charAt(0).toUpperCase() + name.slice(1)} Rank {highlight}
-		</div>
+		<span className={classNames(css.rarity, css[card.rarity])}>
+			{' '}
+			{RARITY_DISPLAY_TEXT[card.rarity]}{' '}
+		</span>
 	)
 }
 
-const getExpansion = (card: Card): React.ReactNode => {
-	if (card.getExpansion() !== 'default') {
-		const expansion = card.getExpansion() as
+const getExpansion = (card: WithoutFunctions<Card>): React.ReactNode => {
+	if (card.expansion !== 'default') {
+		const expansion = card.expansion as
 			| 'default'
 			| 'alter_egos'
 			| 'advent_of_tcg'
 			| 'alter_egos_ii'
 		return (
 			<div className={classNames(css.expansion, css[expansion])}>
-				■ {EXPANSIONS.expansions[expansion]} Card ■
+				■ {EXPANSIONS[expansion].name} Card ■
 			</div>
 		)
 	}
 }
 
-const getAttach = (card: Card): React.ReactNode => {
-	if (!card.showAttachTooltip()) return null
+const getAttach = (card: WithoutFunctions<Card>): React.ReactNode => {
+	if (!isAttach(card)) return null
 	return <div className={css.attach}>Attach</div>
 }
 
-const getSingleUse = (card: Card): React.ReactNode => {
-	if (!card.showSingleUseTooltip()) return null
+const getSingleUse = (card: WithoutFunctions<Card>): React.ReactNode => {
+	if (!isSingleUse(card)) return null
 	return <div className={css.singleUse}>Single Use</div>
 }
 
-const getHermitType = (card: Card): React.ReactNode => {
-	if (card instanceof HermitCard) {
+const getType = (card: WithoutFunctions<Card>): React.ReactNode => {
+	if (isHermit(card)) {
 		return (
-			<div className={classNames(css.hermitType, css[card.hermitType])}>
-				{HERMIT_TYPES[card.hermitType] || card.hermitType} Type
+			<div className={classNames(css.type, css[card.type])}>
+				{HERMIT_TYPES[card.type] || card.type}
 			</div>
 		)
 	}
 	return null
 }
 
-const getSidebarDescriptions = (card: Card): React.ReactNode => {
-	return card.sidebarDescriptions().map((description, i) => {
+const getSidebarDescriptions = (
+	card: WithoutFunctions<Card>,
+): React.ReactNode => {
+	return (card.sidebarDescriptions || []).map((description, i) => {
 		if (description.type === 'statusEffect') {
 			const statusEffect = description.name
 			return (
 				<div key={i} className={classNames(css.cardTooltip, css.small)}>
 					<b>
-						<u>{STATUS_EFFECT_CLASSES[statusEffect].name}</u>
+						<u>{STATUS_EFFECTS[statusEffect].name}</u>
 					</b>
-					<p>{STATUS_EFFECT_CLASSES[statusEffect].description}</p>
+					<p>{STATUS_EFFECTS[statusEffect].description}</p>
 				</div>
 			)
 		}
@@ -158,27 +233,29 @@ const getSidebarDescriptions = (card: Card): React.ReactNode => {
 	})
 }
 
-const CardTooltip = ({card}: Props) => {
-	if (card instanceof HealthCard) return null
+const CardInstanceTooltip = ({card, showStatsOnTooltip}: Props) => {
 	const settings = useSelector(getSettings)
 
 	return (
 		<div className={css.cardTooltipContainer}>
-			{settings.showAdvancedTooltips === 'on' && (
+			{settings.showAdvancedTooltips && (
 				<div className={css.tooltipBelow}>{getSidebarDescriptions(card)}</div>
 			)}
 			<div className={css.cardTooltip}>
 				<div className={css.topLine}>
 					{getName(card)}
-					{getHermitType(card)}
+					{(isHermit(card) || isAttach(card) || isSingleUse(card)) &&
+						getRarity(card)}
+					{getType(card)}
 					{getAttach(card)}
 					{getSingleUse(card)}
 				</div>
 				<div className={css.description}>
 					{getExpansion(card)}
-					{getRank(card)}
 					{getStrengthsAndWeaknesses(card)}
-					{getDescription(card)}
+					{showStatsOnTooltip
+						? getDescriptionWithStats(card)
+						: getDescription(card)}
 				</div>
 				<div></div>
 			</div>
@@ -186,4 +263,4 @@ const CardTooltip = ({card}: Props) => {
 	)
 }
 
-export default CardTooltip
+export default CardInstanceTooltip

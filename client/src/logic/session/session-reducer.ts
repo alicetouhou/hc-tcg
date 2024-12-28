@@ -1,79 +1,148 @@
-import {AnyAction} from 'redux'
-import {PlayerDeckT} from 'common/types/deck'
-import {ToastT} from 'common/types/app'
+import {PlayerId} from 'common/models/player-model'
+import {ToastData} from 'common/types/app'
+import {Deck} from 'common/types/deck'
+import {LocalMessage, localMessages} from 'logic/messages'
+import React from 'react'
 
 type SessionState = {
 	playerName: string
 	minecraftName: string
-	playerId: string
+	playerId: PlayerId
 	playerSecret: string
-	playerDeck: PlayerDeckT
+	playerDeck: Deck | null
 	connecting: boolean
-	errorType?: 'invalid_name' | 'invalid_version' | 'session_expired' | 'timeout' | string
-	toast: ToastT
+	connected: boolean
+	errorType?:
+		| 'invalid_name'
+		| 'invalid_version'
+		| 'session_expired'
+		| 'timeout'
+		| string
+	tooltip: {
+		anchor: React.RefObject<HTMLDivElement>
+		tooltip: React.ReactNode
+		tooltipHeight: number
+		tooltipWidth: number
+	} | null
+	toast: Array<ToastData>
 	updates: Record<string, Array<string>>
+	newPlayer: boolean //If the account was created this session
 }
 
 const defaultState: SessionState = {
 	playerName: '',
 	minecraftName: '',
-	playerId: '',
+	playerId: '' as PlayerId,
 	playerSecret: '',
-	playerDeck: {name: '', icon: 'any', cards: []},
+	playerDeck: {
+		name: '',
+		iconType: 'item',
+		icon: 'any',
+		code: '',
+		cards: [],
+		tags: [],
+		public: false,
+	},
 	connecting: false,
-	toast: {open: false, title: '', description: '', image: ''},
+	connected: false,
+	tooltip: null,
+	toast: [],
 	updates: {},
+	newPlayer: false,
 }
 
-const loginReducer = (state = defaultState, action: AnyAction): SessionState => {
+const loginReducer = (
+	state = defaultState,
+	action: LocalMessage,
+): SessionState => {
 	switch (action.type) {
-		case 'LOGIN':
+		case localMessages.LOGIN:
 			return {...state, connecting: true, errorType: undefined}
-		case 'DISCONNECT':
+		case localMessages.DISCONNECT:
 			return {
 				...state,
 				connecting: false,
+				connected: false,
 				playerName: '',
 				minecraftName: '',
-				playerId: '',
+				playerId: '' as PlayerId,
 				playerSecret: '',
 				playerDeck: state.playerDeck,
-				errorType: action.payload,
+				errorType: action.errorMessage,
 			}
-		case 'SET_PLAYER_INFO':
+		case localMessages.PLAYER_INFO_SET:
+		case localMessages.PLAYER_SESSION_SET:
+			return {
+				...state,
+				errorType: undefined,
+				...action.player,
+			}
+		case localMessages.CONNECTED:
 			return {
 				...state,
 				connecting: false,
-				errorType: undefined,
-				...action.payload,
+				connected: true,
 			}
-		case 'LOAD_UPDATES':
+		case localMessages.UPDATES_LOAD:
 			return {
 				...state,
-				...action.payload,
+				...action.updates,
 			}
-		case 'SET_NEW_DECK':
+		case localMessages.INSERT_DECK:
+		case localMessages.UPDATE_DECK:
+		case localMessages.SELECT_DECK:
 			return {
 				...state,
-				playerDeck: action.payload,
+				playerDeck: action.deck,
 			}
-		case 'SET_TOAST':
+		case localMessages.TOAST_OPEN:
+			state.toast.push({
+				id: state.toast.length + 1,
+				toast: action,
+				closed: false,
+			})
 			return {
 				...state,
-				toast: action.payload,
+				toast: state.toast,
 			}
-		case 'CLOSE_TOAST':
+		case localMessages.TOAST_CLOSE:
+			const thisToast = state.toast.find((toast) => toast.id === action.id)
+			if (thisToast) thisToast.closed = true
+			if (state.toast.some((toast) => !toast.closed)) return state
 			return {
 				...state,
-				toast: {
-					...state.toast,
-					open: false,
+				toast: [],
+			}
+		case localMessages.EVERY_TOAST_CLOSE:
+			return {
+				...state,
+				toast: [],
+			}
+		case localMessages.SHOW_TOOLTIP:
+			return {
+				...state,
+				tooltip: {
+					tooltip: action.tooltip,
+					anchor: action.anchor,
+					tooltipHeight: action.tooltipHeight,
+					tooltipWidth: action.tooltipWidth,
 				},
 			}
-		case 'SET_MINECRAFT_NAME':
+		case localMessages.HIDE_TOOLTIP:
 			return {
 				...state,
-				minecraftName: action.payload,
+				tooltip: null,
+			}
+		case localMessages.MINECRAFT_NAME_NEW:
+		case localMessages.MINECRAFT_NAME_SET:
+			return {
+				...state,
+				minecraftName: action.name,
+			}
+		case localMessages.NEW_PLAYER:
+			return {
+				...state,
+				newPlayer: true,
 			}
 		default:
 			return state

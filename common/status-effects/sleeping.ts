@@ -1,73 +1,75 @@
-import StatusEffect from './status-effect'
+import {
+	CardComponent,
+	ObserverComponent,
+	StatusEffectComponent,
+} from '../components'
 import {GameModel} from '../models/game-model'
-import {HERMIT_CARDS} from '../cards'
-import {CardPosModel, getBasicCardPos} from '../models/card-pos-model'
-import {removeStatusEffect} from '../utils/board'
-import {StatusEffectT} from '../types/game-state'
+import {afterAttack} from '../types/priorities'
+import {Counter, statusEffect} from './status-effect'
 
-class SleepingStatusEffect extends StatusEffect {
-	constructor() {
-		super({
-			id: 'sleeping',
-			name: 'Sleep',
-			description:
-				'While your Hermit is sleeping, you can not attack or make your active Hermit go AFK. If sleeping Hermit is made AFK by your opponent, they wake up.',
-			duration: 3,
-			counter: false,
-			damageEffect: false,
-			visible: true,
-		})
-	}
+const SleepingEffect: Counter<CardComponent> = {
+	...statusEffect,
+	id: 'sleeping',
+	icon: 'sleeping',
+	name: 'Sleep',
+	description:
+		'While your Hermit is sleeping, you can not attack or make your active Hermit go AFK. If sleeping Hermit is made AFK by your opponent, they wake up.',
+	counter: 3,
+	counterType: 'turns',
+	onApply(
+		game: GameModel,
+		effect: StatusEffectComponent,
+		target: CardComponent,
+		observer: ObserverComponent,
+	) {
+		const {player} = target
 
-	override onApply(game: GameModel, statusEffectInfo: StatusEffectT, pos: CardPosModel) {
-		const {player, card, row, rowIndex} = pos
+		effect.counter = this.counter
 
-		if (!card || !row?.hermitCard || rowIndex === null) return
+		if (!target.slot.inRow()) return
+		if (!target.isHealth()) return
 
-		game.state.statusEffects.push(statusEffectInfo)
-		game.addBlockedActions(this.id, 'PRIMARY_ATTACK', 'SECONDARY_ATTACK', 'CHANGE_ACTIVE_HERMIT')
-		if (!statusEffectInfo.duration) statusEffectInfo.duration = this.duration
-
-		row.health = HERMIT_CARDS[card.cardId].health
-
-		game.battleLog.addEntry(
-			player.id,
-			`$p${HERMIT_CARDS[card.cardId].name}$ went to $eSleep$ and restored $gfull health$`
+		game.addBlockedActions(
+			this.icon,
+			'PRIMARY_ATTACK',
+			'SECONDARY_ATTACK',
+			'CHANGE_ACTIVE_HERMIT',
 		)
 
-		player.hooks.onTurnStart.add(statusEffectInfo.statusEffectInstance, () => {
-			const targetPos = getBasicCardPos(game, statusEffectInfo.targetInstance)
-			if (!targetPos || !statusEffectInfo.duration) return
-			statusEffectInfo.duration--
+		target.slot.row.heal(target.props.health)
 
-			if (statusEffectInfo.duration === 0 || player.board.activeRow !== targetPos.rowIndex) {
-				removeStatusEffect(game, pos, statusEffectInfo.statusEffectInstance)
+		game.battleLog.addEntry(
+			player.entity,
+			`$p${target.props.name}$ went to $eSleep$ and restored $gfull health$`,
+		)
+
+		observer.subscribe(player.hooks.onTurnStart, () => {
+			if (effect.counter !== null) effect.counter--
+			if (!target.slot.inRow()) return
+
+			if (effect.counter === 0) {
+				effect.remove()
 				return
 			}
 
-			if (player.board.activeRow === targetPos.rowIndex)
+			if (player.activeRowEntity === target.slot.row.entity) {
 				game.addBlockedActions(
-					this.id,
+					this.icon,
 					'PRIMARY_ATTACK',
 					'SECONDARY_ATTACK',
-					'CHANGE_ACTIVE_HERMIT'
+					'CHANGE_ACTIVE_HERMIT',
 				)
+			}
 		})
 
-		player.hooks.afterDefence.add(statusEffectInfo.statusEffectInstance, (attack) => {
-			const attackTarget = attack.getTarget()
-			if (!attackTarget) return
-			if (attackTarget.row.hermitCard.cardInstance !== statusEffectInfo.targetInstance) return
-			if (attackTarget.row.health > 0) return
-			removeStatusEffect(game, pos, statusEffectInfo.statusEffectInstance)
-		})
-	}
-
-	override onRemoval(game: GameModel, statusEffectInfo: StatusEffectT, pos: CardPosModel) {
-		const {player} = pos
-		player.hooks.onTurnStart.remove(statusEffectInfo.statusEffectInstance)
-		player.hooks.afterDefence.remove(statusEffectInfo.statusEffectInstance)
-	}
+		observer.subscribeWithPriority(
+			game.hooks.afterAttack,
+			afterAttack.UPDATE_POST_ATTACK_STATE,
+			(_attack) => {
+				if (!target.isAlive()) effect.remove()
+			},
+		)
+	},
 }
 
-export default SleepingStatusEffect
+export default SleepingEffect

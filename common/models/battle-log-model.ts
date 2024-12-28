@@ -1,20 +1,24 @@
-import {CARDS, HERMIT_CARDS, SINGLE_USE_CARDS} from '../cards'
-import {
-	CurrentCoinFlipT,
-	PlayerState,
-	RowStateWithHermit,
-	CardT,
-	BattleLogT,
-} from '../types/game-state'
 import {broadcast} from '../../server/src/utils/comm'
-import {AttackModel} from './attack-model'
-import {CardPosModel} from './card-pos-model'
-import {GameModel} from './game-model'
-import {LineNode, formatText} from '../utils/formatting'
+import {
+	CardComponent,
+	PlayerComponent,
+	RowComponent,
+	SlotComponent,
+} from '../components'
+import query from '../components/query'
 import {DEBUG_CONFIG} from '../config'
-import Card from '../cards/base/card'
-import {PickInfo} from '../types/server-requests'
-import StatusEffect from '../status-effects/status-effect'
+import {
+	CardEntity,
+	PlayerEntity,
+	RowEntity,
+	StatusEffectEntity,
+} from '../entities'
+import {serverMessages} from '../socket-messages/server-messages'
+import {StatusEffectLog} from '../status-effects/status-effect'
+import {BattleLogT, CurrentCoinFlip} from '../types/game-state'
+import {LineNode, formatText} from '../utils/formatting'
+import {AttackModel} from './attack-model'
+import {GameModel} from './game-model'
 
 export class BattleLogModel {
 	private game: GameModel
@@ -27,20 +31,22 @@ export class BattleLogModel {
 		this.logMessageQueue = []
 	}
 
-	private generateEffectEntryHeader(card: CardT | null): string {
+	private generateEffectEntryHeader(card: CardComponent | null): string {
 		const currentPlayer = this.game.currentPlayer.playerName
 		if (!card) return ''
-		const cardInfo = CARDS[card.cardId]
-
-		return `$p{You|${currentPlayer}}$ used $e${cardInfo.name}$ `
+		return `$p{You|${currentPlayer}}$ used $e${card.props.name}$`
 	}
 
-	private generateCoinFlipDescription(coinFlip: CurrentCoinFlipT): string {
-		const heads = coinFlip.tosses.filter((flip) => flip === 'heads').length
-		const tails = coinFlip.tosses.filter((flip) => flip === 'tails').length
+	private generateCoinFlipDescription(coinFlip: CurrentCoinFlip): string {
+		const heads = coinFlip.tosses.filter(
+			(flip) => flip.result === 'heads',
+		).length
+		const tails = coinFlip.tosses.filter(
+			(flip) => flip.result === 'tails',
+		).length
 
 		if (coinFlip.tosses.length === 1) {
-			return heads > tails ? `flipped $gheads$` : `flipped $btails$`
+			return heads > tails ? 'flipped $gheads$' : 'flipped $btails$'
 		} else if (tails === 0) {
 			return `flipped $g${heads} heads$`
 		} else if (heads === 0) {
@@ -52,14 +58,17 @@ export class BattleLogModel {
 
 	private generateCoinFlipMessage(
 		attack: AttackModel,
-		coinFlips: Array<CurrentCoinFlipT>
+		coinFlips: Array<CurrentCoinFlip>,
 	): string | null {
 		const entry = coinFlips.reduce((r: string | null, coinFlip) => {
 			const description = this.generateCoinFlipDescription(coinFlip)
 
+			let coinFlipCard = this.game.components.get(coinFlip.card)
+
+			if (!coinFlip) return r
 			if (coinFlip.opponentFlip) return r
-			if (HERMIT_CARDS[coinFlip.cardId] && attack.type === 'effect') return r
-			if (SINGLE_USE_CARDS[coinFlip.cardId] && attack.type !== 'effect') return r
+			if (coinFlipCard?.isHermit() && attack.type === 'effect') return r
+			if (coinFlipCard?.isSingleUse() && attack.type !== 'effect') return r
 
 			return description
 		}, null)
@@ -70,104 +79,119 @@ export class BattleLogModel {
 	public async sendLogs() {
 		while (this.logMessageQueue.length > 0) {
 			const firstEntry = this.logMessageQueue.shift()
-			if (!firstEntry) continue
+			if (!firstEntry) return
+
+			let playerEntity = this.game.components.get(firstEntry.player)?.entity
+			if (!playerEntity) continue
 
 			this.game.chat.push({
+				sender: {
+					type: 'system',
+					id: playerEntity,
+				},
 				createdAt: Date.now(),
 				message: formatText(firstEntry.description, {censor: true}),
-				sender: firstEntry.player,
-				systemMessage: true,
 			})
+
+			if (this.game.settings.verboseLogging) {
+				console.info(`${this.game.logHeader} ${firstEntry.description}`)
+			}
+		}
+
+		// We skip waiting for the logs to send if there are no players. This is because
+		// the coin flip delay confuses jest. Additionally we don't want to wait longer
+		// than what is needed in tests.
+		if (this.game.getPlayers().length === 0) {
+			return
 		}
 
 		await new Promise((e) =>
 			setTimeout(
 				e,
-				this.game.currentPlayer.coinFlips.reduce((r, flip) => r + flip.delay, 0)
-			)
+				this.game.currentPlayer.coinFlips.reduce(
+					(r, flip) => r + flip.delay,
+					0,
+				),
+			),
 		)
 
-		broadcast(this.game.getPlayers(), 'CHAT_UPDATE', this.game.chat)
+		broadcast(this.game.getPlayers(), {
+			type: serverMessages.CHAT_UPDATE,
+			messages: this.game.chat,
+		})
+	}
+
+	private genCardName(
+		player: PlayerComponent | undefined,
+		card: CardComponent | null | undefined,
+		row: RowComponent | null | undefined,
+	) {
+		if (card == null) return '$bINVALID VALUE$'
+
+		if (
+			card.slot.type === 'hermit' &&
+			player &&
+			player.activeRowEntity !== row?.entity &&
+			row?.index !== undefined
+		) {
+			return card.turnedOver
+				? `??? (${row.index + 1})`
+				: `${card.props.name} (${row?.index + 1})`
+		}
+
+		return card.turnedOver ? '???' : `${card.props.name}`
 	}
 
 	public addPlayCardEntry(
-		card: Card,
-		pos: CardPosModel,
-		coinFlips: Array<CurrentCoinFlipT>,
-		pickInfo?: PickInfo
+		card: CardComponent,
+		coinFlips: Array<CurrentCoinFlip>,
+		pickedSlot: SlotComponent | null,
 	) {
-		const getCardName = (
-			player: PlayerState | undefined,
-			cardId: string | undefined,
-			rowIndex: number | null | undefined
-		) => {
-			if (!cardId) return invalid
-			const cardInfo = CARDS[cardId]
-			if (cardInfo.type === 'item') {
-				return `${cardInfo.name} ${cardInfo.rarity === 'rare' ? ' item x2' : 'item'}`
-			}
+		let {player, opponentPlayer} = card
 
-			if (
-				cardInfo.type === 'hermit' &&
-				player &&
-				player.board.activeRow !== rowIndex &&
-				rowIndex !== null &&
-				rowIndex !== undefined
-			) {
-				return `${cardInfo.name} (${rowIndex + 1})`
-			}
+		const cardRow = card.slot.inRow() ? card.slot.row : null
+		const pickedRow = pickedSlot?.inRow() ? pickedSlot.row : null
+		const pickedCard = pickedSlot?.getCard()
 
-			return `${cardInfo.name}`
-		}
-
-		const thisFlip = coinFlips.find((flip) => flip.cardId === card.id)
+		const thisFlip = coinFlips.find((flip) => flip.card == card.entity)
 		const invalid = '$bINVALID VALUE$'
 
-		const pickInfoPlayer = () => {
-			if (!pickInfo) return undefined
-			if (this.game.currentPlayer.id === pickInfo.playerId) return this.game.currentPlayer
-			return this.game.opponentPlayer
-		}
-
-		const pickedPlayer = pickInfoPlayer()
-
-		const logMessage = card.getLog({
-			player: pos.player.playerName,
-			opponent: pos.opponentPlayer.playerName,
+		const logMessage = card.props.getLog({
+			player: player.playerName,
+			opponent: opponentPlayer.playerName,
 			coinFlip: thisFlip ? this.generateCoinFlipDescription(thisFlip) : '',
-			defaultLog: `$p{You|${pos.player.playerName}}$ used $e${card.name}$`,
+			defaultLog: `$p{You|${player.playerName}}$ used $e${card.props.name}$`,
 			pos: {
-				rowIndex: pos.rowIndex !== null ? `${pos.rowIndex + 1}` : invalid,
-				id: pos.card ? pos.card.cardId : invalid,
-				name: pos.card ? getCardName(pos.player, pos.card.cardId, pos.rowIndex) : invalid,
-				hermitCard: pos.row?.hermitCard
-					? getCardName(pos.player, pos.row.hermitCard.cardId, pos.rowIndex)
-					: invalid,
-				slotType: pos.slot.type,
+				rowIndex: cardRow ? `${cardRow.index + 1}` : invalid,
+				id: card.props.id,
+				name: this.genCardName(card.player, card, cardRow),
+				hermitCard: this.genCardName(
+					card.player,
+					cardRow?.getHermit(),
+					cardRow,
+				),
+				slotType: card.slot.type,
 			},
 			pick: {
-				rowIndex:
-					pickInfo && pickInfo.rowIndex !== undefined ? `${pickInfo.rowIndex + 1}` : invalid,
-				id: pickInfo?.card ? pickInfo.card.cardId : invalid,
-				name: pickInfo?.card
-					? getCardName(pickedPlayer, pickInfo.card.cardId, pickInfo.rowIndex)
+				rowIndex: pickedRow !== null ? `${pickedRow.index + 1}` : invalid,
+				id: pickedCard?.props.id || invalid,
+				name: pickedCard
+					? this.genCardName(pickedSlot?.player, pickedCard, pickedRow)
 					: invalid,
-				hermitCard:
-					pickInfo && pickInfo.rowIndex !== null && pickInfo.rowIndex !== undefined && pickedPlayer
-						? getCardName(
-								pickedPlayer,
-								pickedPlayer.board.rows[pickInfo.rowIndex].hermitCard?.cardId,
-								pickInfo.rowIndex
-						  )
-						: invalid,
-				slotType: pickInfo ? pickInfo.slot.type : invalid,
+				hermitCard: this.genCardName(
+					pickedSlot?.player,
+					pickedRow?.getHermit(),
+					pickedRow,
+				),
+				slotType: pickedSlot?.type || invalid,
 			},
+			game: this.game,
 		})
 
 		if (logMessage.length === 0) return
 
 		this.logMessageQueue.unshift({
-			player: pos.player.id,
+			player: player.entity,
 			description: logMessage,
 		})
 
@@ -176,52 +200,65 @@ export class BattleLogModel {
 
 	public addAttackEntry(
 		attack: AttackModel,
-		coinFlips: Array<CurrentCoinFlipT>,
-		singleUse: CardT | null
+		coinFlips: Array<CurrentCoinFlip>,
+		singleUse: CardComponent | null,
 	) {
-		const attacker = attack.getAttacker()
-		if (!attacker) return
-		const playerId = attacker.player.id
+		if (!attack.attacker) return
 
-		if (!playerId) return
+		const getAllSubattacks = (thisAttack: AttackModel): Array<AttackModel> => {
+			if (thisAttack.type !== attack.type) return [thisAttack]
+			return [thisAttack, ...thisAttack.nextAttacks.flatMap(getAllSubattacks)]
+		}
 
-		const attacks = [attack, ...attack.nextAttacks]
+		const attacks = getAllSubattacks(attack)
 
 		let log = attacks.reduce((reducer, subAttack) => {
-			const attacker = subAttack.getAttacker()
-			const target = subAttack.getTarget()
-
 			if (subAttack.type !== attack.type) {
 				this.addAttackEntry(subAttack, coinFlips, singleUse)
 				return reducer
 			}
 
-			if (!attacker || !target) return reducer
+			if (!attack.attacker || !subAttack.target) return reducer
 
 			if (subAttack.getDamage() === 0) return reducer
 
-			const attackingHermitInfo = HERMIT_CARDS[attacker.row.hermitCard.cardId]
-			const targetHermitInfo = CARDS[target.row.hermitCard.cardId]
+			const attackerInfo = attack.attacker
 
-			const targetFormatting = target.player.id === playerId ? 'p' : 'o'
+			const targetFormatting =
+				subAttack.target.player.entity === attack.player.entity ? 'p' : 'o'
 
-			const rowNumberString =
-				target.player.board.activeRow === target.rowIndex ? '' : `(${target.rowIndex + 1})`
+			const weaknessAttack = attacks.find((a) => a.isType('weakness'))
+			const weaknessDamage =
+				attack.isType('primary', 'secondary') &&
+				attack.createWeakness !== 'never' &&
+				weaknessAttack
+					? weaknessAttack.calculateDamage()
+					: 0
 
-			const attackName =
-				subAttack.type === 'primary'
-					? attackingHermitInfo.primary.name
-					: attackingHermitInfo.secondary.name
+			let attackName
+			if (attackerInfo instanceof CardComponent && attackerInfo.isHermit()) {
+				attackName =
+					subAttack.type === 'primary'
+						? attackerInfo.props.primary.name
+						: attackerInfo.props.secondary.name
+			} else {
+				attackName = singleUse?.props.name || '$eINVALID$'
+			}
 
 			const logMessage = subAttack.getLog({
-				attacker: `$p${attackingHermitInfo.name}$`,
-				player: attacker.player.playerName,
-				opponent: target.player.playerName,
-				target: `$${targetFormatting}${targetHermitInfo.name} ${rowNumberString}$`,
+				attacker: `$p${attackerInfo.props.name}$`,
+				player: attack.player.playerName,
+				opponent: attack.player.opponentPlayer.playerName,
+				target: `$${targetFormatting}${this.genCardName(
+					subAttack.target.player,
+					subAttack.target.getHermit(),
+					subAttack.target,
+				)}$`,
 				attackName: `$v${attackName}$`,
-				damage: `$b${subAttack.calculateDamage()}hp$`,
+				damage: `$b${subAttack.calculateDamage() + weaknessDamage}hp$`,
 				defaultLog: this.generateEffectEntryHeader(singleUse),
 				coinFlip: this.generateCoinFlipMessage(attack, coinFlips),
+				attack: subAttack,
 			})
 
 			reducer += logMessage
@@ -233,33 +270,32 @@ export class BattleLogModel {
 
 		log += DEBUG_CONFIG.logAttackHistory
 			? attack.getHistory().reduce((reduce, hist) => {
-					return reduce + `\n\t${hist.sourceId} → ${hist.type} ${hist.value}`
-			  }, '')
+					return reduce + `\n\t${hist.source} → ${hist.type} ${hist.value}`
+				}, '')
 			: ''
 
 		this.logMessageQueue.push({
-			player: playerId,
+			player: attack.player.entity,
 			description: log,
 		})
 	}
 
-	public opponentCoinFlipEntry(coinFlips: Array<CurrentCoinFlipT>) {
+	public opponentCoinFlipEntry(coinFlips: Array<CurrentCoinFlip>) {
 		const player = this.game.currentPlayer
 		// Opponent coin flips
 		coinFlips.forEach((coinFlip) => {
-			const cardName = CARDS[coinFlip.cardId].name
 			if (!coinFlip.opponentFlip) return
 
 			this.logMessageQueue.push({
-				player: player.id,
-				description: `$o${cardName}$ ${this.generateCoinFlipDescription(
-					coinFlip
-				)} on their coinflip`,
+				player: player.entity,
+				description: `$o${
+					this.game.components.get(coinFlip.card)?.props.name
+				}$ ${this.generateCoinFlipDescription(coinFlip)} on their coinflip`,
 			})
 		})
 	}
 
-	public addEntry(player: string, entry: string) {
+	public addEntry(player: PlayerEntity, entry: string) {
 		this.logMessageQueue.push({
 			player: player,
 			description: entry,
@@ -267,62 +303,111 @@ export class BattleLogModel {
 	}
 
 	public addChangeRowEntry(
-		player: PlayerState,
-		newRow: number,
-		oldHermit: CardT | null,
-		newHermit: CardT | null
+		player: PlayerComponent,
+		newRowEntity: RowEntity,
+		oldHermitEntity: CardEntity | null,
+		newHermitEntity: CardEntity | null,
 	) {
-		if (!newHermit) return
-		const newHermitInfo = CARDS[newHermit.cardId]
+		let newRow = this.game.components.get(newRowEntity)
+		let oldHermit = this.game.components.get(oldHermitEntity)
+		let newHermit = this.game.components.get(newHermitEntity)
+
+		if (!newRow || !newHermit) return
 
 		if (oldHermit) {
-			const oldHermitInfo = CARDS[oldHermit.cardId]
-
 			this.logMessageQueue.push({
-				player: player.id,
-				description: `$p{You|${player.playerName}}$ swapped $p${oldHermitInfo.name}$ for $p${
-					newHermitInfo.name
-				} (${newRow + 1})$`,
+				player: player.entity,
+				description: `$p{You|${player.playerName}}$ swapped $p${oldHermit.props.name}$ for $p${
+					newHermit.props.name
+				} (${newRow.index + 1})$`,
 			})
 		} else {
 			this.logMessageQueue.push({
-				player: player.id,
-				description: `$p{You|${player.playerName}}$ activated $p${newHermitInfo.name} (${
-					newRow + 1
+				player: player.entity,
+				description: `$p{You|${player.playerName}}$ activated $p${newHermit.props.name} (${
+					newRow.index + 1
 				})$`,
 			})
 		}
 	}
 
-	public addDeathEntry(player: PlayerState, row: RowStateWithHermit) {
-		const card = row.hermitCard
-		const cardName = CARDS[card.cardId].name
+	public addDeathEntry(playerEntity: PlayerEntity, row: RowEntity) {
+		const hermitCard = this.game.components.find(
+			CardComponent,
+			query.card.isHermit,
+			query.card.rowEntity(row),
+		)
+		if (!hermitCard) return
+		const cardName = hermitCard.props.name
+		let player = this.game.components.get(playerEntity)
 
-		const livesRemaining = player.lives === 3 ? 'two lives' : 'one life'
+		const livesRemaining = player?.lives === 3 ? 'two lives' : 'one life'
 
 		this.logMessageQueue.push({
-			player: player.id,
-			description: `$p${cardName}$ was knocked out, and $p{you|${player.playerName}}$ now {have|has} $b${livesRemaining}$ remaining`,
+			player: playerEntity,
+			description: `$p${cardName}$ was knocked out, and $p{you|${player?.playerName}}$ now {have|has} $b${livesRemaining}$ remaining`,
 		})
 		this.sendLogs()
 	}
 
-	public addTurnEndEntry() {
+	public addTurnStartEntry() {
 		this.game.chat.push({
+			sender: {
+				type: 'system',
+				id: this.game.currentPlayer.entity,
+			},
 			createdAt: Date.now(),
-			message: {TYPE: 'LineNode'},
-			sender: this.game.opponentPlayer.id,
-			systemMessage: true,
+			message: LineNode(),
 		})
 
-		broadcast(this.game.getPlayers(), 'CHAT_UPDATE', this.game.chat)
+		broadcast(this.game.getPlayers(), {
+			type: serverMessages.CHAT_UPDATE,
+			messages: this.game.chat,
+		})
 	}
 
-	public addRemoveStatusEffectEntry(statusEffect: StatusEffect) {
-		this.logMessageQueue.push({
-			player: this.game.currentPlayer.id,
-			description: `$e${statusEffect.name}$ wore off`,
-		})
+	public addStatusEffectEntry(
+		statusEffect: StatusEffectEntity,
+		log: (values: StatusEffectLog) => string,
+	) {
+		const effect = this.game.components.get(statusEffect)
+		if (!effect) return
+		const pos = effect.target
+		if (!pos) return
+
+		if (pos instanceof CardComponent) {
+			const targetFormatting =
+				pos.player.entity === this.game.currentPlayerEntity ? 'p' : 'o'
+			const rowNumberString =
+				(pos.slot.inRow() && (pos.slot.row.index + 1).toString()) ||
+				'Unknown Row'
+
+			const logMessage = log({
+				target: `$${targetFormatting}${pos.props.name} (${rowNumberString})$`,
+				verb: 'was',
+				statusEffect: `$e${effect.props.name}$`,
+			})
+
+			this.logMessageQueue.push({
+				player: this.game.currentPlayerEntity,
+				description: logMessage,
+			})
+		} else if (pos instanceof PlayerComponent) {
+			const targetFormatting =
+				pos.entity === this.game.currentPlayerEntity ? 'p' : 'o'
+
+			const logMessage = log({
+				target: `$${targetFormatting}{You|${pos.playerName}}$`,
+				verb: '{were|was}',
+				statusEffect: `$e${effect.props.name}$`,
+			})
+
+			this.logMessageQueue.push({
+				player: this.game.currentPlayerEntity,
+				description: logMessage,
+			})
+		}
+
 		this.sendLogs()
 	}
 }

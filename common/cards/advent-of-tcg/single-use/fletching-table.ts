@@ -1,26 +1,30 @@
-import {CardPosModel} from '../../../models/card-pos-model'
+import {CardComponent, DeckSlotComponent} from '../../../components'
+import query from '../../../components/query'
 import {GameModel} from '../../../models/game-model'
-import {CanAttachResult} from '../../base/card'
-import SingleUseCard from '../../base/single-use-card'
+import {singleUse} from '../../defaults'
+import {SingleUse} from '../../types'
+import Feather from './feather'
 
-class FletchingTableSingleUseCard extends SingleUseCard {
-	constructor() {
-		super({
-			id: 'fletching_table',
-			numericId: 223,
-			name: 'Fletching table',
-			rarity: 'common',
-			description: 'Completely useless! Worth -1 tokens.',
-		})
-	}
-
-	public override canAttach(game: GameModel, pos: CardPosModel): CanAttachResult {
-		return ['INVALID_SLOT']
-	}
-
-	public override getExpansion(): string {
-		return 'advent_of_tcg'
-	}
+const FletchingTable: SingleUse = {
+	...singleUse,
+	id: 'fletching_table',
+	numericId: 223,
+	name: 'Fletching table',
+	expansion: 'advent_of_tcg',
+	rarity: 'common',
+	tokens: -1,
+	description:
+		'Completely useless! At the start of the game, shuffle a feather into your deck. Feather is also completely useless.\nWorth -1 tokens.',
+	attachCondition: query.nothing,
+	onCreate(game: GameModel, component: CardComponent) {
+		game.components.new(
+			CardComponent,
+			Feather,
+			game.components.new(DeckSlotComponent, component.player.entity, {
+				position: 'random',
+			}).entity,
+		)
+	},
 }
 
-export default FletchingTableSingleUseCard
+export default FletchingTable

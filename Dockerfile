@@ -1,36 +1,30 @@
-FROM debian:bullseye as builder
+FROM node:18.20-bookworm
 
-ARG NODE_VERSION=16.16.0
-
-RUN apt-get update; apt install -y curl python-is-python3 pkg-config build-essential
-RUN curl https://get.volta.sh | bash
-ENV VOLTA_HOME /root/.volta
-ENV PATH /root/.volta/bin:$PATH
-RUN volta install node@${NODE_VERSION}
+ARG APP_VERSION
+ENV APP_VERSION $APP_VERSION
+ENV CI true
 
 #######################################################################
 
 RUN mkdir /app
 WORKDIR /app
 
-# NPM will not install any package listed in "devDependencies" when NODE_ENV is set to "production",
-# to install all modules: "npm install --production=false".
-# Ref: https://docs.npmjs.com/cli/v9/commands/npm-install#description
-
-ENV NODE_ENV production
+RUN apt-get install imagemagick
 
 COPY . .
 
-RUN npm install && npm run build
-FROM debian:bullseye
+COPY common/config/debug-config.example.js common/config/debug-config.js
+
+RUN npm ci
+
+RUN npx playwright install --with-deps firefox
+RUN npm run client:render-cards
+RUN npm run build
+
+# Remove the build-time dependencies to keep the image small and enable node optimizations.
+ENV NODE_ENV production
+RUN npm install
 
 LABEL fly_launch_runtime="nodejs"
 
-COPY --from=builder /root/.volta /root/.volta
-COPY --from=builder /app /app
-
-WORKDIR /app
-ENV NODE_ENV production
-ENV PATH /root/.volta/bin:$PATH
-
-CMD [ "npm", "run", "docker-start" ]
+CMD [ "npm", "run", "start" ]

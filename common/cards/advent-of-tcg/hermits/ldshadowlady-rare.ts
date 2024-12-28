@@ -1,103 +1,134 @@
-import {CardPosModel} from '../../../models/card-pos-model'
+import {
+	CardComponent,
+	ObserverComponent,
+	RowComponent,
+	SlotComponent,
+} from '../../../components'
+import query from '../../../components/query'
 import {GameModel} from '../../../models/game-model'
-import {getActiveRow, getNonEmptyRows} from '../../../utils/board'
-import HermitCard from '../../base/hermit-card'
+import {afterAttack, beforeAttack} from '../../../types/priorities'
+import {hermit} from '../../defaults'
+import GoldenAxe from '../../single-use/golden-axe'
+import {Hermit} from '../../types'
 
-class LDShadowLadyRareHermitCard extends HermitCard {
-	constructor() {
-		super({
-			id: 'ldshadowlady_rare',
-			numericId: 211,
-			name: 'Lizzie',
-			rarity: 'rare',
-			hermitType: 'terraform',
-			health: 290,
-			primary: {
-				name: 'Fairy Fort',
-				cost: ['terraform'],
-				damage: 50,
-				power: null,
-			},
-			secondary: {
-				name: 'Evict',
-				cost: ['terraform', 'terraform', 'any'],
-				damage: 90,
-				power:
-					"Move your opponent's active Hermit and any attached cards to an open slot on their board, if one is available.",
-			},
-		})
-	}
+const LDShadowLadyRare: Hermit = {
+	...hermit,
+	id: 'ldshadowlady_rare',
+	numericId: 211,
+	name: 'Lizzie',
+	expansion: 'advent_of_tcg',
+	palette: 'advent_of_tcg',
+	background: 'advent_of_tcg',
+	rarity: 'rare',
+	tokens: 2,
+	type: 'terraform',
+	health: 290,
+	primary: {
+		name: 'Fairy Fort',
+		cost: ['terraform'],
+		damage: 50,
+		power: null,
+	},
+	secondary: {
+		name: 'Evict',
+		cost: ['terraform', 'terraform', 'any'],
+		damage: 90,
+		power:
+			"Move your opponent's active Hermit and any attached cards to an open slot on their board, if one is available. If their Hermit can't be moved, their active Hermit takes 40hp additional damage.",
+	},
+	onAttach(
+		game: GameModel,
+		component: CardComponent,
+		observer: ObserverComponent,
+	) {
+		const {player, opponentPlayer} = component
 
-	override onAttach(game: GameModel, instance: string, pos: CardPosModel) {
-		const {player, opponentPlayer} = pos
+		let pickedRow: RowComponent | null = null
 
-		player.hooks.afterAttack.add(instance, (attack) => {
-			if (
-				attack.id !== this.getInstanceKey(instance) ||
-				attack.type !== 'secondary' ||
-				!attack.getTarget()
+		const opponentHasMovableActive = () => {
+			const opponentActive = game.components.find(
+				SlotComponent,
+				query.slot.opponent,
+				query.slot.hermit,
+				query.slot.active,
 			)
-				return
 
-			const opponentInactiveRows = getNonEmptyRows(opponentPlayer, true, true)
+			return (
+				opponentActive !== null &&
+				(!query.slot.frozen(game, opponentActive) ||
+					game.components.exists(
+						CardComponent,
+						query.card.is(GoldenAxe),
+						query.card.slot(query.slot.singleUse),
+					))
+			)
+		}
 
-			if (opponentInactiveRows.length === 4) return
-			if (opponentPlayer.board.activeRow === null) return
+		observer.subscribe(
+			player.hooks.getAttackRequests,
+			(instance, attackType) => {
+				if (instance.entity !== component.entity || attackType !== 'secondary')
+					return
+				pickedRow = null
+				if (!opponentHasMovableActive()) return
 
-			// Make sure opponent Hermit isn't dead
-			if (getActiveRow(opponentPlayer)?.health === 0) return
+				const pickCondition = query.every(
+					query.slot.hermit,
+					query.slot.opponent,
+					query.slot.empty,
+					query.not(query.slot.active),
+				)
 
-			// Add a new pick request to the opponent player
-			game.addPickRequest({
-				playerId: player.id,
-				id: this.id,
-				message: "Move your opponent's active Hermit to a new slot.",
-				onResult(pickResult) {
-					// Validation
-					if (pickResult.playerId !== opponentPlayer.id) return 'FAILURE_INVALID_PLAYER'
-					if (pickResult.rowIndex === undefined) return 'FAILURE_INVALID_SLOT'
-					if (pickResult.slot.type !== 'hermit') return 'FAILURE_INVALID_SLOT'
-					if (pickResult.card !== null) return 'FAILURE_INVALID_SLOT'
-					if (pickResult.rowIndex === opponentPlayer.board.activeRow) return 'FAILURE_WRONG_PICK'
-					if (opponentPlayer.board.activeRow === null) return 'FAILURE_INVALID_DATA'
+				if (!game.components.exists(SlotComponent, pickCondition)) return
 
-					game.swapRows(opponentPlayer, opponentPlayer.board.activeRow, pickResult.rowIndex)
+				game.addPickRequest({
+					player: player.entity,
+					id: component.entity,
+					message: "Move your opponent's active Hermit to a new slot.",
+					canPick: pickCondition,
+					onResult(pickedSlot) {
+						if (!pickedSlot.inRow()) return
+						if (opponentPlayer.activeRow === null) return
 
-					return 'SUCCESS'
-				},
-				onTimeout() {
-					if (opponentPlayer.board.activeRow === null) return
+						pickedRow = pickedSlot.row
+					},
+					onTimeout() {
+						if (opponentPlayer.activeRow === null) return
 
-					const filledRowNumbers = getNonEmptyRows(opponentPlayer).map((r) => r.rowIndex)
-					const emptyRows = [0, 1, 2, 3, 4].filter((n) => !filledRowNumbers.includes(n))
+						pickedRow = game.components.find(
+							RowComponent,
+							query.row.opponentPlayer,
+							query.not(query.row.active),
+							query.not(query.row.hasHermit),
+						)
+					},
+				})
+			},
+		)
 
-					if (emptyRows.length === 0) return
+		observer.subscribeWithPriority(
+			game.hooks.beforeAttack,
+			beforeAttack.HERMIT_APPLY_ATTACK,
+			(attack) => {
+				if (!attack.isAttacker(component.entity) || !attack.isType('secondary'))
+					return
+				if (opponentPlayer.activeRow === null) return
+				if (pickedRow === null) {
+					attack.addDamage(component.entity, 40)
+				} else {
+					game.swapRows(opponentPlayer.activeRow, pickedRow)
+				}
+			},
+		)
 
-					const pickedRowIndex = emptyRows[Math.floor(Math.random() * emptyRows.length)]
-
-					game.swapRows(opponentPlayer, opponentPlayer.board.activeRow, pickedRowIndex)
-				},
-			})
-		})
-	}
-
-	override onDetach(game: GameModel, instance: string, pos: CardPosModel) {
-		const {player} = pos
-
-		player.hooks.afterAttack.remove(instance)
-	}
-
-	override getExpansion() {
-		return 'advent_of_tcg'
-	}
-
-	override getPalette() {
-		return 'advent_of_tcg'
-	}
-
-	override getBackground() {
-		return 'advent_of_tcg'
-	}
+		observer.subscribeWithPriority(
+			game.hooks.afterAttack,
+			afterAttack.UPDATE_POST_ATTACK_STATE,
+			(_attack) => {
+				pickedRow = null
+			},
+		)
+	},
 }
 
-export default LDShadowLadyRareHermitCard
+export default LDShadowLadyRare

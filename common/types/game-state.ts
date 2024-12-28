@@ -1,189 +1,57 @@
-import {CanAttachResult} from '../cards/base/card'
-import {AttackModel} from '../models/attack-model'
-import {BattleLogModel} from '../models/battle-log-model'
-import {CardPosModel} from '../models/card-pos-model'
-import {FormattedTextNode} from '../utils/formatting'
-import {HermitAttackType} from './attack'
-import {EnergyT, Slot, SlotPos} from './cards'
-import {GameHook, WaterfallHook} from './hooks'
-import {ModalRequest, PickRequest, PickInfo} from './server-requests'
+import type {Attach, Card, HasHealth} from '../cards/types'
+import type {CardComponent} from '../components'
+import type {CardEntity, PlayerEntity, RowEntity, SlotEntity} from '../entities'
+import type {PlayerId} from '../models/player-model'
+import type {FormattedTextNode} from '../utils/formatting'
+import type {HermitAttackType} from './attack'
+import {ModalRequest} from './modal-requests'
+import type {
+	LocalCardInstance,
+	LocalModalData,
+	LocalStatusEffectInstance,
+	PickRequest,
+} from './server-requests'
 
-export type PlayerId = string
+type NewType = SlotEntity
 
-export type CardT = {
-	cardId: string
-	cardInstance: string
+export type LocalRowState = {
+	entity: RowEntity
+	hermit: {slot: SlotEntity; card: LocalCardInstance<HasHealth> | null}
+	attach: {slot: NewType; card: LocalCardInstance<Attach> | null}
+	items: Array<{slot: SlotEntity; card: LocalCardInstance<Card> | null}>
+	health: number | null
 }
 
-export type RowStateWithHermit = {
-	hermitCard: CardT
-	effectCard: CardT | null
-	itemCards: Array<CardT | null>
-	health: number
-}
+export type CoinFlipResult = 'heads' | 'tails'
+export type CoinFlip = {result: CoinFlipResult; forced: boolean}
 
-export type RowStateWithoutHermit = {
-	hermitCard: null
-	effectCard: null
-	itemCards: Array<null>
-	health: null
-}
-
-export type RowState = RowStateWithHermit | RowStateWithoutHermit
-
-export type CoinFlipT = 'heads' | 'tails'
-
-export type StatusEffectT = {
-	/** The ID of the statusEffect. */
-	statusEffectId: string
-	/** The statusEffect's instance. */
-	statusEffectInstance: string
-	/** The target card's instance. */
-	targetInstance: string
-	/** The duration of the effect. If undefined, the effect is infinite. */
-	duration?: number
-	/** Whether the statusEffect is a damage effect or not. */
-	damageEffect: boolean
-}
-
-export type CurrentCoinFlipT = {
-	cardId: string
+export type CurrentCoinFlip = {
+	card: CardEntity
 	opponentFlip: boolean
 	name: string
-	tosses: Array<CoinFlipT>
+	tosses: Array<CoinFlip>
+	amount: number
+	delay: number
+}
+
+export type LocalCurrentCoinFlip = {
+	card: LocalCardInstance
+	opponentFlip: boolean
+	name: string
+	tosses: Array<CoinFlip>
 	amount: number
 	delay: number
 }
 
 export type BattleLogT = {
-	player: PlayerId
+	player: PlayerEntity
 	description: string
 }
 
-export type PlayerState = {
-	id: PlayerId
-	playerName: string
-	minecraftName: string
-	playerDeck: Array<CardT>
-	censoredPlayerName: string
-	coinFlips: Array<CurrentCoinFlipT>
-	custom: Record<string, any>
-	hand: Array<CardT>
-	lives: number
-	pile: Array<CardT>
-	discarded: Array<CardT>
-	board: {
-		activeRow: number | null
-		singleUseCard: CardT | null
-		singleUseCardUsed: boolean
-		rows: Array<RowState>
-	}
-
-	hooks: {
-		/** Hook that modifies and returns available energy from item cards */
-		availableEnergy: WaterfallHook<(availableEnergy: Array<EnergyT>) => Array<EnergyT>>
-
-		/** Hook that modifies and returns blockedActions */
-		blockedActions: WaterfallHook<(blockedActions: TurnActions) => TurnActions>
-
-		/** Hook called when checking if a card can be attached. The result can be modified and will be stored */
-		canAttach: GameHook<(canAttach: CanAttachResult, pos: CardPosModel) => void>
-		/** Hook called when a card is attached */
-		onAttach: GameHook<(instance: string) => void>
-		/** Hook called when a card is detached */
-		onDetach: GameHook<(instance: string) => void>
-
-		/** Hook called before a single use card is applied */
-		beforeApply: GameHook<() => void>
-		/** Hook called when a single use card is applied */
-		onApply: GameHook<() => void>
-		/** Hook called after a single use card is applied */
-		afterApply: GameHook<() => void>
-
-		/**
-		 * Hook called once before each attack loop.
-		 *
-		 * This is the place to add pick/modal requests if they need to be resolved before the attack loop.
-		 */
-		getAttackRequests: GameHook<
-			(activeInstance: string, hermitAttackType: HermitAttackType) => void
-		>
-
-		/** Hook that returns attacks to execute */
-		getAttack: GameHook<() => AttackModel | null>
-		/** Hook called before the main attack loop, for every attack from our side of the board */
-		beforeAttack: GameHook<(attack: AttackModel) => void>
-		/** Hook called before the main attack loop, for every attack targeting our side of the board */
-		beforeDefence: GameHook<(attack: AttackModel) => void>
-		/** Hook called for every attack from our side of the board */
-		onAttack: GameHook<(attack: AttackModel) => void>
-		/** Hook called for every attack that targets our side of the board */
-		onDefence: GameHook<(attack: AttackModel) => void>
-		/**
-		 * Hook called after the main attack loop, for every attack from our side of the board.
-		 *
-		 * This is called after actions are marked as completed and blocked
-		 */
-		afterAttack: GameHook<(attack: AttackModel) => void>
-		/**
-		 * Hook called after the main attack loop, for every attack targeting our side of the board
-		 *
-		 * This is called after actions are marked as completed and blocked
-		 */
-		afterDefence: GameHook<(attack: AttackModel) => void>
-
-		/**
-		 * Hook called at the start of the turn
-		 *
-		 * This is a great place to add blocked actions for the turn, as it's called before actions are calculated
-		 */
-		onTurnStart: GameHook<() => void>
-		/** Hook called at the end of the turn */
-		onTurnEnd: GameHook<(drawCards: Array<CardT | null>) => void>
-
-		/** Hook called when the player flips a coin */
-		onCoinFlip: GameHook<(card: CardT, coinFlips: Array<CoinFlipT>) => Array<CoinFlipT>>
-
-		// @TODO eventually to simplify a lot more code this could potentially be called whenever anything changes the row, using a helper.
-		/** Hook called before the active row is changed. Returns whether or not the change can be completed. */
-		beforeActiveRowChange: GameHook<(oldRow: number | null, newRow: number | null) => boolean>
-		/** Hook called when the active row is changed. */
-		onActiveRowChange: GameHook<(oldRow: number | null, newRow: number | null) => void>
-		// @TODO replace with canDetach, we already have canAttach
-		/** Hook called when a card attemps to move or rows are swapped. Returns whether the card in this position can be moved, or if the slot is empty, if it can be moved to. */
-		onSlotChange: GameHook<(slot: SlotPos) => boolean>
-	}
-}
-
-export type GenericActionResult =
-	| 'SUCCESS'
-	| 'FAILURE_INVALID_DATA'
-	| 'FAILURE_NOT_APPLICABLE'
-	| 'FAILURE_ACTION_NOT_AVAILABLE'
-	| 'FAILURE_CANNOT_COMPLETE'
-	| 'FAILURE_UNKNOWN_ERROR'
-
-export type PlayCardActionResult =
-	| 'FAILURE_INVALID_PLAYER'
-	| 'FAILURE_INVALID_SLOT'
-	| 'FAILURE_UNMET_CONDITION'
-	| 'FAILURE_UNMET_CONDITION_SILENT'
-
-export type PickCardActionResult =
-	| 'FAILURE_INVALID_PLAYER'
-	| 'FAILURE_INVALID_SLOT'
-	| 'FAILURE_WRONG_PICK'
-
-export type ActionResult = GenericActionResult | PlayCardActionResult | PickCardActionResult
-
-export type ModalData = {
-	modalId: string
-	payload?: any
-}
+export type {LocalModalData as ModalData} from './server-requests'
 
 export type TurnState = {
 	turnNumber: number
-	currentPlayerId: string
 	availableActions: TurnActions
 	opponentAvailableActions: TurnActions
 	completedActions: TurnActions
@@ -195,29 +63,24 @@ export type TurnState = {
 
 export type LocalTurnState = {
 	turnNumber: number
-	currentPlayerId: string
+	currentPlayerEntity: PlayerEntity
 	availableActions: TurnActions
 }
 
 export type GameState = {
 	turn: TurnState
-	order: Array<PlayerId>
-	players: Record<string, PlayerState>
-	statusEffects: Array<StatusEffectT>
+	order: Array<PlayerEntity>
 
 	pickRequests: Array<PickRequest>
 	modalRequests: Array<ModalRequest>
-
-	lastActionResult: {
-		action: TurnAction
-		result: ActionResult
-	} | null
 
 	timer: {
 		turnStartTime: number
 		turnRemaining: number
 		opponentActionStartTime: number | null
 	}
+
+	isBossGame: boolean
 }
 
 export type PlayCardAction =
@@ -226,7 +89,10 @@ export type PlayCardAction =
 	| 'PLAY_SINGLE_USE_CARD'
 	| 'PLAY_EFFECT_CARD'
 
-export type AttackAction = 'SINGLE_USE_ATTACK' | 'PRIMARY_ATTACK' | 'SECONDARY_ATTACK'
+export type AttackAction =
+	| 'SINGLE_USE_ATTACK'
+	| 'PRIMARY_ATTACK'
+	| 'SECONDARY_ATTACK'
 
 export type TurnAction =
 	| PlayCardAction
@@ -239,6 +105,8 @@ export type TurnAction =
 	| 'MODAL_REQUEST'
 	| 'WAIT_FOR_TURN'
 	| 'WAIT_FOR_OPPONENT_ACTION'
+	| 'DELAY'
+	| 'FORFEIT'
 
 export type GameRules = {
 	disableTimer: boolean
@@ -246,99 +114,127 @@ export type GameRules = {
 
 export type TurnActions = Array<TurnAction>
 
-export type GameEndOutcomeT =
-	| 'client_crash'
-	| 'server_crash'
-	| 'timeout'
-	| 'forfeit_win'
-	| 'forfeit_loss'
-	| 'leave_win'
-	| 'leave_loss'
-	| 'tie'
-	| 'unknown'
-	| 'you_won'
-	| 'you_lost'
-	| null
+export type GameOutcome =
+	| {type: 'tie'}
+	| {type: 'timeout'}
+	| {type: 'game-crash'; error: string}
+	| {
+			type: 'player-won'
+			winner: PlayerEntity
+			victoryReason: GameVictoryReason
+	  }
 
-export type GameEndReasonT = 'hermits' | 'lives' | 'cards' | 'time' | null
+export type GameVictoryReason =
+	| 'forfeit'
+	| 'no-hermits-on-board'
+	| 'timeout-without-hermits'
+	| 'decked-out'
+	| 'lives'
 
 export type LocalPlayerState = {
-	id: PlayerId
+	entity: PlayerEntity
+	playerId?: PlayerId
 	playerName: string
 	minecraftName: string
 	censoredPlayerName: string
-	coinFlips: Array<CurrentCoinFlipT>
-	custom: Record<string, any>
+	coinFlips: Array<LocalCurrentCoinFlip>
 	lives: number
 	board: {
-		activeRow: number | null
-		singleUseCard: CardT | null
+		activeRow: RowEntity | null
+		singleUse: {slot: SlotEntity; card: LocalCardInstance | null}
 		singleUseCardUsed: boolean
-		rows: Array<RowState>
+		rows: Array<LocalRowState>
 	}
 }
 
 export type LocalGameState = {
+	isSpectator: boolean
 	turn: LocalTurnState
-	order: Array<PlayerId>
-	statusEffects: Array<StatusEffectT>
+	order: Array<PlayerEntity>
+
+	statusEffects: Array<LocalStatusEffectInstance>
 
 	// personal data
-	hand: Array<CardT>
+	hand: Array<LocalCardInstance>
 	pileCount: number
-	discarded: Array<CardT>
+	discarded: Array<LocalCardInstance>
 
 	// ids
-	playerId: PlayerId
-	opponentPlayerId: PlayerId
+	playerEntity: PlayerEntity
+	opponentPlayerEntity: PlayerEntity
 
-	lastActionResult: {
-		action: TurnAction
-		result: ActionResult
-	} | null
-
+	currentCardsCanBePlacedIn: Array<
+		[LocalCardInstance, Array<SlotEntity>]
+	> | null
+	currentPickableSlots: Array<SlotEntity> | null
 	currentPickMessage: string | null
-	currentModalData: ModalData | null
+	currentModalData: LocalModalData | null
 
-	players: Record<string, LocalPlayerState>
+	players: Record<PlayerEntity, LocalPlayerState>
 
 	timer: {
 		turnStartTime: number
 		turnRemaining: number
 	}
+
+	isBossGame: boolean
+
+	voiceLineQueue: Array<string>
 }
 
+type MessageSender =
+	| {
+			type: 'viewer'
+			id: PlayerId
+	  }
+	| {
+			type: 'system'
+			id: PlayerEntity
+	  }
+
 export type Message = {
-	sender: PlayerId
-	systemMessage: boolean
+	sender: MessageSender
 	message: FormattedTextNode
 	createdAt: number
 }
 
-// state sent to client
-export type LocalGameRoot = {
-	localGameState: LocalGameState | null
-	time: number
-
-	selectedCard: CardT | null
-	openedModal: {
-		id: string
-		info: null
-	} | null
-	endGameOverlay: {
-		reason: GameEndReasonT
-		outcome: GameEndOutcomeT
-	} | null
-	chat: Array<Message>
-	battleLog: BattleLogModel | null
-	currentCoinFlip: CurrentCoinFlipT | null
-	opponentConnected: boolean
-}
-
 export type GameLog = {
 	type: 'public' | 'private'
-	startHand1: string[]
-	startHand2: string[]
+	startHand1: Array<CardComponent>
+	startHand2: Array<CardComponent>
 	startTimestamp: number
 	startDeck: string
+}
+
+export type UsedHermitAttackInfo = {
+	readonly attackType: 'primary' | 'secondary'
+	readonly attacker: CardComponent
+	readonly turn: number
+}
+
+export abstract class DefaultDictionary<Keys, Type> {
+	default: () => Type
+	values: Record<string, Type> = {}
+
+	public constructor(defaultFactory: () => Type) {
+		this.default = defaultFactory
+	}
+
+	public abstract set(key: Keys, value: Type): void
+	protected setValue(stringKey: string, value: Type) {
+		this.values[stringKey] = value
+	}
+
+	public abstract get(key: Keys): Type
+	protected getValue(stringKey: string) {
+		if (stringKey in this.values) {
+			return this.values[stringKey]
+		}
+		return this.default()
+	}
+
+	public abstract clear(key: Keys): void
+	protected clearValue(stringKey: string) {
+		delete this.values[stringKey]
+	}
 }

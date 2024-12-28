@@ -1,189 +1,286 @@
-import {call, cancelled, fork, put, putResolve, race, take, takeEvery} from 'typed-redux-saga'
-import {sendMsg, receiveMsg} from 'logic/socket/socket-saga'
+import {clientMessages} from 'common/socket-messages/client-messages'
+import {serverMessages} from 'common/socket-messages/server-messages'
 import gameSaga from 'logic/game/game-saga'
-import {gameEnd} from 'logic/game/game-actions'
-import {codeReceived, invalidCode, waitingForPlayer, clearMatchmaking} from './matchmaking-actions'
+import {LocalMessage, LocalMessageTable, localMessages} from 'logic/messages'
+import {receiveMsg, sendMsg} from 'logic/socket/socket-saga'
+import {getSocket} from 'logic/socket/socket-selectors'
+import {
+	call,
+	cancel,
+	cancelled,
+	fork,
+	put,
+	race,
+	select,
+	take,
+	takeEvery,
+} from 'typed-redux-saga'
 
-function* createPrivateGameSaga() {
+function* createBossGameSaga() {
 	function* matchmaking() {
+		const socket = yield* select(getSocket)
 		try {
 			// Send message to server to create the game
-			yield* call(sendMsg, 'CREATE_PRIVATE_GAME')
+			yield* sendMsg({type: clientMessages.CREATE_BOSS_GAME})
 
-			// Wait for response
-			const createGameResponse = yield* race({
-				success: call(receiveMsg, 'CREATE_PRIVATE_GAME_SUCCESS'),
-				failure: call(receiveMsg, 'CREATE_PRIVATE_GAME_FAILURE'),
+			const createBossResponse = yield* race({
+				success: call(
+					receiveMsg(socket, serverMessages.CREATE_BOSS_GAME_SUCCESS),
+				),
+				failure: call(
+					receiveMsg(socket, serverMessages.CREATE_BOSS_GAME_FAILURE),
+				),
 			})
 
-			if (createGameResponse.success) {
-				const gameCode: string = createGameResponse.success.payload
-				yield* put(codeReceived(gameCode))
-			} else {
-				// Something went wrong, go back to menu
-				yield* put(clearMatchmaking())
+			if (createBossResponse.failure) {
+				yield* put<LocalMessage>({type: localMessages.MATCHMAKING_LEAVE})
 				return
 			}
 
-			// Wait for game start or timeout
-			const queueResponse = yield* race({
-				gameStart: call(receiveMsg, 'GAME_START'),
-				timeout: call(receiveMsg, 'PRIVATE_GAME_TIMEOUT'),
+			yield* call(receiveMsg, socket, localMessages.GAME_START)
+			yield* put<LocalMessage>({
+				type: localMessages.QUEUE_VOICE,
+				lines: ['/voice/EXSTART.ogg'],
 			})
-
-			if (queueResponse.gameStart) {
-				yield* call(gameSaga)
-			}
+			yield* call(gameSaga)
 		} catch (err) {
 			console.error('Game crashed: ', err)
 		} finally {
 			if (yield* cancelled()) {
-				yield* put(clearMatchmaking())
-				yield* put(gameEnd())
+				// Clear state and back to menu
+				yield* put<LocalMessage>({type: localMessages.MATCHMAKING_LEAVE})
+				yield* put<LocalMessage>({type: localMessages.GAME_END})
 			}
 		}
 	}
 
 	const result = yield* race({
-		cancel: take('LEAVE_MATCHMAKING'), // We pressed the leave button
+		cancel: take('LEAVE_MATCHMAKING'),
 		matchmaking: call(matchmaking),
 	})
 
-	yield* put(clearMatchmaking())
+	yield* put<LocalMessage>({type: localMessages.MATCHMAKING_LEAVE})
 
 	if (result.cancel) {
-		// Tell the server the private game is cancelled
-		yield* call(sendMsg, 'CANCEL_PRIVATE_GAME')
+		yield* sendMsg({type: clientMessages.CANCEL_BOSS_GAME})
 	}
 }
 
-function* joinPrivateGameSaga() {
+function* privateLobbySaga() {
 	function* matchmaking() {
+		const socket = yield* select(getSocket)
+
+		yield* sendMsg({type: clientMessages.CREATE_PRIVATE_GAME})
+
+		const matchmakingCodeTask = yield* fork(function* () {
+			while (true) {
+				const {code} = yield* take<
+					LocalMessageTable[typeof localMessages.MATCHMAKING_CODE_SET]
+				>(localMessages.MATCHMAKING_CODE_SET)
+
+				yield* sendMsg({type: clientMessages.JOIN_PRIVATE_GAME, code})
+			}
+		})
+
 		try {
 			while (true) {
-				const {payload: gameCode} = yield take('SET_MATCHMAKING_CODE')
-				yield* call(sendMsg, 'JOIN_PRIVATE_GAME', gameCode)
-
 				const result = yield* race({
-					failure: call(receiveMsg, 'JOIN_PRIVATE_GAME_FAILURE'),
-					success: call(receiveMsg, 'JOIN_PRIVATE_GAME_SUCCESS'),
-					invalidCode: call(receiveMsg, 'INVALID_CODE'),
-					waitingForPlayer: call(receiveMsg, 'WAITING_FOR_PLAYER'),
-					timeout: call(receiveMsg, 'PRIVATE_GAME_TIMEOUT'),
+					createPrivateGameSuccess: call(
+						receiveMsg(socket, serverMessages.CREATE_PRIVATE_GAME_SUCCESS),
+					),
+					createPrivateGameFailure: call(
+						receiveMsg(socket, serverMessages.CREATE_PRIVATE_GAME_FAILURE),
+					),
+					joinPrivateGameFailure: call(
+						receiveMsg(socket, serverMessages.JOIN_PRIVATE_GAME_FAILURE),
+					),
+					joinPrivateGameSuccess: call(
+						receiveMsg(socket, serverMessages.JOIN_PRIVATE_GAME_SUCCESS),
+					),
+					cancel: take(localMessages.MATCHMAKING_LEAVE), // We pressed the leave button
+					invalidCode: call(receiveMsg(socket, serverMessages.INVALID_CODE)),
+					waitingForPlayer: call(
+						receiveMsg(socket, serverMessages.WAITING_FOR_PLAYER),
+					),
+					spectateSuccess: call(
+						receiveMsg(socket, serverMessages.SPECTATE_PRIVATE_GAME_START),
+					),
+					specateWaitSuccess: call(
+						receiveMsg(socket, serverMessages.SPECTATE_PRIVATE_GAME_WAITING),
+					),
+					timeout: call(
+						receiveMsg(socket, serverMessages.PRIVATE_GAME_TIMEOUT),
+					),
 				})
 
 				if (result.invalidCode) {
-					yield* put(invalidCode())
+					yield* put<LocalMessage>({
+						type: localMessages.MATCHMAKING_CODE_INVALID,
+					})
 					continue
-				}
-
-				if (result.failure) {
-					// Something went wrong, go back to menu
-					yield* put(clearMatchmaking())
-				} else if (result.success || result.waitingForPlayer) {
+				} else if (result.createPrivateGameSuccess) {
+					yield* put<LocalMessage>({
+						type: localMessages.MATCHMAKING_CODE_RECIEVED,
+						gameCode: result.createPrivateGameSuccess.gameCode,
+						spectatorCode: result.createPrivateGameSuccess.spectatorCode,
+					})
+					continue
+				} else if (result.joinPrivateGameSuccess || result.waitingForPlayer) {
 					if (result.waitingForPlayer) {
-						yield put(waitingForPlayer())
+						yield* put<LocalMessage>({
+							type: localMessages.MATCHMAKING_WAITING_FOR_PLAYER,
+						})
 					}
 
 					// Private game joined successfully - wait for game start or timeout
 					const queueResponse = yield* race({
-						gameStart: call(receiveMsg, 'GAME_START'),
-						timeout: call(receiveMsg, 'PRIVATE_GAME_TIMEOUT'),
+						gameStart: call(receiveMsg(socket, serverMessages.GAME_START)),
+						leave: take(localMessages.MATCHMAKING_LEAVE), // We pressed the leave button
+						timeout: call(
+							receiveMsg(socket, serverMessages.PRIVATE_GAME_TIMEOUT),
+						),
 					})
 
 					if (queueResponse.gameStart) {
 						yield* call(gameSaga)
+						break
 					}
-				} else if (result.invalidCode) {
-					yield* put(invalidCode())
+
+					if (queueResponse.leave) {
+						yield* sendMsg({
+							type: clientMessages.LEAVE_PRIVATE_QUEUE,
+						})
+					}
+
+					if (result.timeout) {
+						yield* put<LocalMessage>({type: localMessages.MATCHMAKING_LEAVE})
+					}
+				} else if (result.createPrivateGameFailure) {
+					// Something went wrong, go back to menu
+					yield* put<LocalMessage>({
+						type: localMessages.MATCHMAKING_LEAVE,
+					})
+				} else if (result.joinPrivateGameFailure) {
+					// Something went wrong, go back to menu
+					yield* put<LocalMessage>({
+						type: localMessages.MATCHMAKING_LEAVE,
+					})
+				} else if (result.cancel) {
+					yield* sendMsg({
+						type: clientMessages.CANCEL_PRIVATE_GAME,
+					})
+				} else if (result.spectateSuccess) {
+					yield* call(gameSaga, result.spectateSuccess.localGameState)
+				} else if (result.specateWaitSuccess) {
+					yield* put<LocalMessage>({
+						type: localMessages.MATCHMAKING_WAITING_FOR_PLAYER_AS_SPECTATOR,
+					})
+					let result = yield* race({
+						matchmakingLeave: take(localMessages.MATCHMAKING_LEAVE),
+						spectatePrivateGame: call(
+							receiveMsg(socket, serverMessages.SPECTATE_PRIVATE_GAME_START),
+						),
+						timeout: call(
+							receiveMsg(socket, serverMessages.PRIVATE_GAME_TIMEOUT),
+						),
+					})
+					if (result.spectatePrivateGame) {
+						yield* call(gameSaga, result.spectatePrivateGame.localGameState)
+					}
+					if (result.matchmakingLeave || result.timeout) {
+						yield* sendMsg({
+							type: clientMessages.LEAVE_PRIVATE_QUEUE,
+						})
+					}
+					if (result.timeout) {
+						yield* put<LocalMessage>({type: localMessages.MATCHMAKING_LEAVE})
+					}
 				}
 
-				// For anything but invalid code, we exit loop
 				break
 			}
 		} catch (err) {
 			console.error('Game crashed: ', err)
 		} finally {
 			if (yield* cancelled()) {
-				yield put(gameEnd())
-				yield* put(clearMatchmaking())
+				yield put<LocalMessage>({type: localMessages.GAME_END})
+				yield* put<LocalMessage>({
+					type: localMessages.MATCHMAKING_LEAVE,
+				})
 			}
+			yield cancel(matchmakingCodeTask)
 		}
 	}
 
-	const result = yield* race({
-		cancel: take('LEAVE_MATCHMAKING'), // We pressed the leave button
-		matchmaking: call(matchmaking),
+	yield* call(matchmaking)
+
+	// After the game is over, return to the main menu
+	yield* put<LocalMessage>({
+		type: localMessages.MATCHMAKING_LEAVE,
 	})
-
-	yield* put(clearMatchmaking())
-
-	if (result.cancel) {
-		// If we are waiting for a game here - i.e. we are in the private queue - Then cancel it
-		yield* call(sendMsg, 'CANCEL_PRIVATE_GAME')
-	}
 }
 
 function* joinQueueSaga() {
 	function* matchmaking() {
+		const socket = yield* select(getSocket)
 		try {
 			// Send message to server to join the queue
-			yield* call(sendMsg, 'JOIN_QUEUE')
+			yield sendMsg({type: clientMessages.JOIN_QUEUE})
 
 			// Wait for response
 			const joinResponse = yield* race({
-				success: call(receiveMsg, 'JOIN_QUEUE_SUCCESS'),
-				failure: call(receiveMsg, 'JOIN_QUEUE_FAILURE'),
+				success: call(receiveMsg(socket, serverMessages.JOIN_QUEUE_SUCCESS)),
+				failure: call(receiveMsg(socket, serverMessages.JOIN_QUEUE_FAILURE)),
 			})
 
 			if (joinResponse.failure) {
 				// Something went wrong, go back to menu
-				yield* put(clearMatchmaking())
+				yield* put<LocalMessage>({
+					type: localMessages.MATCHMAKING_LEAVE,
+				})
 				return
 			}
 
 			// We have joined the queue, wait for game start
-			yield* call(receiveMsg, 'GAME_START')
-			yield* call(gameSaga)
+			yield call(receiveMsg(socket, serverMessages.GAME_START))
+			yield call(gameSaga)
 			console.log('end game sagas')
 		} catch (err) {
 			console.error('Game crashed: ', err)
 		} finally {
 			if (yield* cancelled()) {
 				// Clear state and back to menu
-				yield* put(clearMatchmaking())
-				yield* put(gameEnd())
+				yield* put<LocalMessage>({
+					type: localMessages.MATCHMAKING_LEAVE,
+				})
+				yield put<LocalMessage>({type: localMessages.GAME_END})
 			}
 		}
 	}
 
 	const result = yield* race({
-		leave: take('LEAVE_MATCHMAKING'), // We pressed the leave button
+		leave: take(localMessages.MATCHMAKING_LEAVE), // We pressed the leave button
 		matchmaking: call(matchmaking),
 	})
 
-	yield* put(clearMatchmaking())
+	yield* put<LocalMessage>({type: localMessages.MATCHMAKING_LEAVE})
 
 	if (result.leave) {
 		// Tell the server we left the queue
-		yield* call(sendMsg, 'LEAVE_QUEUE')
-	} else {
-		yield* put(clearMatchmaking())
+		yield* sendMsg({type: clientMessages.LEAVE_QUEUE})
 	}
 }
 
-function* reconnectSaga() {
-	const reconnectState = yield* call(receiveMsg, 'GAME_STATE_ON_RECONNECT')
-	yield* put(clearMatchmaking())
-	yield* call(gameSaga, reconnectState.payload.localGameState)
-	yield* put(clearMatchmaking())
-}
-
 function* matchmakingSaga() {
-	yield* takeEvery('JOIN_QUEUE', joinQueueSaga)
-	yield* takeEvery('CREATE_PRIVATE_GAME', createPrivateGameSaga)
-	yield* takeEvery('JOIN_PRIVATE_GAME', joinPrivateGameSaga)
-	yield* fork(reconnectSaga)
+	yield* takeEvery(localMessages.MATCHMAKING_QUEUE_JOIN, joinQueueSaga)
+	yield* takeEvery(
+		localMessages.MATCHMAKING_PRIVATE_GAME_LOBBY,
+		privateLobbySaga,
+	)
+	yield* takeEvery(
+		localMessages.MATCHMAKING_BOSS_GAME_CREATE,
+		createBossGameSaga,
+	)
 }
 
 export default matchmakingSaga

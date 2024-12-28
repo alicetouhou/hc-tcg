@@ -1,100 +1,80 @@
-import {HERMIT_CARDS} from '../..'
-import {CardPosModel} from '../../../models/card-pos-model'
+import {
+	CardComponent,
+	ObserverComponent,
+	SlotComponent,
+	StatusEffectComponent,
+} from '../../../components'
+import query from '../../../components/query'
 import {GameModel} from '../../../models/game-model'
-import {RowPos} from '../../../types/cards'
-import {RowStateWithHermit} from '../../../types/game-state'
-import {getNonEmptyRows} from '../../../utils/board'
-import HermitCard from '../../base/hermit-card'
-import {applyStatusEffect, removeStatusEffect} from '../../../utils/board'
+import ProtectedEffect from '../../../status-effects/protected'
+import {afterAttack} from '../../../types/priorities'
+import {hermit} from '../../defaults'
+import {Hermit} from '../../types'
 
-class SolidaritygamingRareHermitCard extends HermitCard {
-	constructor() {
-		super({
-			id: 'solidaritygaming_rare',
-			numericId: 220,
-			name: 'Jimmy',
-			rarity: 'rare',
-			hermitType: 'prankster',
-			health: 270,
-			primary: {
-				name: 'The Law',
-				cost: ['prankster', 'any'],
-				damage: 70,
-				power:
-					'After your attack, choose one of your AFK Hermits to protect. This Hermit does not take damage on their first active turn.\nOnly one Hermit can be protected at a time.',
-			},
-			secondary: {
-				name: 'Not a toy',
-				cost: ['prankster', 'prankster', 'prankster'],
-				damage: 100,
-				power: null,
-			},
-		})
-	}
+const SolidaritygamingRare: Hermit = {
+	...hermit,
+	id: 'solidaritygaming_rare',
+	numericId: 220,
+	name: 'Jimmy',
+	expansion: 'advent_of_tcg',
+	palette: 'advent_of_tcg',
+	background: 'advent_of_tcg',
+	rarity: 'rare',
+	tokens: 2,
+	type: 'prankster',
+	health: 270,
+	primary: {
+		name: 'The Law',
+		cost: ['prankster', 'any'],
+		damage: 70,
+		power:
+			'After your attack, choose one of your AFK Hermits to protect from damage on their first active turn.\nOnly one Hermit can be protected at a time.',
+	},
+	secondary: {
+		name: 'Not a toy',
+		cost: ['prankster', 'prankster', 'prankster'],
+		damage: 100,
+		power: null,
+	},
+	onAttach(
+		game: GameModel,
+		component: CardComponent,
+		observer: ObserverComponent,
+	): void {
+		const {player} = component
 
-	public override onAttach(game: GameModel, instance: string, pos: CardPosModel): void {
-		const {player} = pos
-		const instanceKey = this.getInstanceKey(instance)
+		observer.subscribeWithPriority(
+			game.hooks.afterAttack,
+			afterAttack.HERMIT_ATTACK_REQUESTS,
+			(attack) => {
+				if (!attack.isAttacker(component.entity) || attack.type !== 'primary')
+					return
 
-		player.hooks.onAttack.add(instance, (attack) => {
-			if (attack.id !== this.getInstanceKey(instance) || attack.type !== 'primary') return
-			const playerInactiveRows = getNonEmptyRows(player, true)
-			if (playerInactiveRows.length === 0) return
+				const pickCondition = query.every(
+					query.slot.currentPlayer,
+					query.slot.hermit,
+					query.not(query.slot.active),
+					query.not(query.slot.empty),
+				)
 
-			player.board.rows.forEach((row) => {
-				if (!row.hermitCard) return
+				if (!game.components.exists(SlotComponent, pickCondition)) return
 
-				const statusEffectsToRemove = game.state.statusEffects.filter((ail) => {
-					return (
-						ail.targetInstance === row.hermitCard.cardInstance && ail.statusEffectId === 'protected'
-					)
+				game.addPickRequest({
+					player: player.entity,
+					id: component.entity,
+					message: 'Choose an AFK Hermit to protect',
+					canPick: pickCondition,
+					onResult(pickedSlot) {
+						if (!pickedSlot.inRow() || !pickedSlot.getCard()) return
+
+						game.components
+							.new(StatusEffectComponent, ProtectedEffect, component.entity)
+							.apply(pickedSlot.getCard()?.entity)
+					},
 				})
-
-				statusEffectsToRemove.forEach((ail) => {
-					removeStatusEffect(game, pos, ail.statusEffectInstance)
-				})
-			})
-
-			game.addPickRequest({
-				playerId: player.id,
-				id: instance,
-				message: 'Choose an AFK Hermit to protect',
-				onResult(pickResult) {
-					if (pickResult.playerId !== player.id) return 'FAILURE_INVALID_PLAYER'
-
-					const rowIndex = pickResult.rowIndex
-					if (rowIndex === undefined || rowIndex === player.board.activeRow)
-						return 'FAILURE_INVALID_SLOT'
-					if (pickResult.slot.type !== 'hermit') return 'FAILURE_INVALID_SLOT'
-					if (!pickResult.card) return 'FAILURE_INVALID_SLOT'
-
-					applyStatusEffect(game, 'protected', pickResult.card.cardInstance)
-
-					return 'SUCCESS'
-				},
-			})
-		})
-	}
-
-	public override onDetach(game: GameModel, instance: string, pos: CardPosModel): void {
-		const {player} = pos
-		const instanceKey = this.getInstanceKey(instance)
-
-		player.hooks.onAttack.remove(instance)
-		delete player.custom[instanceKey]
-	}
-
-	override getExpansion() {
-		return 'advent_of_tcg'
-	}
-
-	override getPalette() {
-		return 'advent_of_tcg'
-	}
-
-	override getBackground() {
-		return 'advent_of_tcg'
-	}
+			},
+		)
+	},
 }
 
-export default SolidaritygamingRareHermitCard
+export default SolidaritygamingRare

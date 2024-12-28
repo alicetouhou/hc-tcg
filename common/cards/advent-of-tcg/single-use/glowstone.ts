@@ -1,58 +1,74 @@
-import {CardPosModel} from '../../../models/card-pos-model'
+import {
+	CardComponent,
+	DeckSlotComponent,
+	ObserverComponent,
+} from '../../../components'
+import query from '../../../components/query'
 import {GameModel} from '../../../models/game-model'
-import {CardT} from '../../../types/game-state'
-import SingleUseCard from '../../base/single-use-card'
+import {singleUse} from '../../defaults'
+import {SingleUse} from '../../types'
 
-class GlowstoneSingleUseCard extends SingleUseCard {
-	constructor() {
-		super({
-			id: 'glowstone',
-			numericId: 224,
-			name: 'Glowstone',
-			rarity: 'rare',
-			description:
-				'View the top 3 cards of your opponent’s deck. Choose one for them to draw. The other 2 will be placed on the bottom of their deck in their original order.',
-		})
-	}
+const Glowstone: SingleUse = {
+	...singleUse,
+	id: 'glowstone',
+	numericId: 224,
+	name: 'Glowstone',
+	expansion: 'advent_of_tcg',
+	rarity: 'rare',
+	tokens: 2,
+	description:
+		"View the top 3 cards of your opponent's deck. Choose one for them to discard. The other 2 will be placed on the bottom of their deck in their original order.",
+	showConfirmationModal: true,
+	attachCondition: query.every(
+		singleUse.attachCondition,
+		(_game, pos) =>
+			!!pos.opponentPlayer && pos.opponentPlayer.getDeck().length >= 3,
+	),
+	log: (values) => values.defaultLog,
+	onAttach(
+		game: GameModel,
+		component: CardComponent,
+		observer: ObserverComponent,
+	) {
+		const {player, opponentPlayer} = component
 
-	override canApply() {
-		return true
-	}
+		observer.subscribe(player.hooks.onApply, () => {
+			const topCards = opponentPlayer
+				.getDeck()
+				.sort(CardComponent.compareOrder)
+				.slice(0, 3)
 
-	override onAttach(game: GameModel, instance: string, pos: CardPosModel) {
-		const {player, opponentPlayer} = pos
-
-		player.hooks.onApply.add(instance, () => {
 			game.addModalRequest({
-				playerId: player.id,
-				data: {
-					modalId: 'selectCards',
-					payload: {
-						modalName: 'Glowstone: Choose the card for your opponent to draw.',
-						modalDescription: 'The other two cards will be placed on the bottom of their deck.',
-						cards: opponentPlayer.pile.slice(0, 3),
-						selectionSize: 1,
-						primaryButton: {
-							text: 'Confirm Selection',
-							variant: 'default',
-						},
+				player: player.entity,
+				modal: {
+					type: 'selectCards',
+					name: 'Glowstone: Choose the card for your opponent to discard.',
+					description:
+						'The other two cards will be placed on the bottom of their deck.',
+					cards: topCards.map((card) => card.entity),
+					selectionSize: 1,
+					primaryButton: {
+						text: 'Confirm Selection',
+						variant: 'default',
 					},
+					cancelable: false,
 				},
 				onResult(modalResult) {
-					if (!modalResult) return 'FAILURE_INVALID_DATA'
-					if (!modalResult.cards) return 'FAILURE_INVALID_DATA'
-					if (modalResult.cards.length !== 1) return 'FAILURE_INVALID_DATA'
+					if (!modalResult) return
+					if (!modalResult.cards) return
+					if (modalResult.cards.length !== 1) return
 
-					const cards: Array<CardT> = modalResult.cards
-					const bottomCards: Array<CardT> = opponentPlayer.pile.slice(0, 3).filter((c) => {
-						if (cards.some((d) => c.cardInstance === d.cardInstance)) return false
-						return true
+					const drawCard = modalResult.cards[0]
+
+					topCards.forEach((card) => {
+						if (drawCard.entity === card.entity) card.discard()
+						else
+							card.attach(
+								game.components.new(DeckSlotComponent, opponentPlayer.entity, {
+									position: 'back',
+								}),
+							)
 					})
-
-					opponentPlayer.pile = opponentPlayer.pile.slice(3)
-					bottomCards.forEach((c) => opponentPlayer.pile.push(c))
-
-					cards.forEach((c) => opponentPlayer.hand.push(c))
 
 					return 'SUCCESS'
 				},
@@ -61,16 +77,7 @@ class GlowstoneSingleUseCard extends SingleUseCard {
 				},
 			})
 		})
-	}
-
-	override onDetach(game: GameModel, instance: string, pos: CardPosModel) {
-		const {player} = pos
-		player.hooks.onApply.remove(instance)
-	}
-
-	override getExpansion() {
-		return 'advent_of_tcg'
-	}
+	},
 }
 
-export default GlowstoneSingleUseCard
+export default Glowstone
