@@ -80,6 +80,7 @@ function Settings({setMenuSection}: Props) {
 	const handleGameSettings = () => changeMenuSection('game-settings')
 	const handleDataSettings = () => changeMenuSection('data-settings')
 	const handleHallOfFame = () => changeMenuSection('hall-of-fame')
+	const handleAchievements = () => changeMenuSection('achievements')
 
 	const handleCredits = () => changeMenuSection('credits')
 
