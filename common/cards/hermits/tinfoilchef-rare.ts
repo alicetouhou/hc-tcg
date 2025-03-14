@@ -29,7 +29,7 @@ const TinFoilChefRare: Hermit = {
 	secondary: {
 		name: 'Branch Mine',
 		cost: ['miner', 'miner'],
-		damage: 80,
+		damage: 70,
 		power:
 			'Flip a coin.\nIf heads, you draw an extra card at the end of your turn.',
 	},

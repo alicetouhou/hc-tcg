@@ -33,7 +33,7 @@ const RendogRare: Hermit = {
 	rarity: 'rare',
 	tokens: 2,
 	type: 'builder',
-	health: 250,
+	health: 280,
 	primary: {
 		name: "Comin' At Ya",
 		cost: ['builder'],
@@ -42,7 +42,7 @@ const RendogRare: Hermit = {
 	},
 	secondary: {
 		name: 'Role Play',
-		cost: ['builder', 'builder', 'builder'],
+		cost: ['builder', 'any'],
 		damage: 0,
 		power: "Use an attack from any of your opponent's Hermits.",
 	},

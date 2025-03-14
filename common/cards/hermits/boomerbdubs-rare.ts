@@ -38,7 +38,7 @@ const BoomerBdubsRare: Hermit = {
 		cost: ['redstone', 'redstone'],
 		damage: 80,
 		power:
-			'Flip a coin as many times as you want.\nDo an additional 20hp damage for every heads, but if tails is flipped, this attack deals 0hp total damage.\nWhen this attack is used with Fortune, only the first coinflip will be affected.',
+			'Flip a coin as many times as you want.\nDo an additional 20hp damage for every heads, but if tails is flipped, this attack only deals 80hp total damage.\nWhen this attack is used with Fortune, only the first coinflip will be affected.',
 	},
 	onAttach(
 		game: GameModel,
@@ -183,9 +183,6 @@ const BoomerBdubsRare: Hermit = {
 					return
 				observer.unsubscribe(player.hooks.blockedActions)
 				if (flippedTails === true) {
-					attack
-						.multiplyDamage(component.entity, 0)
-						.lockDamage(component.entity)
 					return
 				}
 

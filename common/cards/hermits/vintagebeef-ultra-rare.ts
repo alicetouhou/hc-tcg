@@ -23,51 +23,65 @@ const VintageBeefUltraRare: Hermit = {
 	type: 'explorer',
 	health: 280,
 	primary: {
-		name: 'Back in Action',
-		cost: ['any'],
-		damage: 40,
-		power: null,
+		name: 'N.H.O.',
+		cost: [],
+		damage: 0,
+		power:
+			"When Knocked out, your opponent draws 2 prize cards. If you have AFK Docm77, Bdubs AND Etho on the game board, this Hermit's attack damage doubles and health increases by 100hp.",
+		passive: true,
 	},
 	secondary: {
-		name: 'N.H.O',
+		name: 'Back in Action',
 		cost: ['explorer', 'explorer', 'explorer'],
 		damage: 100,
-		power:
-			'If you have AFK Docm77, Bdubs AND Etho on the game board, attack damage doubles.',
+		power: null,
 	},
 	onAttach(
 		game: GameModel,
 		component: CardComponent,
 		observer: ObserverComponent,
 	) {
+		let poweredUp = false
+
+		observer.subscribe(component.player.hooks.onAttach, () => {
+			const hasBdubs = game.components.exists(
+				CardComponent,
+				query.card.currentPlayer,
+				query.card.is(BdoubleO100Common, BdoubleO100Rare),
+				query.card.attached,
+			)
+			const hasDoc = game.components.exists(
+				CardComponent,
+				query.card.currentPlayer,
+				query.card.is(Docm77Common, Docm77Rare),
+				query.card.attached,
+			)
+			const hasEtho = game.components.exists(
+				CardComponent,
+				query.card.currentPlayer,
+				query.card.is(EthosLabCommon, EthosLabRare, EthosLabUltraRare),
+				query.card.attached,
+			)
+
+			if (!hasBdubs || !hasDoc || !hasEtho) {
+				poweredUp = false
+				if (!component.slot.inRow() || !component.slot.row.health) return
+				component.slot.row.health -= 100
+				return
+			}
+			poweredUp = true
+
+			if (!component.slot.inRow() || !component.slot.row.health) return
+
+			component.slot.row.health += 100
+		})
 		observer.subscribeWithPriority(
 			game.hooks.beforeAttack,
 			beforeAttack.MODIFY_DAMAGE,
 			(attack) => {
-				if (!attack.isAttacker(component.entity) || attack.type !== 'secondary')
-					return
+				if (!attack.isAttacker(component.entity)) return
 
-				const hasBdubs = game.components.exists(
-					CardComponent,
-					query.card.currentPlayer,
-					query.card.is(BdoubleO100Common, BdoubleO100Rare),
-					query.card.attached,
-				)
-				const hasDoc = game.components.exists(
-					CardComponent,
-					query.card.currentPlayer,
-					query.card.is(Docm77Common, Docm77Rare),
-					query.card.attached,
-				)
-				const hasEtho = game.components.exists(
-					CardComponent,
-					query.card.currentPlayer,
-					query.card.is(EthosLabCommon, EthosLabRare, EthosLabUltraRare),
-					query.card.attached,
-				)
-
-				if (hasBdubs && hasDoc && hasEtho)
-					attack.multiplyDamage(component.entity, 2)
+				if (poweredUp) attack.multiplyDamage(component.entity, 2)
 			},
 		)
 	},

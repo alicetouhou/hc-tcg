@@ -37,7 +37,7 @@ const ZombieCleoRare: Hermit = {
 	},
 	secondary: {
 		name: 'Puppetry',
-		cost: ['pvp', 'pvp', 'pvp'],
+		cost: ['pvp', 'pvp'],
 		damage: 0,
 		power: 'Use an attack from any of your AFK Hermits.',
 	},

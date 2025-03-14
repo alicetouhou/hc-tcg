@@ -1,7 +1,7 @@
 import {CardComponent, ObserverComponent, RowComponent} from '../../components'
 import query from '../../components/query'
 import {GameModel} from '../../models/game-model'
-import {beforeAttack} from '../../types/priorities'
+import {beforeAttack, onTurnEnd} from '../../types/priorities'
 import {hermit} from '../defaults'
 import {Hermit} from '../types'
 
@@ -14,14 +14,16 @@ const PotatoBoyRare: Hermit = {
 	palette: 'alter_egos',
 	background: 'alter_egos',
 	rarity: 'rare',
-	tokens: 1,
+	tokens: 2,
 	type: 'farm',
 	health: 270,
 	primary: {
 		name: 'Peace & Love',
-		cost: ['any'],
-		damage: 30,
-		power: 'Heal all Hermits that are adjacent to your active Hermit 40hp.',
+		cost: [],
+		damage: 0,
+		power:
+			'At the end of each turn, if your active Hermit is adjacent to this Hermit, heal them 20hp.',
+		passive: true,
 	},
 	secondary: {
 		name: 'Volcarbo',
@@ -37,11 +39,9 @@ const PotatoBoyRare: Hermit = {
 		const {player} = component
 
 		observer.subscribeWithPriority(
-			game.hooks.beforeAttack,
-			beforeAttack.HERMIT_APPLY_ATTACK,
-			(attack) => {
-				if (!attack.isAttacker(component.entity) || attack.type !== 'primary')
-					return
+			player.hooks.onTurnEnd,
+			onTurnEnd.POTATO_BOY,
+			() => {
 				game.components
 					.filter(
 						RowComponent,

@@ -16,7 +16,7 @@ const ImpulseSVRare: Hermit = {
 	name: 'Impulse',
 	expansion: 'default',
 	rarity: 'rare',
-	tokens: 4,
+	tokens: 3,
 	type: 'redstone',
 	health: 250,
 	primary: {
@@ -27,7 +27,7 @@ const ImpulseSVRare: Hermit = {
 	},
 	secondary: {
 		name: 'Boomer',
-		cost: ['redstone', 'any'],
+		cost: ['redstone', 'redstone', 'any'],
 		damage: 70,
 		power:
 			'For each of your AFK Bdubs or Tangos on the game board, do an additional 40hp damage, up to a maximum of 80hp additional damage.',

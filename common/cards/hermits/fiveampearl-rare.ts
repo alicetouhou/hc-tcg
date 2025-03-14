@@ -27,7 +27,7 @@ const FiveAMPearlRare: Hermit = {
 	secondary: {
 		name: 'Dogs of War',
 		cost: ['balanced', 'balanced'],
-		damage: 70,
+		damage: 80,
 		power:
 			'If Wolf card is attached to this Hermit, do an additional 30hp damage.',
 	},
