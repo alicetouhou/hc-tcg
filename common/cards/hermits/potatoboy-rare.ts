@@ -45,7 +45,7 @@ const PotatoBoyRare: Hermit = {
 				game.components
 					.filter(
 						RowComponent,
-						query.row.currentPlayer,
+						query.row.player(player.entity),
 						query.row.adjacent(query.row.active),
 						query.row.hasHermit,
 					)

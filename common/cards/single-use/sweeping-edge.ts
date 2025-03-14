@@ -4,16 +4,7 @@ import {GameModel} from '../../models/game-model'
 import {singleUse} from '../defaults'
 import {SingleUse} from '../types'
 
-const discardCondition = query.every(
-	query.some(
-		query.slot.active,
-		query.slot.row(query.row.adjacent(query.row.active)),
-	),
-	query.slot.attach,
-	query.slot.opponent,
-	query.not(query.slot.empty),
-	query.not(query.slot.frozen),
-)
+const discardCondition = query.every(query.slot.hermit, query.slot.opponent)
 
 const SweepingEdge: SingleUse = {
 	...singleUse,
@@ -24,7 +15,7 @@ const SweepingEdge: SingleUse = {
 	rarity: 'ultra_rare',
 	tokens: 2,
 	description:
-		'Your opponent must discard any effect cards attached to their active Hermit and any adjacent Hermits.',
+		'Your opponent must discard any effect cards attached to a Hermit you choose and any adjacent Hermits.',
 	showConfirmationModal: true,
 	attachCondition: query.every(
 		singleUse.attachCondition,
@@ -39,9 +30,36 @@ const SweepingEdge: SingleUse = {
 		const {player} = component
 
 		observer.subscribe(player.hooks.onApply, () => {
-			game.components
-				.filter(CardComponent, query.card.slot(discardCondition))
-				.map((card) => card.discard())
+			game.addPickRequest({
+				player: player.entity,
+				id: component.entity,
+				message: 'Pick a hermit as the center of the attack',
+				canPick: discardCondition,
+				onResult(pickedSlot) {
+					const row = pickedSlot.inRow() && pickedSlot.row
+					if (!row) return
+
+					game.components
+						.filter(
+							CardComponent,
+							query.card.slot(
+								query.every(
+									query.some(
+										query.slot.active,
+										query.slot.row(
+											query.row.adjacent(query.row.entity(row.entity)),
+										),
+									),
+									query.slot.attach,
+									query.slot.opponent,
+									query.not(query.slot.empty),
+									query.not(query.slot.frozen),
+								),
+							),
+						)
+						.map((card) => card.discard())
+				},
+			})
 		})
 	},
 }
