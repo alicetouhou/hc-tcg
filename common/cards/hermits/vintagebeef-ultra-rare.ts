@@ -27,7 +27,7 @@ const VintageBeefUltraRare: Hermit = {
 		cost: [],
 		damage: 0,
 		power:
-			"When Knocked out, your opponent draws 2 prize cards. If you have AFK Docm77, Bdubs AND Etho on the game board, this Hermit's attack damage doubles and health increases by 100hp.",
+			"If you have AFK Docm77, Bdubs AND Etho on the game board, this Hermit's attack damage doubles and health increases by 100hp.\nWhen Knocked out, your opponent draws 2 prize cards.",
 		passive: true,
 	},
 	secondary: {
